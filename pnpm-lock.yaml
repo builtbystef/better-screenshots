@@ -12,6 +12,9 @@ catalogs:
     '@types/node':
       specifier: ^24
       version: 24.13.3
+    fake-indexeddb:
+      specifier: 6.2.5
+      version: 6.2.5
     jsdom:
       specifier: 30.0.1
       version: 30.0.1
@@ -96,6 +99,9 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6
         version: 6.0.5(@voidzero-dev/vite-plus-core@0.2.8(@types/node@24.13.3)(jiti@2.7.0)(typescript@7.0.2))
+      fake-indexeddb:
+        specifier: 'catalog:'
+        version: 6.2.5
       jsdom:
         specifier: 'catalog:'
         version: 30.0.1
@@ -1479,6 +1485,10 @@ packages:
 
   exsolve@1.1.1:
     resolution: {integrity: sha512-9U/jZUgjnSGyntRr6y5Muu1MJcwFl6kPu7k8qLF0IMNfLqvw0NZ4nnVDq0RVoZ0RvCyumib4Ez3KYrVfilrw+g==}
+
+  fake-indexeddb@6.2.5:
+    resolution: {integrity: sha512-CGnyrvbhPlWYMngksqrSSUT1BAVP49dZocrHuK0SvtR0D5TMs5wP0o3j7jexDJW01KSadjBp1M/71o/KR3nD1w==}
+    engines: {node: '>=18'}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -3217,6 +3227,8 @@ snapshots:
   expect-type@1.4.0: {}
 
   exsolve@1.1.1: {}
+
+  fake-indexeddb@6.2.5: {}
 
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
