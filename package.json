@@ -1,0 +1,25 @@
+{
+  "name": "better-screenshots",
+  "private": true,
+  "license": "MIT",
+  "author": "builtbystef",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @better-screenshots/web dev",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "test": "vp test",
+    "build": "vp run -r build",
+    "ci": "vp check && vp test && vp run -r build"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.17.0"
+}

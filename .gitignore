@@ -1,0 +1,26 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test output
+coverage/
+
+# Tool caches
+.cache/
+.vite/
+.tanstack/
+
+# Logs & OS noise
+*.log
+.DS_Store
