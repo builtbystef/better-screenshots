@@ -31,6 +31,7 @@ export default defineConfig({
   },
   test: {
     passWithNoTests: true,
+    globalSetup: ["apps/web/src/test/ensure-canvas-shim.ts"],
   },
   pack: {
     dts: true,

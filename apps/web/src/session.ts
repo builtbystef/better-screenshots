@@ -101,6 +101,214 @@ function derivePlacement(composition: Composition, screenshot: Size): Placement 
   };
 }
 
+const PAINT_SCALE = 2;
+
+function gradientLine(
+  width: number,
+  height: number,
+  angle: number,
+): { start: { x: number; y: number }; end: { x: number; y: number } } {
+  const theta = (angle * Math.PI) / 180;
+  const length = Math.abs(width * Math.sin(theta)) + Math.abs(height * Math.cos(theta));
+  const dx = Math.sin(theta);
+  const dy = -Math.cos(theta);
+  const centerX = width / 2;
+  const centerY = height / 2;
+  return {
+    start: { x: centerX - (dx * length) / 2, y: centerY - (dy * length) / 2 },
+    end: { x: centerX + (dx * length) / 2, y: centerY + (dy * length) / 2 },
+  };
+}
+
+async function paintBackground(
+  ctx: CanvasRenderingContext2D,
+  composition: Composition,
+  options: { defaultSolid: SolidBackground; store: UploadedBackgroundStore },
+): Promise<void> {
+  const width = composition.width * PAINT_SCALE;
+  const height = composition.height * PAINT_SCALE;
+  const fillSolid = (color: HexColor) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, width, height);
+  };
+  switch (composition.background.type) {
+    case "solid":
+      fillSolid(composition.background.color);
+      return;
+    case "gradient": {
+      const { start, end } = gradientLine(
+        composition.width,
+        composition.height,
+        composition.background.angle,
+      );
+      const gradient = ctx.createLinearGradient(
+        start.x * PAINT_SCALE,
+        start.y * PAINT_SCALE,
+        end.x * PAINT_SCALE,
+        end.y * PAINT_SCALE,
+      );
+      for (const stop of composition.background.stops) {
+        gradient.addColorStop(stop.offset, stop.color);
+      }
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+      return;
+    }
+    case "image": {
+      const record = await options.store.get(composition.background.id);
+      if (record === undefined || record === "unavailable") {
+        fillSolid(options.defaultSolid.color);
+        return;
+      }
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(record.blob);
+      } catch {
+        fillSolid(options.defaultSolid.color);
+        return;
+      }
+      const k = Math.max(composition.width / bitmap.width, composition.height / bitmap.height);
+      const drawnWidth = bitmap.width * k;
+      const drawnHeight = bitmap.height * k;
+      const x = ((composition.width - drawnWidth) / 2) * PAINT_SCALE;
+      const y = ((composition.height - drawnHeight) / 2) * PAINT_SCALE;
+      ctx.drawImage(bitmap, x, y, drawnWidth * PAINT_SCALE, drawnHeight * PAINT_SCALE);
+      if (typeof bitmap.close === "function") {
+        bitmap.close();
+      }
+    }
+  }
+}
+
+function pathRoundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+): void {
+  ctx.roundRect(x, y, width, height, radius);
+}
+
+function paintShadow(
+  ctx: CanvasRenderingContext2D,
+  outer: Rect,
+  outerRadius: number,
+  shadow: { offset: number; blur: number; opacity: number },
+): void {
+  if (shadow.offset === 0 && shadow.blur === 0) {
+    return;
+  }
+  const layer = document.createElement("canvas");
+  layer.width = ctx.canvas.width;
+  layer.height = ctx.canvas.height;
+  const shadowCtx = layer.getContext("2d");
+  if (shadowCtx === null) {
+    return;
+  }
+  shadowCtx.shadowColor = `rgba(0,0,0,${String(shadow.opacity)})`;
+  shadowCtx.shadowOffsetX = shadow.offset * PAINT_SCALE;
+  shadowCtx.shadowOffsetY = shadow.offset * PAINT_SCALE;
+  shadowCtx.shadowBlur = shadow.blur * PAINT_SCALE;
+  shadowCtx.fillStyle = "#000000";
+  shadowCtx.beginPath();
+  pathRoundedRect(
+    shadowCtx,
+    outer.x * PAINT_SCALE,
+    outer.y * PAINT_SCALE,
+    outer.width * PAINT_SCALE,
+    outer.height * PAINT_SCALE,
+    outerRadius * PAINT_SCALE,
+  );
+  shadowCtx.fill();
+  shadowCtx.shadowColor = "rgba(0,0,0,0)";
+  shadowCtx.shadowOffsetX = 0;
+  shadowCtx.shadowOffsetY = 0;
+  shadowCtx.shadowBlur = 0;
+  shadowCtx.globalCompositeOperation = "destination-out";
+  shadowCtx.beginPath();
+  pathRoundedRect(
+    shadowCtx,
+    outer.x * PAINT_SCALE,
+    outer.y * PAINT_SCALE,
+    outer.width * PAINT_SCALE,
+    outer.height * PAINT_SCALE,
+    outerRadius * PAINT_SCALE,
+  );
+  shadowCtx.fill();
+  ctx.drawImage(layer, 0, 0);
+}
+
+async function paintScreenshot(
+  ctx: CanvasRenderingContext2D,
+  composition: Composition,
+  placement: Placement,
+  screenshot: Blob,
+): Promise<void> {
+  const { drawn } = placement;
+  const borderWidth = composition.border.width;
+  const outer = {
+    x: drawn.x - borderWidth,
+    y: drawn.y - borderWidth,
+    width: drawn.width + 2 * borderWidth,
+    height: drawn.height + 2 * borderWidth,
+  };
+  const outerRadius = composition.radius + borderWidth;
+  paintShadow(ctx, outer, outerRadius, composition.shadow);
+  if (borderWidth > 0) {
+    ctx.save();
+    ctx.fillStyle = composition.border.color;
+    ctx.beginPath();
+    pathRoundedRect(
+      ctx,
+      outer.x * PAINT_SCALE,
+      outer.y * PAINT_SCALE,
+      outer.width * PAINT_SCALE,
+      outer.height * PAINT_SCALE,
+      outerRadius * PAINT_SCALE,
+    );
+    pathRoundedRect(
+      ctx,
+      drawn.x * PAINT_SCALE,
+      drawn.y * PAINT_SCALE,
+      drawn.width * PAINT_SCALE,
+      drawn.height * PAINT_SCALE,
+      composition.radius * PAINT_SCALE,
+    );
+    ctx.fill("evenodd");
+    ctx.restore();
+  }
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(screenshot);
+  } catch {
+    return;
+  }
+  ctx.save();
+  ctx.beginPath();
+  pathRoundedRect(
+    ctx,
+    drawn.x * PAINT_SCALE,
+    drawn.y * PAINT_SCALE,
+    drawn.width * PAINT_SCALE,
+    drawn.height * PAINT_SCALE,
+    composition.radius * PAINT_SCALE,
+  );
+  ctx.clip();
+  ctx.drawImage(
+    bitmap,
+    drawn.x * PAINT_SCALE,
+    drawn.y * PAINT_SCALE,
+    drawn.width * PAINT_SCALE,
+    drawn.height * PAINT_SCALE,
+  );
+  ctx.restore();
+  if (typeof bitmap.close === "function") {
+    bitmap.close();
+  }
+}
+
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
 function isHexColor(value: string): boolean {
@@ -142,6 +350,8 @@ export type StudioSession = {
   setShadow(offset: number, blur: number, opacity: number): "ok" | Refuse;
   setBorder(width: number, color: HexColor): "ok" | Refuse;
   setRadius(value: number): "ok" | Refuse;
+  render(): Promise<HTMLCanvasElement>;
+  exportPng(now: Date): Promise<{ blob: Blob; filename: string } | Refuse>;
 };
 
 export async function createSession(options: {
@@ -164,6 +374,32 @@ export async function createSession(options: {
     border: { width: 0, color: "#FFFFFF" },
     radius: 16,
   };
+  async function renderComposition(): Promise<HTMLCanvasElement> {
+    const canvas = document.createElement("canvas");
+    canvas.width = composition.width * 2;
+    canvas.height = composition.height * 2;
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) {
+      return canvas;
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, canvas.width, canvas.height);
+    ctx.clip();
+    await paintBackground(ctx, composition, options);
+    if (composition.screenshot !== null && screenshotSize !== null) {
+      await paintScreenshot(
+        ctx,
+        composition,
+        derivePlacement(composition, screenshotSize),
+        composition.screenshot,
+      );
+    }
+    ctx.restore();
+    return canvas;
+  }
   return {
     get composition() {
       return composition;
@@ -278,6 +514,29 @@ export async function createSession(options: {
       }
       composition = { ...composition, radius: value };
       return "ok";
+    },
+    render: renderComposition,
+    async exportPng(now) {
+      if (composition.screenshot === null) {
+        return "refuse";
+      }
+      const canvas = await renderComposition();
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, "image/png");
+      });
+      if (blob === null) {
+        return "refuse";
+      }
+      const year = String(now.getFullYear());
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      return {
+        blob,
+        filename: `better-screenshots-${year}-${month}-${day}T${hours}${minutes}${seconds}.png`,
+      };
     },
   };
 }
