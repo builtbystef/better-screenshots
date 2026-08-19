@@ -8,6 +8,18 @@ The project's shared language. The rules: use one term for each concept — the 
 The browser app where the user makes a Composition.
 _Avoid_: editor, app, site
 
+**Empty Studio**:
+The Studio when the Composition has no Screenshot.
+_Avoid_: first-run, blank, unoccupied, empty-occupied
+
+**Inspector**:
+The single Studio panel for Background, placement, and Effects.
+_Avoid_: sidebar, properties, settings (when this panel is meant)
+
+**Preview**:
+The Studio surface that displays the Composition bitmap.
+_Avoid_: canvas, stage, viewport (when this surface is meant)
+
 **Screenshot**:
 The source image the user brings into the Studio.
 _Avoid_: capture, shot, image (when the upload is meant)
