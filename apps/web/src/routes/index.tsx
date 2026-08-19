@@ -7,6 +7,7 @@ import {
   useState,
   type ChangeEvent,
   type KeyboardEvent,
+  type PointerEvent,
 } from "react";
 import { catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
 import {
@@ -20,6 +21,7 @@ import {
   parseOpacityPercent,
   parseScale,
   placeLine,
+  positionFromDrag,
   uploadLine,
   type PlaceOutcome,
   type PlaceSource,
@@ -98,6 +100,30 @@ function filesFrom(data: DataTransfer | null): File[] {
   return files;
 }
 
+function previewCanvas(host: HTMLDivElement | null): HTMLCanvasElement | null {
+  const child = host?.firstElementChild;
+  return child instanceof HTMLCanvasElement ? child : null;
+}
+
+function hitsDrawn(
+  clientX: number,
+  clientY: number,
+  canvas: HTMLCanvasElement,
+  drawn: { x: number; y: number; width: number; height: number },
+  compositionWidth: number,
+): boolean {
+  const bounds = canvas.getBoundingClientRect();
+  const scale = canvas.clientWidth / compositionWidth;
+  const left = bounds.left + canvas.clientLeft + drawn.x * scale;
+  const top = bounds.top + canvas.clientTop + drawn.y * scale;
+  return (
+    clientX >= left &&
+    clientX < left + drawn.width * scale &&
+    clientY >= top &&
+    clientY < top + drawn.height * scale
+  );
+}
+
 function Preview({
   session,
   revision,
@@ -108,10 +134,17 @@ function Preview({
   onPlaced: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{
+    origin: { x: number; y: number };
+    start: { x: number; y: number };
+    previewWidth: number;
+  } | null>(null);
   const pickerId = useId();
   const [line, setLine] = useState<string | null>(null);
   const [fileDrag, setFileDrag] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [overShot, setOverShot] = useState(false);
   const occupied = session.composition.screenshot !== null;
   const exportDisabled = !occupied || exporting;
 
@@ -148,7 +181,6 @@ function Preview({
     });
     return () => {
       cancelled = true;
-      host.replaceChildren();
     };
   }, [revision, session]);
 
@@ -255,6 +287,90 @@ function Preview({
     }
   }
 
+  function screenshotHit(clientX: number, clientY: number): boolean {
+    const canvas = previewCanvas(hostRef.current);
+    const drawn = session.placement?.drawn;
+    if (canvas === null || drawn === undefined || canvas.clientWidth === 0) {
+      return false;
+    }
+    return hitsDrawn(clientX, clientY, canvas, drawn, session.composition.width);
+  }
+
+  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (!event.isPrimary || event.button !== 0 || !occupied) {
+      return;
+    }
+    if (!screenshotHit(event.clientX, event.clientY)) {
+      return;
+    }
+    const canvas = previewCanvas(hostRef.current);
+    if (canvas === null || canvas.clientWidth === 0) {
+      return;
+    }
+    dragRef.current = {
+      origin: { ...session.composition.position },
+      start: { x: event.clientX, y: event.clientY },
+      previewWidth: canvas.clientWidth,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setOverShot(true);
+  }
+
+  function onPointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (!event.isPrimary) {
+      return;
+    }
+    const drag = dragRef.current;
+    if (drag === null) {
+      setOverShot(occupied && screenshotHit(event.clientX, event.clientY));
+      return;
+    }
+    if (event.clientX === drag.start.x && event.clientY === drag.start.y) {
+      return;
+    }
+    setDragging(true);
+    const next = positionFromDrag({
+      origin: drag.origin,
+      start: drag.start,
+      current: { x: event.clientX, y: event.clientY },
+      previewWidth: drag.previewWidth,
+      compositionWidth: session.composition.width,
+    });
+    if (session.setPosition(next.x, next.y) === "ok") {
+      onPlaced();
+    }
+  }
+
+  function endDrag() {
+    if (dragRef.current === null) {
+      return;
+    }
+    dragRef.current = null;
+    setDragging(false);
+  }
+
+  function onPointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (!event.isPrimary) {
+      return;
+    }
+    endDrag();
+    setOverShot(occupied && screenshotHit(event.clientX, event.clientY));
+  }
+
+  function onPointerCancel(event: PointerEvent<HTMLDivElement>) {
+    if (!event.isPrimary) {
+      return;
+    }
+    endDrag();
+    setOverShot(false);
+  }
+
+  function onPointerLeave() {
+    if (dragRef.current === null) {
+      setOverShot(false);
+    }
+  }
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <div className="mb-2 flex shrink-0 justify-end gap-2">
@@ -290,8 +406,16 @@ function Preview({
       </div>
       <div
         className={
-          fileDrag ? "relative min-h-0 flex-1 ring-2 ring-ring" : "relative min-h-0 flex-1"
+          "relative min-h-0 flex-1" +
+          (fileDrag ? " ring-2 ring-ring" : "") +
+          (occupied ? " touch-none" : "") +
+          (dragging ? " cursor-grabbing" : overShot ? " cursor-grab" : "")
         }
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onPointerLeave={onPointerLeave}
       >
         <div ref={hostRef} className="h-full w-full" />
         {occupied ? null : (

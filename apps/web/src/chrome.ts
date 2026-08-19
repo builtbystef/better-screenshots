@@ -115,6 +115,20 @@ export function matchingGradient(
   );
 }
 
+export function positionFromDrag(input: {
+  origin: { x: number; y: number };
+  start: { x: number; y: number };
+  current: { x: number; y: number };
+  previewWidth: number;
+  compositionWidth: number;
+}): { x: number; y: number } {
+  const scale = input.compositionWidth / input.previewWidth;
+  return {
+    x: input.origin.x + Math.round((input.current.x - input.start.x) * scale),
+    y: input.origin.y + Math.round((input.current.y - input.start.y) * scale),
+  };
+}
+
 export function schemeClass(prefers: "dark" | "light" | "no-preference"): "dark" | null {
   return prefers === "dark" ? "dark" : null;
 }

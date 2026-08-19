@@ -1,13 +1,14 @@
 ---
 id: k50xag
 title: Drag the Screenshot to write Position
-state: todo
+state: done
+assignee: agent
 priority: medium
 depends_on:
     - hp3l6u
 parent: 3toux4
 created: 2026-08-19T19:38:36Z
-updated: 2026-08-19T19:38:36Z
+updated: 2026-08-19T20:47:18Z
 ---
 
 ## What to build
@@ -22,3 +23,13 @@ The developer drags the Screenshot on the Preview to write Position. The stored 
 - [ ] Cursor is `grab` at rest on the Screenshot and `grabbing` during the drag. `setPointerCapture` so the drag continues off the Preview.
 - [ ] Each move calls `positionFromDrag` and `setPosition`. A click with no movement writes nothing.
 - [ ] A touch drag writes Position and does not scroll the page.
+
+## Notes
+
+**agent** — 2026-08-19T20:47:18Z
+
+Drag on the Preview Screenshot writes Position live. A click with no movement writes nothing.
+
+Seam (chrome.ts): positionFromDrag. Preview CSS px scale to Composition CSS px and snap to integers. Spec worked examples are tests. Page is not a test seam.
+
+Occupied Preview: primary pointer down on the axis-aligned placement.drawn rect (Screenshot only, not shadow or empty Background) setPointerCapture on the surface so the drag continues off the Preview. Each move calls positionFromDrag then setPosition; Inspector X/Y follow. grab at rest on the Screenshot, grabbing during the drag. touch-action: none so a touch drag does not scroll the page.

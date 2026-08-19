@@ -13,6 +13,7 @@ import {
   parseOpacityPercent,
   parseScale,
   placeLine,
+  positionFromDrag,
   schemeClass,
   uploadLine,
 } from "./chrome";
@@ -161,6 +162,30 @@ test("parseOpacityPercent accepts a percent integer", () => {
 test("parseOpacityPercent refuses a value outside 0-100 and a non-integer", () => {
   expect(parseOpacityPercent("101")).toBe("refuse");
   expect(parseOpacityPercent("25.5")).toBe("refuse");
+});
+
+test("positionFromDrag maps a horizontal Preview drag into Composition Position", () => {
+  expect(
+    positionFromDrag({
+      origin: { x: 0, y: 0 },
+      start: { x: 0, y: 0 },
+      current: { x: 10, y: 0 },
+      previewWidth: 960,
+      compositionWidth: 1920,
+    }),
+  ).toEqual({ x: 20, y: 0 });
+});
+
+test("positionFromDrag snaps a fractional Preview drag to integer Position", () => {
+  expect(
+    positionFromDrag({
+      origin: { x: 0, y: 0 },
+      start: { x: 0, y: 0 },
+      current: { x: 10.4, y: -3.2 },
+      previewWidth: 960,
+      compositionWidth: 1920,
+    }),
+  ).toEqual({ x: 21, y: -6 });
 });
 
 test("a successful upload writes no Image line", () => {
