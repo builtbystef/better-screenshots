@@ -1,4 +1,4 @@
-import type { GradientBackground, HexColor } from "./session";
+import type { GradientBackground, HexColor, UploadRefuse } from "./session";
 
 export type PlaceSource = "picker" | "drop" | "paste";
 
@@ -16,6 +16,19 @@ export function placeLine(source: PlaceSource, outcome: PlaceOutcome): string | 
 
 export function exportLine(outcome: "ok" | "refuse"): string | null {
   return outcome === "ok" ? null : "Couldn't export that image.";
+}
+
+export function uploadLine(outcome: "ok" | UploadRefuse): string | null {
+  switch (outcome) {
+    case "ok":
+      return null;
+    case "undecodable":
+      return "That file isn't an image.";
+    case "quota":
+      return "Not enough storage for that image.";
+    case "unavailable":
+      return "Can't store images in this browser.";
+  }
 }
 
 export function isFileDrag(types: readonly string[]): boolean {

@@ -20,6 +20,7 @@ import {
   parseOpacityPercent,
   parseScale,
   placeLine,
+  uploadLine,
   type PlaceOutcome,
   type PlaceSource,
 } from "../chrome";
@@ -331,14 +332,19 @@ function BackgroundInspector({
   session: StudioSession;
   onChange: () => void;
 }) {
+  const pickerId = useId();
   const background = session.composition.background;
   const currentSolid = background.type === "solid" ? background.color : null;
+  const currentImageId = background.type === "image" ? background.id : null;
   const selectedSolid =
     currentSolid === null ? null : matchingSolid(currentSolid, catalogSolidColors);
   const selectedGradient =
     background.type === "gradient" ? matchingGradient(background, catalogGradientValues) : null;
+  const addDisabled = session.storage === "unavailable";
+  const images = session.uploadedBackgrounds.toReversed();
   const [hexDraft, setHexDraft] = useState(currentSolid ?? "");
   const [lastSolid, setLastSolid] = useState(currentSolid ?? "#000000");
+  const [line, setLine] = useState<string | null>(null);
 
   function writeSolid(color: HexColor) {
     if (session.setBackground({ type: "solid", color }) !== "ok") {
@@ -376,6 +382,34 @@ function BackgroundInspector({
 
   function onNativeChange(event: ChangeEvent<HTMLInputElement>) {
     writeSolid(event.target.value);
+  }
+
+  function writeImage(id: string) {
+    if (session.setBackground({ type: "image", id }) !== "ok") {
+      return;
+    }
+    setHexDraft("");
+    onChange();
+  }
+
+  async function removeImage(id: string) {
+    await session.removeBackground(id);
+    onChange();
+  }
+
+  async function onAddChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file === undefined) {
+      return;
+    }
+    const result = await session.uploadBackground(file, file.name);
+    if (result === "undecodable" || result === "quota" || result === "unavailable") {
+      setLine(uploadLine(result));
+      return;
+    }
+    setLine(null);
+    writeImage(result.id);
   }
 
   return (
@@ -447,8 +481,80 @@ function BackgroundInspector({
           })}
         </div>
       </div>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-xs font-medium text-muted-foreground">Image</h3>
+        <ul className="flex flex-col gap-1.5">
+          {images.map((record) => {
+            const current = record.id === currentImageId;
+            return (
+              <li key={record.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
+                  onClick={() => writeImage(record.id)}
+                >
+                  <ImageThumbnail blob={record.blob} />
+                  <span className="min-w-0 truncate">{record.filename}</span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove ${record.filename}`}
+                  disabled={current}
+                  className={
+                    current
+                      ? "shrink-0 cursor-default px-1 text-sm text-muted-foreground"
+                      : "shrink-0 cursor-pointer px-1 text-sm"
+                  }
+                  onClick={() => {
+                    void removeImage(record.id);
+                  }}
+                >
+                  X
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <input
+          id={pickerId}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          disabled={addDisabled}
+          onClick={() => setLine(null)}
+          onChange={(event) => {
+            void onAddChange(event);
+          }}
+        />
+        <label
+          htmlFor={pickerId}
+          className={
+            addDisabled ? "cursor-default text-sm text-muted-foreground" : "cursor-pointer text-sm"
+          }
+        >
+          Add
+        </label>
+        {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
+      </div>
     </div>
   );
+}
+
+function ImageThumbnail({ blob }: { blob: Blob }) {
+  const [src, setSrc] = useState("");
+
+  useEffect(() => {
+    const url = URL.createObjectURL(blob);
+    setSrc(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [blob]);
+
+  if (src === "") {
+    return <span className="size-7 shrink-0 border border-border bg-background" />;
+  }
+  return <img src={src} alt="" className="size-7 shrink-0 border border-border object-cover" />;
 }
 
 const numberChromeClass =

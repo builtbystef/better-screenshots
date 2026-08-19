@@ -14,6 +14,7 @@ import {
   parseScale,
   placeLine,
   schemeClass,
+  uploadLine,
 } from "./chrome";
 
 test("schemeClass maps dark to the dark class", () => {
@@ -160,4 +161,20 @@ test("parseOpacityPercent accepts a percent integer", () => {
 test("parseOpacityPercent refuses a value outside 0-100 and a non-integer", () => {
   expect(parseOpacityPercent("101")).toBe("refuse");
   expect(parseOpacityPercent("25.5")).toBe("refuse");
+});
+
+test("a successful upload writes no Image line", () => {
+  expect(uploadLine("ok")).toBeNull();
+});
+
+test("an undecodable upload writes the file line", () => {
+  expect(uploadLine("undecodable")).toBe("That file isn't an image.");
+});
+
+test("a quota upload writes the storage line", () => {
+  expect(uploadLine("quota")).toBe("Not enough storage for that image.");
+});
+
+test("an unavailable upload writes the browser line", () => {
+  expect(uploadLine("unavailable")).toBe("Can't store images in this browser.");
 });
