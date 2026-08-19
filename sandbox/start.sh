@@ -22,6 +22,7 @@ exec podman run \
   --cap-drop=all \
   --security-opt=no-new-privileges \
   --userns=keep-id:uid=1000,gid=1000 \
+  --dns 1.1.1.1 \
   --pids-limit=2048 \
   --memory=4g \
   --cpus=2 \
