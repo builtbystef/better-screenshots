@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { schemeBootScript } from "../chrome";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -21,8 +22,9 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: schemeBootScript }} />
         <HeadContent />
       </head>
       <body>
