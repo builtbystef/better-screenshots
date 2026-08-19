@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import { isFileDrag, isTextFieldTarget, placeLine, schemeClass } from "./chrome";
+import { catalogGradients, catalogSolids } from "./catalog";
+import {
+  isFileDrag,
+  isTextFieldTarget,
+  matchingGradient,
+  matchingSolid,
+  parseHex,
+  placeLine,
+  schemeClass,
+} from "./chrome";
 
 test("schemeClass maps dark to the dark class", () => {
   expect(schemeClass("dark")).toBe("dark");
@@ -66,4 +75,47 @@ test("file, button, and a plain element are not text field targets", () => {
   expect(isTextFieldTarget(button)).toBe(false);
   expect(isTextFieldTarget(div)).toBe(false);
   expect(isTextFieldTarget(null)).toBe(false);
+});
+
+test("parseHex accepts six digits without a hash and keeps case", () => {
+  expect(parseHex("aabbcc")).toBe("#aabbcc");
+});
+
+test("parseHex accepts a hashed six-digit hex and keeps case", () => {
+  expect(parseHex("#AaBbCc")).toBe("#AaBbCc");
+});
+
+test("parseHex refuses shorthand, empty, and eight-digit hex", () => {
+  expect(parseHex("#abc")).toBe("refuse");
+  expect(parseHex("")).toBe("refuse");
+  expect(parseHex("#aabbccff")).toBe("refuse");
+});
+
+const catalogSolidColors = catalogSolids.map((entry) => entry.color);
+
+test("matchingSolid matches a Catalog solid case-insensitively", () => {
+  expect(matchingSolid("#e4e4e7", catalogSolidColors)).toBe("#E4E4E7");
+});
+
+test("matchingSolid returns null for a hex that is not a Catalog solid", () => {
+  expect(matchingSolid("#FFFFFF", catalogSolidColors)).toBeNull();
+});
+
+const zincFade = {
+  type: "gradient" as const,
+  angle: 180,
+  stops: [
+    { offset: 0, color: "#F4F4F5" },
+    { offset: 1, color: "#D4D4D8" },
+  ],
+};
+
+const catalogGradientValues = catalogGradients.map((entry) => entry.value);
+
+test("matchingGradient of Zinc fade against the Catalog is Zinc fade", () => {
+  expect(matchingGradient(zincFade, catalogGradientValues)).toEqual(zincFade);
+});
+
+test("matchingGradient of Zinc fade stops at 160 degrees is null", () => {
+  expect(matchingGradient({ ...zincFade, angle: 160 }, catalogGradientValues)).toBeNull();
 });

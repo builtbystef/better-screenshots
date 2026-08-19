@@ -1,13 +1,14 @@
 ---
 id: 9vtbbf
 title: Set Background from Catalog chips and a custom solid
-state: todo
+state: done
+assignee: agent
 priority: high
 depends_on:
     - 866rvo
 parent: 3toux4
 created: 2026-08-19T19:38:34Z
-updated: 2026-08-19T19:38:34Z
+updated: 2026-08-19T20:21:32Z
 ---
 
 ## What to build
@@ -26,3 +27,15 @@ The Inspector Background section sets a solid or a gradient. Catalog chips write
 - [ ] `parseHex("aabbcc")` → `"#aabbcc"`. `parseHex("#AaBbCc")` → `"#AaBbCc"`. `parseHex("#abc")` → `"refuse"`. `parseHex("")` → `"refuse"`. `parseHex("#aabbccff")` → `"refuse"`.
 - [ ] Hex field and native color input are always visible and kept in sync when current is a solid. `parseHex` on blur and Enter, not per keystroke. Invalid or incomplete: restore to the current solid or to empty. Native commits immediately (`#RRGGBB` only). A hex that equals a Catalog solid selects that chip; otherwise no solid chip is selected.
 - [ ] Not a solid: hex empty, placeholder `#RRGGBB`. Native is not current: it shows the last solid this sitting, else `#000000`. Editing either control writes a solid and replaces the gradient or image.
+
+## Notes
+
+**agent** — 2026-08-19T20:21:31Z
+
+Inspector Background now sets a Catalog solid, a Catalog gradient, or a custom solid. Preview re-renders, including on Empty.
+
+Seams (chrome.ts): parseHex, matchingSolid, matchingGradient. Worked examples from the spec are tests. Catalog lives in catalog.ts — eight solids and six two-stop gradients in spec order; default remains Zinc 200 #E4E4E7.
+
+UI: groups labeled Solid and Gradient. Square 1.75rem chips, fill only, title is the Catalog name. Selected match is a 2px ring with a 2px offset via matchingSolid / matchingGradient. Click writes immediately; a selected chip is a no-op. Hex field commits on blur and Enter; invalid or incomplete restores to the current solid or to empty. Native color commits immediately. Not a solid: hex empty with placeholder #RRGGBB; native shows the last solid this sitting, else #000000. Editing either writes a solid and replaces a gradient.
+
+Chips have a 1px border so Zinc 100 stays visible on the card. Page is not a test seam. Image upload stays su8i9j.

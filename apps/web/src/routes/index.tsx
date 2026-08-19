@@ -1,16 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from "react";
+import { catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
 import {
   isFileDrag,
   isTextFieldTarget,
+  matchingGradient,
+  matchingSolid,
+  parseHex,
   placeLine,
   type PlaceOutcome,
   type PlaceSource,
 } from "../chrome";
 import { createIndexedDbStore } from "../indexed-db-store";
-import { createSession, type StudioSession } from "../session";
+import {
+  createSession,
+  type GradientBackground,
+  type HexColor,
+  type StudioSession,
+} from "../session";
 
-const CATALOG_DEFAULT_SOLID = { type: "solid" as const, color: "#E4E4E7" };
+const catalogSolidColors = catalogSolids.map((entry) => entry.color);
+const catalogGradientValues = catalogGradients.map((entry) => entry.value);
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -18,10 +35,12 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const [session, setSession] = useState<StudioSession | null>(null);
+  const [revision, setRevision] = useState(0);
+  const bump = useCallback(() => setRevision((current) => current + 1), []);
 
   useEffect(() => {
     void createSession({
-      defaultSolid: CATALOG_DEFAULT_SOLID,
+      defaultSolid: catalogDefaultSolid,
       store: createIndexedDbStore(),
     }).then(setSession);
   }, []);
@@ -33,11 +52,12 @@ function HomePage() {
   return (
     <main className="flex h-svh min-h-svh min-w-[48rem] gap-6 p-6">
       <section className="min-h-0 min-w-0 flex-1">
-        <Preview session={session} />
+        <Preview session={session} revision={revision} onPlaced={bump} />
       </section>
       <aside className="flex w-80 shrink-0 flex-col gap-6 overflow-y-auto rounded-lg border border-border bg-card p-4 text-card-foreground">
         <section>
           <h2 className="text-sm font-medium">Background</h2>
+          <BackgroundInspector session={session} onChange={bump} />
         </section>
         <section>
           <h2 className="text-sm font-medium">Placement</h2>
@@ -70,9 +90,16 @@ function filesFrom(data: DataTransfer | null): File[] {
   return files;
 }
 
-function Preview({ session }: { session: StudioSession }) {
+function Preview({
+  session,
+  revision,
+  onPlaced,
+}: {
+  session: StudioSession;
+  revision: number;
+  onPlaced: () => void;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [generation, setGeneration] = useState(0);
   const [line, setLine] = useState<string | null>(null);
   const [fileDrag, setFileDrag] = useState(false);
   const occupied = session.composition.screenshot !== null;
@@ -88,10 +115,10 @@ function Preview({ session }: { session: StudioSession }) {
             : "refuse";
       setLine(placeLine(source, outcome));
       if (outcome === "ok") {
-        setGeneration((current) => current + 1);
+        onPlaced();
       }
     },
-    [session],
+    [onPlaced, session],
   );
 
   useEffect(() => {
@@ -112,7 +139,7 @@ function Preview({ session }: { session: StudioSession }) {
       cancelled = true;
       host.replaceChildren();
     };
-  }, [generation, session]);
+  }, [revision, session]);
 
   useEffect(() => {
     let dragDepth = 0;
@@ -214,6 +241,144 @@ function Preview({ session }: { session: StudioSession }) {
         )}
       </div>
       {line === null ? null : <p className="mt-2 text-sm text-muted-foreground">{line}</p>}
+    </div>
+  );
+}
+
+function gradientCss(value: GradientBackground): string {
+  const stops = value.stops.map((stop) => `${stop.color} ${stop.offset * 100}%`).join(", ");
+  return `linear-gradient(${value.angle}deg, ${stops})`;
+}
+
+function chipClass(selected: boolean): string {
+  return selected
+    ? "size-7 shrink-0 rounded-none border border-border ring-2 ring-ring ring-offset-2 ring-offset-card"
+    : "size-7 shrink-0 rounded-none border border-border";
+}
+
+function BackgroundInspector({
+  session,
+  onChange,
+}: {
+  session: StudioSession;
+  onChange: () => void;
+}) {
+  const background = session.composition.background;
+  const currentSolid = background.type === "solid" ? background.color : null;
+  const selectedSolid =
+    currentSolid === null ? null : matchingSolid(currentSolid, catalogSolidColors);
+  const selectedGradient =
+    background.type === "gradient" ? matchingGradient(background, catalogGradientValues) : null;
+  const [hexDraft, setHexDraft] = useState(currentSolid ?? "");
+  const [lastSolid, setLastSolid] = useState(currentSolid ?? "#000000");
+
+  function writeSolid(color: HexColor) {
+    if (session.setBackground({ type: "solid", color }) !== "ok") {
+      return;
+    }
+    setLastSolid(color);
+    setHexDraft(color);
+    onChange();
+  }
+
+  function writeGradient(value: GradientBackground) {
+    if (session.setBackground(value) !== "ok") {
+      return;
+    }
+    setHexDraft("");
+    onChange();
+  }
+
+  function commitHex() {
+    const parsed = parseHex(hexDraft);
+    if (parsed === "refuse") {
+      setHexDraft(currentSolid ?? "");
+      return;
+    }
+    writeSolid(parsed);
+  }
+
+  function onHexKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    commitHex();
+  }
+
+  function onNativeChange(event: ChangeEvent<HTMLInputElement>) {
+    writeSolid(event.target.value);
+  }
+
+  return (
+    <div className="mt-3 flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
+        <h3 className="text-xs font-medium text-muted-foreground">Solid</h3>
+        <div className="flex flex-wrap gap-1.5 p-1">
+          {catalogSolids.map((entry) => {
+            const selected = selectedSolid === entry.color;
+            return (
+              <button
+                key={entry.color}
+                type="button"
+                title={entry.name}
+                aria-label={entry.name}
+                className={chipClass(selected)}
+                style={{ backgroundColor: entry.color }}
+                onClick={() => {
+                  if (selected) {
+                    return;
+                  }
+                  writeSolid(entry.color);
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={hexDraft}
+            placeholder="#RRGGBB"
+            spellCheck={false}
+            autoComplete="off"
+            className="min-w-0 flex-1 border border-input bg-background px-2 py-1 text-sm"
+            onChange={(event) => setHexDraft(event.target.value)}
+            onBlur={commitHex}
+            onKeyDown={onHexKeyDown}
+          />
+          <input
+            type="color"
+            value={currentSolid ?? lastSolid}
+            className="size-7 shrink-0 cursor-pointer border border-input bg-background p-0"
+            onChange={onNativeChange}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-xs font-medium text-muted-foreground">Gradient</h3>
+        <div className="flex flex-wrap gap-1.5 p-1">
+          {catalogGradients.map((entry) => {
+            const selected = selectedGradient === entry.value;
+            return (
+              <button
+                key={entry.name}
+                type="button"
+                title={entry.name}
+                aria-label={entry.name}
+                className={chipClass(selected)}
+                style={{ backgroundImage: gradientCss(entry.value) }}
+                onClick={() => {
+                  if (selected) {
+                    return;
+                  }
+                  writeGradient(entry.value);
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

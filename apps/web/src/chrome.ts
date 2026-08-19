@@ -1,3 +1,5 @@
+import type { GradientBackground, HexColor } from "./session";
+
 export type PlaceSource = "picker" | "drop" | "paste";
 
 export type PlaceOutcome = "ok" | "refuse" | "empty";
@@ -37,6 +39,40 @@ export function isTextFieldTarget(target: EventTarget | null): boolean {
     return !NON_TEXT_INPUT_TYPES.has(target.type);
   }
   return target instanceof HTMLElement && target.isContentEditable === true;
+}
+
+const HEX_DIGITS = /^#?([0-9A-Fa-f]{6})$/;
+
+export function parseHex(raw: string): `#${string}` | "refuse" {
+  const match = HEX_DIGITS.exec(raw);
+  return match === null ? "refuse" : `#${match[1]}`;
+}
+
+export function matchingSolid(color: HexColor, solids: readonly HexColor[]): HexColor | null {
+  const needle = color.toLowerCase();
+  return solids.find((solid) => solid.toLowerCase() === needle) ?? null;
+}
+
+function sameStops(left: GradientBackground["stops"], right: GradientBackground["stops"]): boolean {
+  return (
+    left.length === right.length &&
+    left.every(
+      (stop, index) =>
+        stop.offset === right[index]?.offset &&
+        stop.color.toLowerCase() === right[index].color.toLowerCase(),
+    )
+  );
+}
+
+export function matchingGradient(
+  value: GradientBackground,
+  gradients: readonly GradientBackground[],
+): GradientBackground | null {
+  return (
+    gradients.find(
+      (gradient) => gradient.angle === value.angle && sameStops(gradient.stops, value.stops),
+    ) ?? null
+  );
 }
 
 export function schemeClass(prefers: "dark" | "light" | "no-preference"): "dark" | null {
