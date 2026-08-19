@@ -1,14 +1,13 @@
 ---
 id: hbbrwg
 title: 'Prototype: decode a Blob and get a Canvas 2D bitmap under vp test'
-state: in-progress
+state: done
 priority: high
 labels:
     - research
-    - needs-review
 parent: erb9py
 created: 2026-08-19T06:07:51Z
-updated: 2026-08-19T07:07:02Z
+updated: 2026-08-19T07:19:57Z
 ---
 
 ## What to build
@@ -50,3 +49,7 @@ Prototype: branch `prototype/decode-blob-canvas-under-vp-test` (fbff447). Run: `
 # User
 
 Close this issue to approve the verdict. Or note requested changes and remove the needs-review label.
+
+**agent** — 2026-08-19T07:19:52Z
+
+Approved: later decode/draw slices use environment jsdom with test-only jsdom@30.0.1 and @napi-rs/canvas@1.0.6, a canvas shim, and a test-only createImageBitmap polyfill. No production draw library.
