@@ -1,6 +1,20 @@
 # The agent sandbox image for better-screenshots. Build it and run it only through
 # sandbox/start.sh. Everything installed here is reachable only from inside
 # the sandbox.
+
+# Beaver Backlog CLI (docs/TRACKER.md). Built in a throwaway stage so the
+# image keeps the binary and not the Go toolchain.
+FROM ubuntu:24.04 AS beaver
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://go.dev/dl/go1.26.0.linux-amd64.tar.gz \
+        | tar -xz -C /usr/local
+ENV PATH="/usr/local/go/bin:${PATH}"
+RUN GOBIN=/out go install github.com/builtbystef/beaver-backlog/cmd/beaver@ef48f10b3241
+
 FROM ubuntu:24.04
 
 RUN apt-get update && \
@@ -22,6 +36,8 @@ RUN curl -fsSL https://nodejs.org/dist/v24.18.0/node-v24.18.0-linux-x64.tar.gz \
 RUN npm install -g @anthropic-ai/claude-code \
     && npm install -g @openai/codex \
     && npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+
+COPY --from=beaver /out/beaver /usr/local/bin/beaver
 
 # The sandbox runs as a user without privileges: agent CLIs (Claude Code,
 # Codex) refuse their full-permission flags under root. The uid 1000 also

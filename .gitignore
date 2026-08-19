@@ -24,3 +24,6 @@ coverage/
 # Logs & OS noise
 *.log
 .DS_Store
+
+# Implement-loop operator state
+.implement-loop/
