@@ -2,7 +2,7 @@ import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb";
 import { expect, test } from "vite-plus/test";
 import { createIndexedDbStore } from "./indexed-db-store";
-import { createSession } from "./session";
+import { createSession, type UploadRefuse, type UploadedBackground } from "./session";
 
 if (typeof globalThis.createImageBitmap !== "function") {
   globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
@@ -20,6 +20,10 @@ function pngBlob(width: number, height: number): Blob {
 
 const defaultSolid = { type: "solid" as const, color: "#112233" };
 
+function isUploaded(result: UploadedBackground | UploadRefuse): result is UploadedBackground {
+  return typeof result !== "string";
+}
+
 function indexedDbStore() {
   globalThis.indexedDB = new IDBFactory();
   return createIndexedDbStore();
@@ -34,8 +38,8 @@ test("two createSession calls against the IndexedDB store see the same upload", 
   const first = await createSession({ defaultSolid, store });
   const file = pngBlob(100, 80);
   const uploaded = await first.uploadBackground(file, "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
 
@@ -54,8 +58,8 @@ test("a new session against the IndexedDB store does not list a removed Backgrou
   const store = indexedDbStore();
   const first = await createSession({ defaultSolid, store });
   const uploaded = await first.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
 
@@ -71,7 +75,7 @@ test("upload and remove refuse when IndexedDB is unavailable", async () => {
   try {
     const session = await createSession({ defaultSolid, store: createIndexedDbStore() });
     expect(session.uploadedBackgrounds).toEqual([]);
-    expect(await session.uploadBackground(pngBlob(100, 80), "wall.png")).toBe("refuse");
+    expect(await session.uploadBackground(pngBlob(100, 80), "wall.png")).toBe("unavailable");
     expect(await session.removeBackground("missing")).toBe("refuse");
   } finally {
     if (previous === undefined) {
@@ -109,14 +113,14 @@ test("upload refuses when the IndexedDB store hits quota or is unavailable", asy
       "put",
       new DOMException("The quota has been exceeded.", "QuotaExceededError"),
     );
-    expect(await session.uploadBackground(pngBlob(100, 80), "one.png")).toBe("refuse");
+    expect(await session.uploadBackground(pngBlob(100, 80), "one.png")).toBe("quota");
     expect(session.uploadedBackgrounds).toEqual([]);
 
     stubObjectStoreMethod(
       "put",
       new DOMException("The database is not available.", "UnknownError"),
     );
-    expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("refuse");
+    expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("unavailable");
     expect(session.uploadedBackgrounds).toEqual([]);
   } finally {
     Object.defineProperty(IDBObjectStore.prototype, "put", original);
@@ -127,8 +131,8 @@ test("remove refuses when the IndexedDB store is unavailable", async () => {
   const store = indexedDbStore();
   const session = await createSession({ defaultSolid, store });
   const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
   const original = objectStoreMethod("delete");

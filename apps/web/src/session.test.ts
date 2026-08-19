@@ -2,7 +2,12 @@
 
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { expect, test } from "vite-plus/test";
-import { createSession, type UploadedBackground, type UploadedBackgroundStore } from "./session";
+import {
+  createSession,
+  type UploadRefuse,
+  type UploadedBackground,
+  type UploadedBackgroundStore,
+} from "./session";
 
 if (typeof globalThis.createImageBitmap !== "function") {
   globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
@@ -26,6 +31,10 @@ function pngBlob(
 }
 
 const defaultSolid = { type: "solid" as const, color: "#112233" };
+
+function isUploaded(result: UploadedBackground | UploadRefuse): result is UploadedBackground {
+  return typeof result !== "string";
+}
 
 function emptyStore(): UploadedBackgroundStore {
   return {
@@ -112,6 +121,7 @@ test("uploadedBackgrounds is empty when the store list is unavailable", async ()
   const session = await createSession({ defaultSolid, store });
 
   expect(session.uploadedBackgrounds).toEqual([]);
+  expect(session.storage).toBe("unavailable");
 });
 
 test("a second createSession is a fresh default Composition", async () => {
@@ -429,8 +439,8 @@ test("uploadBackground of a decodable image returns a record and does not change
 
   const result = await session.uploadBackground(file, "wall.png");
 
-  expect(result).not.toBe("refuse");
-  if (result === "refuse") {
+  expect(isUploaded(result)).toBe(true);
+  if (!isUploaded(result)) {
     return;
   }
   expect(result.id).not.toBe("");
@@ -444,6 +454,7 @@ test("uploadBackground of a decodable image returns a record and does not change
   expect(result.blob).toBe(file);
   expect(session.composition.background).toEqual(before);
   expect(session.uploadedBackgrounds).toEqual([result]);
+  expect(session.storage).toBe("ok");
 });
 
 test("two uploads of the same bytes are two records", async () => {
@@ -453,29 +464,31 @@ test("two uploads of the same bytes are two records", async () => {
   const first = await session.uploadBackground(file, "wall.png");
   const second = await session.uploadBackground(file, "wall.png");
 
-  expect(first).not.toBe("refuse");
-  expect(second).not.toBe("refuse");
-  if (first === "refuse" || second === "refuse") {
+  expect(isUploaded(first)).toBe(true);
+  expect(isUploaded(second)).toBe(true);
+  if (!isUploaded(first) || !isUploaded(second)) {
     return;
   }
   expect(first.id).not.toBe(second.id);
   expect(session.uploadedBackgrounds).toEqual([first, second]);
 });
 
-test("uploadBackground refuses an undecodable Blob or a 0x0 image and stores nothing", async () => {
+test("uploadBackground of an undecodable Blob or a 0x0 image returns undecodable and stores nothing", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
+  const before = session.composition.background;
   const undecodable = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
   const emptySize = new Blob(
     ['<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"></svg>'],
     { type: "image/svg+xml" },
   );
 
-  expect(await session.uploadBackground(undecodable, "bad.png")).toBe("refuse");
-  expect(await session.uploadBackground(emptySize, "empty.svg")).toBe("refuse");
+  expect(await session.uploadBackground(undecodable, "bad.png")).toBe("undecodable");
+  expect(await session.uploadBackground(emptySize, "empty.svg")).toBe("undecodable");
   expect(session.uploadedBackgrounds).toEqual([]);
+  expect(session.composition.background).toEqual(before);
 });
 
-test("uploadBackground refuses when put returns quota or unavailable and leaves stored records", async () => {
+test("uploadBackground returns quota when put is quota and leaves stored records", async () => {
   const stored: UploadedBackground[] = [];
   const store: UploadedBackgroundStore = {
     ...emptyStore(),
@@ -490,32 +503,38 @@ test("uploadBackground refuses when put returns quota or unavailable and leaves 
   };
   const session = await createSession({ defaultSolid, store });
   const first = await session.uploadBackground(pngBlob(100, 80), "one.png");
-  expect(first).not.toBe("refuse");
-  if (first === "refuse") {
+  expect(isUploaded(first)).toBe(true);
+  if (!isUploaded(first)) {
     return;
   }
 
-  expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("refuse");
+  expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("quota");
   expect(session.uploadedBackgrounds).toEqual([first]);
   expect(stored).toEqual([first]);
+  expect(session.storage).toBe("ok");
+});
 
-  const unavailable: UploadedBackgroundStore = {
+test("uploadBackground returns unavailable when put is unavailable", async () => {
+  const store: UploadedBackgroundStore = {
     ...emptyStore(),
     put: async () => "unavailable",
   };
-  const other = await createSession({ defaultSolid, store: unavailable });
-  expect(await other.uploadBackground(pngBlob(100, 80), "x.png")).toBe("refuse");
-  expect(other.uploadedBackgrounds).toEqual([]);
+  const session = await createSession({ defaultSolid, store });
+
+  expect(await session.uploadBackground(pngBlob(100, 80), "x.png")).toBe("unavailable");
+  expect(session.uploadedBackgrounds).toEqual([]);
+  expect(session.storage).toBe("unavailable");
 });
 
-test("uploadBackground refuses when createSession saw an unavailable store", async () => {
+test("uploadBackground returns unavailable when createSession could not list the store", async () => {
   const store: UploadedBackgroundStore = {
     ...emptyStore(),
     list: async () => "unavailable",
   };
   const session = await createSession({ defaultSolid, store });
 
-  expect(await session.uploadBackground(pngBlob(100, 80), "wall.png")).toBe("refuse");
+  expect(session.storage).toBe("unavailable");
+  expect(await session.uploadBackground(pngBlob(100, 80), "wall.png")).toBe("unavailable");
   expect(session.uploadedBackgrounds).toEqual([]);
 });
 
@@ -523,8 +542,8 @@ test("removeBackground of an unused id removes the record across a refresh", asy
   const store = memoryStore();
   const session = await createSession({ defaultSolid, store });
   const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
 
@@ -535,12 +554,25 @@ test("removeBackground of an unused id removes the record across a refresh", asy
   expect(refreshed.uploadedBackgrounds).toEqual([]);
 });
 
+test("removeBackground sets storage to unavailable when the store remove is unavailable", async () => {
+  const store: UploadedBackgroundStore = {
+    ...emptyStore(),
+    list: async () => [uploaded("wall")],
+    remove: async () => "unavailable",
+  };
+  const session = await createSession({ defaultSolid, store });
+
+  expect(session.storage).toBe("ok");
+  expect(await session.removeBackground("wall")).toBe("refuse");
+  expect(session.storage).toBe("unavailable");
+});
+
 test("removeBackground refuses the current image Background or an unavailable store", async () => {
   const store = memoryStore();
   const session = await createSession({ defaultSolid, store });
   const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
   expect(session.setBackground({ type: "image", id: uploaded.id })).toBe("ok");
@@ -720,8 +752,8 @@ test("an image Background is cover-center on the default frame", async () => {
     ctx.fillRect(0, 1400, 1000, 600);
   });
   const uploaded = await session.uploadBackground(file, "cover.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
   expect(session.setBackground({ type: "image", id: uploaded.id })).toBe("ok");
@@ -849,8 +881,8 @@ test("a second createSession lists this session's uploads and a fresh default Co
   const store = memoryStore();
   const session = await createSession({ defaultSolid, store });
   const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(uploaded).not.toBe("refuse");
-  if (uploaded === "refuse") {
+  expect(isUploaded(uploaded)).toBe(true);
+  if (!isUploaded(uploaded)) {
     return;
   }
   session.setPadding(0);

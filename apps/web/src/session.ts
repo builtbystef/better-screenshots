@@ -336,13 +336,16 @@ function isUsableBackground(background: Background): boolean {
   }
 }
 
+export type UploadRefuse = "undecodable" | "quota" | "unavailable";
+
 export type StudioSession = {
   readonly composition: Composition;
   readonly uploadedBackgrounds: readonly UploadedBackground[];
   readonly placement: Placement | null;
+  readonly storage: "ok" | "unavailable";
   placeScreenshot(sources: readonly Blob[]): Promise<"ok" | Refuse>;
   setBackground(background: Background): "ok" | Refuse;
-  uploadBackground(file: Blob, filename: string): Promise<UploadedBackground | Refuse>;
+  uploadBackground(file: Blob, filename: string): Promise<UploadedBackground | UploadRefuse>;
   removeBackground(id: string): Promise<"ok" | Refuse>;
   setPadding(value: number): "ok" | Refuse;
   setScale(value: number): "ok" | Refuse;
@@ -360,6 +363,7 @@ export async function createSession(options: {
 }): Promise<StudioSession> {
   const listed = await options.store.list();
   const storeUnavailable = listed === "unavailable";
+  let storage: "ok" | "unavailable" = storeUnavailable ? "unavailable" : "ok";
   let uploadedBackgrounds: UploadedBackground[] = storeUnavailable ? [] : [...listed];
   let screenshotSize: Size | null = null;
   let composition: Composition = {
@@ -407,6 +411,9 @@ export async function createSession(options: {
     get uploadedBackgrounds() {
       return uploadedBackgrounds;
     },
+    get storage() {
+      return storage;
+    },
     get placement() {
       return screenshotSize === null ? null : derivePlacement(composition, screenshotSize);
     },
@@ -430,12 +437,12 @@ export async function createSession(options: {
       return "ok";
     },
     async uploadBackground(file, filename) {
-      if (storeUnavailable) {
-        return "refuse";
+      if (storage === "unavailable") {
+        return "unavailable";
       }
       const size = await decodeImageSize(file);
       if (size === null) {
-        return "refuse";
+        return "undecodable";
       }
       const record: UploadedBackground = {
         id: crypto.randomUUID(),
@@ -446,8 +453,13 @@ export async function createSession(options: {
         byteLength: file.size,
         blob: file,
       };
-      if ((await options.store.put(record)) !== "ok") {
-        return "refuse";
+      const put = await options.store.put(record);
+      if (put === "quota") {
+        return "quota";
+      }
+      if (put === "unavailable") {
+        storage = "unavailable";
+        return "unavailable";
       }
       uploadedBackgrounds = [...uploadedBackgrounds, record];
       return record;
@@ -459,7 +471,9 @@ export async function createSession(options: {
       ) {
         return "refuse";
       }
-      if ((await options.store.remove(id)) !== "ok") {
+      const removed = await options.store.remove(id);
+      if (removed === "unavailable") {
+        storage = "unavailable";
         return "refuse";
       }
       uploadedBackgrounds = uploadedBackgrounds.filter((record) => record.id !== id);

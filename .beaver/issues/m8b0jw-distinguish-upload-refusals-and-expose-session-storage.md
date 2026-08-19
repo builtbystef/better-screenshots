@@ -1,11 +1,12 @@
 ---
 id: m8b0jw
 title: Distinguish upload refusals and expose session storage
-state: todo
+state: done
+assignee: agent
 priority: high
 parent: 3toux4
 created: 2026-08-19T19:38:30Z
-updated: 2026-08-19T19:38:30Z
+updated: 2026-08-19T20:05:10Z
 ---
 
 ## What to build
@@ -35,3 +36,15 @@ type StudioSession = {
 - [ ] When `createSession` could not list the store, `storage` is `"unavailable"` and `uploadBackground` returns `"unavailable"`.
 - [ ] After a `removeBackground` whose store `remove` is `"unavailable"`, `storage` is `"unavailable"`.
 - [ ] A successful upload still returns the record. `storage` is `"ok"` when the store listed and later puts succeed.
+
+## Notes
+
+**agent** — 2026-08-19T20:05:10Z
+
+Completed at the session seam named by the spec.
+
+uploadBackground now returns UploadRefuse ("undecodable" | "quota" | "unavailable") instead of collapsing to "refuse". StudioSession.storage is "ok" | "unavailable": "unavailable" after a failed list, and after a put or remove that sees the store unavailable. quota does not flip storage. Decode failure returns "undecodable" and does not write the store. removeBackground still returns "ok" | "refuse".
+
+IndexedDB adapter tests now expect the distinguished refuse strings so they follow the same contract.
+
+No new decisions. Existing storeUnavailable short-circuit on upload now returns "unavailable" via the live storage flag.
