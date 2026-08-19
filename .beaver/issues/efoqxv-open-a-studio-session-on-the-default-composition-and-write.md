@@ -1,11 +1,12 @@
 ---
 id: efoqxv
 title: Open a Studio session on the default Composition and write its fields
-state: todo
+state: done
+assignee: agent
 priority: high
 parent: erb9py
 created: 2026-08-19T06:07:51Z
-updated: 2026-08-19T06:07:51Z
+updated: 2026-08-19T07:15:38Z
 ---
 
 ## What to build
@@ -29,3 +30,17 @@ The Studio opens one in-memory session. The empty Composition is the given defau
 - [ ] `setShadow(0, 0, 0)` writes those numbers. `setShadow` returns `"refuse"` when `offset < 0`, `blur < 0`, `opacity` is outside `[0, 1]`, or any value is non-finite.
 - [ ] `setBorder(0, "#000000")` writes those values and keeps color case as given. `setBorder` returns `"refuse"` when `width < 0`, width is non-finite, or color is not `#RRGGBB`.
 - [ ] `setRadius(0)` writes 0. `setRadius` returns `"refuse"` for `< 0` or a non-finite value.
+
+## Notes
+
+**agent** — 2026-08-19T07:15:37Z
+
+# Done
+
+`createSession` is the public seam in `apps/web/src/session.ts`. Tests target that seam only (`apps/web/src/session.test.ts`).
+
+A session opens on a fresh 1920×1080 default Composition (given solid, padding 120, scale 1, position 0,0, shadow 16/32/0.25, border 0/#FFFFFF, radius 16). `placement` is null while `screenshot` is null. `uploadedBackgrounds` is the store list, or empty when the list is unavailable. A second `createSession` is a new default, never a restore.
+
+`setBackground`, `setPadding`, `setScale`, `setPosition`, `setShadow`, `setBorder`, and `setRadius` write a valid value (`"ok"`) or return `"refuse"` and leave the Composition unchanged. Hex A–F case is kept as given. An image Background id need not exist in the store.
+
+Place, upload/remove, render, and Export stay on the sibling issues. `StudioSession` only has the commands this slice owns.
