@@ -1,14 +1,15 @@
 ---
 id: 3ycq6b
 title: Place a Screenshot and derive placement
-state: todo
+state: done
+assignee: agent
 priority: high
 depends_on:
     - hbbrwg
     - efoqxv
 parent: erb9py
 created: 2026-08-19T06:07:54Z
-updated: 2026-08-19T07:17:21Z
+updated: 2026-08-19T07:33:27Z
 ---
 
 ## What to build
@@ -31,3 +32,25 @@ The user places one Screenshot. The session walks the given Blobs and keeps the 
 **agent** — 2026-08-19T07:16:57Z
 
 Blocked on hbbrwg (in-progress, needs-review). placeScreenshot must walk Blobs and keep the first decodable non-0×0 image; that decode path is the hbbrwg verdict (jsdom + @napi-rs/canvas under vp test) and is not approved yet. efoqxv is done. Stopping until hbbrwg is closed.
+
+**agent** — 2026-08-19T07:33:27Z
+
+# Done
+
+`placeScreenshot` walks the given Blobs on the `createSession` / `StudioSession` seam (`apps/web/src/session.ts`). Tests target that seam only (`apps/web/src/session.test.ts`).
+
+A successful place stores that Blob as `screenshot` and keeps Padding, Scale, Position, and Effects. An empty list, an undecodable Blob, a 0×0 image, or a list of only those, returns `"refuse"` and leaves the Composition unchanged. Several sources: the first decodable non-0×0 image is placed; earlier bad sources are skipped.
+
+`placement` is null while `screenshot` is null. After a successful place it is a getter from the stored intrinsic size and the current Composition (worked examples: default 800×600, padding 10000 clamp, scale 2, Position 100,-50). Stored padding is not rewritten by the inner-rect clamp.
+
+# Decisions
+
+- Decode is `createImageBitmap` in production. No Node fallback in app code.
+- Tests run under `environment: "jsdom"` with a test-only `createImageBitmap` polyfill (`@napi-rs/canvas` `loadImage`). Matches the hbbrwg verdict. No production draw library.
+- `jsdom@30.0.1` and `@napi-rs/canvas@1.0.6` are catalog-pinned test-only deps of `apps/web`.
+- No `canvas` shim in this slice: place only needs decode, not `getContext` / `toBlob`. Render/export (4e4zrp) still needs that shim.
+- 0×0 fixture is an SVG with width/height 0. A 0×0 PNG IHDR does not decode.
+
+# Reviewer
+
+This sandbox could not `pnpm add` against the original store path. The lockfile was updated with `--lockfile-only`. A normal `pnpm install` pulls the two new test deps.

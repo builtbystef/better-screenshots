@@ -1,5 +1,22 @@
+// @vitest-environment jsdom
+
+import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { expect, test } from "vite-plus/test";
 import { createSession, type UploadedBackground, type UploadedBackgroundStore } from "./session";
+
+if (typeof globalThis.createImageBitmap !== "function") {
+  globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
+    if (!(image instanceof Blob)) {
+      throw new TypeError("test createImageBitmap polyfill accepts a Blob");
+    }
+    return loadImage(await image.arrayBuffer());
+  }) as unknown as typeof createImageBitmap;
+}
+
+function pngBlob(width: number, height: number): Blob {
+  const canvas = createCanvas(width, height);
+  return new Blob([Uint8Array.from(canvas.toBuffer("image/png"))], { type: "image/png" });
+}
 
 const defaultSolid = { type: "solid" as const, color: "#112233" };
 
@@ -271,4 +288,109 @@ test("setRadius writes 0 and refuses a value below 0 or non-finite", async () =>
     expect(session.setRadius(value)).toBe("refuse");
     expect(session.composition).toEqual(before);
   }
+});
+
+test("placeScreenshot of one decodable image returns ok and sets that Blob", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const screenshot = pngBlob(800, 600);
+
+  expect(await session.placeScreenshot([screenshot])).toBe("ok");
+  expect(session.composition.screenshot).toBe(screenshot);
+});
+
+test("a second successful place swaps the Screenshot and keeps fields", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+  session.setPadding(40);
+  session.setScale(2);
+  session.setPosition(10, -20);
+  session.setShadow(1, 2, 0.5);
+  session.setBorder(3, "#aAbBcC");
+  session.setRadius(8);
+  const second = pngBlob(400, 300);
+
+  expect(await session.placeScreenshot([second])).toBe("ok");
+  expect(session.composition.screenshot).toBe(second);
+  expect(session.composition.padding).toBe(40);
+  expect(session.composition.scale).toBe(2);
+  expect(session.composition.position).toEqual({ x: 10, y: -20 });
+  expect(session.composition.shadow).toEqual({ offset: 1, blur: 2, opacity: 0.5 });
+  expect(session.composition.border).toEqual({ width: 3, color: "#aAbBcC" });
+  expect(session.composition.radius).toBe(8);
+});
+
+test("placeScreenshot refuses an empty list, undecodable Blob, 0x0 image, or only those", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const first = pngBlob(800, 600);
+  expect(await session.placeScreenshot([first])).toBe("ok");
+  const before = session.composition;
+  const undecodable = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+  const emptySize = new Blob(
+    ['<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"></svg>'],
+    { type: "image/svg+xml" },
+  );
+
+  expect(await session.placeScreenshot([])).toBe("refuse");
+  expect(session.composition).toBe(before);
+  expect(await session.placeScreenshot([undecodable])).toBe("refuse");
+  expect(session.composition).toBe(before);
+  expect(await session.placeScreenshot([emptySize])).toBe("refuse");
+  expect(session.composition).toBe(before);
+  expect(await session.placeScreenshot([undecodable, emptySize])).toBe("refuse");
+  expect(session.composition).toBe(before);
+});
+
+test("placeScreenshot keeps the first decodable non-0x0 image and skips earlier bad sources", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const undecodable = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+  const emptySize = new Blob(
+    ['<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"></svg>'],
+    { type: "image/svg+xml" },
+  );
+  const firstGood = pngBlob(800, 600);
+  const laterGood = pngBlob(400, 300);
+
+  expect(await session.placeScreenshot([undecodable, emptySize, firstGood, laterGood])).toBe("ok");
+  expect(session.composition.screenshot).toBe(firstGood);
+});
+
+test("placement is derived from the default frame after placing an 800x600 Screenshot", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.placement).toBeNull();
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.placement).toEqual({
+    inner: { x: 120, y: 120, width: 1680, height: 840 },
+    fitted: { width: 1120, height: 840 },
+    drawn: { x: 400, y: 120, width: 1120, height: 840 },
+  });
+});
+
+test("setPadding(10000) then an 800x600 Screenshot clamps inner and keeps stored padding", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setPadding(10000)).toBe("ok");
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.composition.padding).toBe(10000);
+  expect(session.placement?.inner).toEqual({ x: 539.5, y: 539.5, width: 841, height: 1 });
+});
+
+test("placement drawn at scale 2 and Position 0, 0 uses the default inner", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setScale(2)).toBe("ok");
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.placement?.drawn).toEqual({ x: -160, y: -300, width: 2240, height: 1680 });
+});
+
+test("placement drawn at scale 1 and Position 100, -50 uses the default inner", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setPosition(100, -50)).toBe("ok");
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.placement?.drawn).toEqual({ x: 500, y: 70, width: 1120, height: 840 });
 });

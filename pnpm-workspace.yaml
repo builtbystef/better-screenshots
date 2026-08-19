@@ -6,7 +6,9 @@ packages:
 catalogMode: prefer
 
 catalog:
+  "@napi-rs/canvas": 1.0.6
   "@types/node": ^24
+  jsdom: 30.0.1
   typescript: ^7.0.2
   # Bump these two together. A split pair fails at startup. Dependabot misses
   # the coupling through the npm: alias, so update both by hand.

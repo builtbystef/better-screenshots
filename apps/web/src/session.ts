@@ -44,7 +44,62 @@ export type UploadedBackgroundStore = {
   remove(id: string): Promise<"ok" | "unavailable">;
 };
 
+export type Rect = { x: number; y: number; width: number; height: number };
+
+export type Placement = {
+  inner: Rect;
+  fitted: { width: number; height: number };
+  drawn: Rect;
+};
+
 export type Refuse = "refuse";
+
+type Size = { width: number; height: number };
+
+async function decodeImageSize(blob: Blob): Promise<Size | null> {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const { width, height } = bitmap;
+    if (typeof bitmap.close === "function") {
+      bitmap.close();
+    }
+    if (width === 0 || height === 0) {
+      return null;
+    }
+    return { width, height };
+  } catch {
+    return null;
+  }
+}
+
+function derivePlacement(composition: Composition, screenshot: Size): Placement {
+  const p = Math.min(
+    composition.padding,
+    (Math.min(composition.width, composition.height) - 1) / 2,
+  );
+  const inner = {
+    x: p,
+    y: p,
+    width: composition.width - 2 * p,
+    height: composition.height - 2 * p,
+  };
+  const k = Math.min(inner.width / screenshot.width, inner.height / screenshot.height);
+  const fitted = { width: screenshot.width * k, height: screenshot.height * k };
+  const drawnWidth = fitted.width * composition.scale;
+  const drawnHeight = fitted.height * composition.scale;
+  const centerX = composition.width / 2 + composition.position.x;
+  const centerY = composition.height / 2 + composition.position.y;
+  return {
+    inner,
+    fitted,
+    drawn: {
+      x: centerX - drawnWidth / 2,
+      y: centerY - drawnHeight / 2,
+      width: drawnWidth,
+      height: drawnHeight,
+    },
+  };
+}
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
@@ -76,7 +131,8 @@ function isUsableBackground(background: Background): boolean {
 export type StudioSession = {
   readonly composition: Composition;
   readonly uploadedBackgrounds: readonly UploadedBackground[];
-  readonly placement: null;
+  readonly placement: Placement | null;
+  placeScreenshot(sources: readonly Blob[]): Promise<"ok" | Refuse>;
   setBackground(background: Background): "ok" | Refuse;
   setPadding(value: number): "ok" | Refuse;
   setScale(value: number): "ok" | Refuse;
@@ -91,6 +147,7 @@ export async function createSession(options: {
   store: UploadedBackgroundStore;
 }): Promise<StudioSession> {
   const listed = await options.store.list();
+  let screenshotSize: Size | null = null;
   let composition: Composition = {
     width: 1920,
     height: 1080,
@@ -108,7 +165,21 @@ export async function createSession(options: {
       return composition;
     },
     uploadedBackgrounds: listed === "unavailable" ? [] : listed,
-    placement: null,
+    get placement() {
+      return screenshotSize === null ? null : derivePlacement(composition, screenshotSize);
+    },
+    async placeScreenshot(sources) {
+      for (const blob of sources) {
+        const size = await decodeImageSize(blob);
+        if (size === null) {
+          continue;
+        }
+        composition = { ...composition, screenshot: blob };
+        screenshotSize = size;
+        return "ok";
+      }
+      return "refuse";
+    },
     setBackground(background) {
       if (!isUsableBackground(background)) {
         return "refuse";
