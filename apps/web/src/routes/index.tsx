@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   type ChangeEvent,
@@ -9,6 +10,7 @@ import {
 } from "react";
 import { catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
 import {
+  exportLine,
   isFileDrag,
   isTextFieldTarget,
   matchingGradient,
@@ -105,9 +107,12 @@ function Preview({
   onPlaced: () => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const pickerId = useId();
   const [line, setLine] = useState<string | null>(null);
   const [fileDrag, setFileDrag] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const occupied = session.composition.screenshot !== null;
+  const exportDisabled = !occupied || exporting;
 
   const place = useCallback(
     async (source: PlaceSource, files: readonly Blob[]) => {
@@ -224,8 +229,64 @@ function Preview({
     void place("picker", files);
   }
 
+  async function onExport() {
+    if (exportDisabled) {
+      return;
+    }
+    setLine(null);
+    setExporting(true);
+    try {
+      const result = await session.exportPng(new Date());
+      setLine(exportLine(result === "refuse" ? "refuse" : "ok"));
+      if (result === "refuse") {
+        return;
+      }
+      const url = URL.createObjectURL(result.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.filename;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
+      <div className="mb-2 flex shrink-0 justify-end gap-2">
+        <input
+          id={pickerId}
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={onPickerChange}
+        />
+        {occupied ? (
+          <label
+            htmlFor={pickerId}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-sm text-secondary-foreground"
+          >
+            Replace
+          </label>
+        ) : null}
+        <button
+          type="button"
+          disabled={exportDisabled}
+          className={
+            exportDisabled
+              ? "cursor-default rounded-lg px-3 py-1.5 text-sm text-muted-foreground"
+              : "cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+          }
+          onClick={() => {
+            void onExport();
+          }}
+        >
+          Export
+        </button>
+      </div>
       <div
         className={
           fileDrag ? "relative min-h-0 flex-1 ring-2 ring-ring" : "relative min-h-0 flex-1"
@@ -233,7 +294,10 @@ function Preview({
       >
         <div ref={hostRef} className="h-full w-full" />
         {occupied ? null : (
-          <label className="absolute inset-0 flex cursor-pointer items-center justify-center">
+          <label
+            htmlFor={pickerId}
+            className="absolute inset-0 flex cursor-pointer items-center justify-center"
+          >
             <span className="flex flex-col items-center gap-2 text-center">
               <span className="text-base font-medium">Drop a screenshot</span>
               <span className="text-sm text-muted-foreground">or paste (Ctrl/Cmd+V)</span>
@@ -241,7 +305,6 @@ function Preview({
                 Choose a file
               </span>
             </span>
-            <input type="file" accept="image/*" className="sr-only" onChange={onPickerChange} />
           </label>
         )}
       </div>

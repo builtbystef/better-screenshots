@@ -3,6 +3,7 @@
 import { expect, test } from "vite-plus/test";
 import { catalogGradients, catalogSolids } from "./catalog";
 import {
+  exportLine,
   isFileDrag,
   isTextFieldTarget,
   matchingGradient,
@@ -46,6 +47,14 @@ test("paste with no image writes the clipboard line", () => {
 test("an empty picker or drop writes no Preview line", () => {
   expect(placeLine("picker", "empty")).toBeNull();
   expect(placeLine("drop", "empty")).toBeNull();
+});
+
+test("a successful Export writes no Preview line", () => {
+  expect(exportLine("ok")).toBeNull();
+});
+
+test("an occupied Export refuse writes the Export line", () => {
+  expect(exportLine("refuse")).toBe("Couldn't export that image.");
 });
 
 test("a drag is a file drag when types include Files", () => {
