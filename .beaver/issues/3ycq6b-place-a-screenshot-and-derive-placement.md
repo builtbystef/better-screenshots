@@ -8,7 +8,7 @@ depends_on:
     - efoqxv
 parent: erb9py
 created: 2026-08-19T06:07:54Z
-updated: 2026-08-19T06:07:54Z
+updated: 2026-08-19T07:17:21Z
 ---
 
 ## What to build
@@ -25,3 +25,9 @@ The user places one Screenshot. The session walks the given Blobs and keeps the 
 - [ ] `setPadding(10000)` then the same Screenshot: effective padding is `539.5`, `inner` is `{ x: 539.5, y: 539.5, width: 841, height: 1 }`, stored `padding` stays `10000`.
 - [ ] Same default inner, Screenshot `800×600`, `setScale(2)`, Position `0, 0`: `drawn` is `{ x: -160, y: -300, width: 2240, height: 1680 }`.
 - [ ] Same default inner and Screenshot, scale 1, `setPosition(100, -50)`: `drawn` is `{ x: 500, y: 70, width: 1120, height: 840 }`.
+
+## Notes
+
+**agent** — 2026-08-19T07:16:57Z
+
+Blocked on hbbrwg (in-progress, needs-review). placeScreenshot must walk Blobs and keep the first decodable non-0×0 image; that decode path is the hbbrwg verdict (jsdom + @napi-rs/canvas under vp test) and is not approved yet. efoqxv is done. Stopping until hbbrwg is closed.
