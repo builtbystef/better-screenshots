@@ -1,7 +1,7 @@
 ---
 id: erb9py
 title: First-ship Composition, draw, and Export
-state: todo
+state: done
 labels:
     - spec
 depends_on:
@@ -16,7 +16,7 @@ depends_on:
     - qjw6h1
     - vfgwur
 created: 2026-08-19T05:44:11Z
-updated: 2026-08-19T05:44:11Z
+updated: 2026-08-19T06:40:03Z
 ---
 
 # First-ship Composition, draw, and Export
