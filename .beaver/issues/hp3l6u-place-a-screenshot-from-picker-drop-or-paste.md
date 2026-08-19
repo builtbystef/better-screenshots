@@ -1,13 +1,14 @@
 ---
 id: hp3l6u
 title: Place a Screenshot from picker, drop, or paste
-state: todo
+state: done
+assignee: agent
 priority: high
 depends_on:
     - 866rvo
 parent: 3toux4
 created: 2026-08-19T19:38:34Z
-updated: 2026-08-19T19:38:34Z
+updated: 2026-08-19T20:13:12Z
 ---
 
 ## What to build
@@ -24,3 +25,17 @@ On Empty Studio the Preview offers a place: drop, paste, or Choose a file. A suc
 - [ ] Picker, drop, undecodable, or `0×0` → `That file isn't an image.`
 - [ ] Paste with no image → `No image on the clipboard.`
 - [ ] Focused text field: text paste is not a place and writes no line.
+
+## Notes
+
+**agent** — 2026-08-19T20:13:11Z
+
+Empty Preview overlay: Drop a screenshot / or paste (Ctrl/Cmd+V) / Choose a file. Centered, no scrim, no dashed frame. The overlay is a label over one hidden image/* file input, so Choose a file, overlay click, and empty Preview click open the same picker.
+
+Occupied: overlay unmounts. Drop and paste still call placeScreenshot (session already keeps Padding, Scale, Position, Effects). Occupied clicks do not open the picker.
+
+Window drag/drop: file types show the Preview ring; a file drop anywhere preventDefaults and places. Non-file drops are ignored. Inspector has no drop handler. Several files go to placeScreenshot; first decodable wins.
+
+Preview line under the overlay/bitmap. placeLine is the chrome seam: picker/drop/paste refuse → That file isn't an image.; paste empty → No image on the clipboard.; success or empty picker/drop → no line. Next attempt clears then replaces. isTextFieldTarget: text paste in a focused text/number/textarea is not a place and writes no line.
+
+Page is not a test seam. Tests cover placeLine, isFileDrag, isTextFieldTarget.
