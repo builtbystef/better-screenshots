@@ -29,6 +29,25 @@ function emptyStore(): UploadedBackgroundStore {
   };
 }
 
+function memoryStore(): UploadedBackgroundStore {
+  const records: UploadedBackground[] = [];
+  return {
+    list: async () => [...records],
+    put: async (record) => {
+      records.push(record);
+      return "ok";
+    },
+    get: async (id) => records.find((record) => record.id === id),
+    remove: async (id) => {
+      const index = records.findIndex((record) => record.id === id);
+      if (index !== -1) {
+        records.splice(index, 1);
+      }
+      return "ok";
+    },
+  };
+}
+
 test("createSession opens a default Composition on the given solid", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
@@ -393,4 +412,177 @@ test("placement drawn at scale 1 and Position 100, -50 uses the default inner", 
   expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
 
   expect(session.placement?.drawn).toEqual({ x: 500, y: 70, width: 1120, height: 840 });
+});
+
+test("uploadBackground of a decodable image returns a record and does not change the Background", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const before = session.composition.background;
+  const file = pngBlob(100, 80);
+  const started = Date.now();
+
+  const result = await session.uploadBackground(file, "wall.png");
+
+  expect(result).not.toBe("refuse");
+  if (result === "refuse") {
+    return;
+  }
+  expect(result.id).not.toBe("");
+  expect(result.filename).toBe("wall.png");
+  expect(result.addedAt).toBeInstanceOf(Date);
+  expect(result.addedAt.getTime()).toBeGreaterThanOrEqual(started);
+  expect(result.addedAt.getTime()).toBeLessThanOrEqual(Date.now());
+  expect(result.width).toBe(100);
+  expect(result.height).toBe(80);
+  expect(result.byteLength).toBe(file.size);
+  expect(result.blob).toBe(file);
+  expect(session.composition.background).toEqual(before);
+  expect(session.uploadedBackgrounds).toEqual([result]);
+});
+
+test("two uploads of the same bytes are two records", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const file = pngBlob(100, 80);
+
+  const first = await session.uploadBackground(file, "wall.png");
+  const second = await session.uploadBackground(file, "wall.png");
+
+  expect(first).not.toBe("refuse");
+  expect(second).not.toBe("refuse");
+  if (first === "refuse" || second === "refuse") {
+    return;
+  }
+  expect(first.id).not.toBe(second.id);
+  expect(session.uploadedBackgrounds).toEqual([first, second]);
+});
+
+test("uploadBackground refuses an undecodable Blob or a 0x0 image and stores nothing", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const undecodable = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+  const emptySize = new Blob(
+    ['<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0"></svg>'],
+    { type: "image/svg+xml" },
+  );
+
+  expect(await session.uploadBackground(undecodable, "bad.png")).toBe("refuse");
+  expect(await session.uploadBackground(emptySize, "empty.svg")).toBe("refuse");
+  expect(session.uploadedBackgrounds).toEqual([]);
+});
+
+test("uploadBackground refuses when put returns quota or unavailable and leaves stored records", async () => {
+  const stored: UploadedBackground[] = [];
+  const store: UploadedBackgroundStore = {
+    ...emptyStore(),
+    list: async () => [...stored],
+    put: async (record) => {
+      if (stored.length >= 1) {
+        return "quota";
+      }
+      stored.push(record);
+      return "ok";
+    },
+  };
+  const session = await createSession({ defaultSolid, store });
+  const first = await session.uploadBackground(pngBlob(100, 80), "one.png");
+  expect(first).not.toBe("refuse");
+  if (first === "refuse") {
+    return;
+  }
+
+  expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("refuse");
+  expect(session.uploadedBackgrounds).toEqual([first]);
+  expect(stored).toEqual([first]);
+
+  const unavailable: UploadedBackgroundStore = {
+    ...emptyStore(),
+    put: async () => "unavailable",
+  };
+  const other = await createSession({ defaultSolid, store: unavailable });
+  expect(await other.uploadBackground(pngBlob(100, 80), "x.png")).toBe("refuse");
+  expect(other.uploadedBackgrounds).toEqual([]);
+});
+
+test("uploadBackground refuses when createSession saw an unavailable store", async () => {
+  const store: UploadedBackgroundStore = {
+    ...emptyStore(),
+    list: async () => "unavailable",
+  };
+  const session = await createSession({ defaultSolid, store });
+
+  expect(await session.uploadBackground(pngBlob(100, 80), "wall.png")).toBe("refuse");
+  expect(session.uploadedBackgrounds).toEqual([]);
+});
+
+test("removeBackground of an unused id removes the record across a refresh", async () => {
+  const store = memoryStore();
+  const session = await createSession({ defaultSolid, store });
+  const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
+  expect(uploaded).not.toBe("refuse");
+  if (uploaded === "refuse") {
+    return;
+  }
+
+  expect(await session.removeBackground(uploaded.id)).toBe("ok");
+  expect(session.uploadedBackgrounds).toEqual([]);
+
+  const refreshed = await createSession({ defaultSolid, store });
+  expect(refreshed.uploadedBackgrounds).toEqual([]);
+});
+
+test("removeBackground refuses the current image Background or an unavailable store", async () => {
+  const store = memoryStore();
+  const session = await createSession({ defaultSolid, store });
+  const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
+  expect(uploaded).not.toBe("refuse");
+  if (uploaded === "refuse") {
+    return;
+  }
+  expect(session.setBackground({ type: "image", id: uploaded.id })).toBe("ok");
+
+  expect(await session.removeBackground(uploaded.id)).toBe("refuse");
+  expect(session.uploadedBackgrounds).toEqual([uploaded]);
+
+  const unavailable: UploadedBackgroundStore = {
+    ...emptyStore(),
+    list: async () => [uploaded],
+    remove: async () => "unavailable",
+  };
+  const other = await createSession({ defaultSolid, store: unavailable });
+  expect(await other.removeBackground(uploaded.id)).toBe("refuse");
+  expect(other.uploadedBackgrounds).toEqual([uploaded]);
+
+  const listedUnavailable: UploadedBackgroundStore = {
+    ...emptyStore(),
+    list: async () => "unavailable",
+    remove: async () => "ok",
+  };
+  const listedDown = await createSession({ defaultSolid, store: listedUnavailable });
+  expect(await listedDown.removeBackground(uploaded.id)).toBe("refuse");
+});
+
+test("a second createSession lists this session's uploads and a fresh default Composition", async () => {
+  const store = memoryStore();
+  const session = await createSession({ defaultSolid, store });
+  const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
+  expect(uploaded).not.toBe("refuse");
+  if (uploaded === "refuse") {
+    return;
+  }
+  session.setPadding(0);
+  session.setBackground({ type: "image", id: uploaded.id });
+
+  const refreshed = await createSession({ defaultSolid, store });
+
+  expect(refreshed.uploadedBackgrounds).toEqual([uploaded]);
+  expect(refreshed.composition).toEqual({
+    width: 1920,
+    height: 1080,
+    background: defaultSolid,
+    screenshot: null,
+    padding: 120,
+    scale: 1,
+    position: { x: 0, y: 0 },
+    shadow: { offset: 16, blur: 32, opacity: 0.25 },
+    border: { width: 0, color: "#FFFFFF" },
+    radius: 16,
+  });
 });

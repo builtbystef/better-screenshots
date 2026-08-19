@@ -134,6 +134,8 @@ export type StudioSession = {
   readonly placement: Placement | null;
   placeScreenshot(sources: readonly Blob[]): Promise<"ok" | Refuse>;
   setBackground(background: Background): "ok" | Refuse;
+  uploadBackground(file: Blob, filename: string): Promise<UploadedBackground | Refuse>;
+  removeBackground(id: string): Promise<"ok" | Refuse>;
   setPadding(value: number): "ok" | Refuse;
   setScale(value: number): "ok" | Refuse;
   setPosition(x: number, y: number): "ok" | Refuse;
@@ -147,6 +149,8 @@ export async function createSession(options: {
   store: UploadedBackgroundStore;
 }): Promise<StudioSession> {
   const listed = await options.store.list();
+  const storeUnavailable = listed === "unavailable";
+  let uploadedBackgrounds: UploadedBackground[] = storeUnavailable ? [] : [...listed];
   let screenshotSize: Size | null = null;
   let composition: Composition = {
     width: 1920,
@@ -164,7 +168,9 @@ export async function createSession(options: {
     get composition() {
       return composition;
     },
-    uploadedBackgrounds: listed === "unavailable" ? [] : listed,
+    get uploadedBackgrounds() {
+      return uploadedBackgrounds;
+    },
     get placement() {
       return screenshotSize === null ? null : derivePlacement(composition, screenshotSize);
     },
@@ -185,6 +191,42 @@ export async function createSession(options: {
         return "refuse";
       }
       composition = { ...composition, background };
+      return "ok";
+    },
+    async uploadBackground(file, filename) {
+      if (storeUnavailable) {
+        return "refuse";
+      }
+      const size = await decodeImageSize(file);
+      if (size === null) {
+        return "refuse";
+      }
+      const record: UploadedBackground = {
+        id: crypto.randomUUID(),
+        filename,
+        addedAt: new Date(),
+        width: size.width,
+        height: size.height,
+        byteLength: file.size,
+        blob: file,
+      };
+      if ((await options.store.put(record)) !== "ok") {
+        return "refuse";
+      }
+      uploadedBackgrounds = [...uploadedBackgrounds, record];
+      return record;
+    },
+    async removeBackground(id) {
+      if (
+        storeUnavailable ||
+        (composition.background.type === "image" && composition.background.id === id)
+      ) {
+        return "refuse";
+      }
+      if ((await options.store.remove(id)) !== "ok") {
+        return "refuse";
+      }
+      uploadedBackgrounds = uploadedBackgrounds.filter((record) => record.id !== id);
       return "ok";
     },
     setPadding(value) {
