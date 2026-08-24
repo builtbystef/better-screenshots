@@ -5,7 +5,7 @@ export default defineConfig({
     "*": "vp check --fix",
   },
   fmt: {
-    ignorePatterns: [".agents/**", ".claude/**", ".beaver/**", "**/routeTree.gen.ts"],
+    ignorePatterns: [".agents/**", ".claude/**", ".pi/**", ".beaver/**", "**/routeTree.gen.ts"],
   },
   lint: {
     plugins: ["typescript"],
