@@ -19,6 +19,7 @@
       "~/.local/share/keyrings",
       "~/.claude/.credentials.json",
       "~/.claude.json",
+      "~/.claude.json.backup",
       "~/.codex/auth.json",
       "~/.pi/agent/auth.json",
       "~/.netrc",
@@ -29,7 +30,14 @@
       "/run/docker.sock",
       "/run/user/1000/podman/podman.sock"
     ],
-    "allowWrite": [".", "/tmp", "~/.cache", "~/.npm", "~/.local/share/pnpm", "~/go/pkg/mod"],
+    "allowWrite": [
+      ".",
+      "/tmp",
+      "~/.cache",
+      "~/.npm",
+      "~/.local/share/pnpm",
+      "~/go/pkg/mod"
+    ],
     "denyWrite": [
       ".pi",
       ".claude",
