@@ -6,7 +6,7 @@ assignee: builtbystef
 labels:
     - roadmap
 created: 2026-08-18T22:57:21Z
-updated: 2026-08-19T12:35:21Z
+updated: 2026-08-25T13:18:03Z
 ---
 
 ## Goal
@@ -90,3 +90,9 @@ A developer can open Better Screenshots in the browser, upload one or more Scree
 - Persisted chrome scheme (adfte6).
 - Snapshot-at-load chrome that ignores an OS change (adfte6).
 - A stacked phone layout (aitiuw).
+
+## Notes
+
+**agent** — 2026-08-25T13:18:03Z
+
+Aspect presets and Browser window shipped in ape56b.

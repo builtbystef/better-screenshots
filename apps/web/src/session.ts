@@ -14,6 +14,8 @@ export type ImageBackground = { type: "image"; id: string };
 
 export type Background = SolidBackground | GradientBackground | ImageBackground;
 
+export type BrowserWindow = "none" | "light" | "dark";
+
 export type Composition = {
   width: number;
   height: number;
@@ -25,6 +27,8 @@ export type Composition = {
   shadow: { offset: number; blur: number; opacity: number };
   border: { width: number; color: HexColor };
   radius: number;
+  browserWindow: BrowserWindow;
+  url: string;
 };
 
 export type UploadedBackground = {
@@ -72,6 +76,12 @@ async function decodeImageSize(blob: Blob): Promise<Size | null> {
   }
 }
 
+const BROWSER_WINDOW_CHROME_RATIO = 0.055;
+
+function chromeHeight(composition: Composition, screenshotWidth: number): number {
+  return composition.browserWindow === "none" ? 0 : screenshotWidth * BROWSER_WINDOW_CHROME_RATIO;
+}
+
 function derivePlacement(composition: Composition, screenshot: Size): Placement {
   const p = Math.min(
     composition.padding,
@@ -83,8 +93,10 @@ function derivePlacement(composition: Composition, screenshot: Size): Placement 
     width: composition.width - 2 * p,
     height: composition.height - 2 * p,
   };
-  const k = Math.min(inner.width / screenshot.width, inner.height / screenshot.height);
-  const fitted = { width: screenshot.width * k, height: screenshot.height * k };
+  const objectWidth = screenshot.width;
+  const objectHeight = screenshot.height + chromeHeight(composition, screenshot.width);
+  const k = Math.min(inner.width / objectWidth, inner.height / objectHeight);
+  const fitted = { width: objectWidth * k, height: objectHeight * k };
   const drawnWidth = fitted.width * composition.scale;
   const drawnHeight = fitted.height * composition.scale;
   const centerX = composition.width / 2 + composition.position.x;
@@ -240,6 +252,80 @@ function paintShadow(
   ctx.drawImage(layer, 0, 0);
 }
 
+const WINDOW_THEME = {
+  light: { bar: "#F1F3F4", pill: "#FFFFFF", text: "#202124", hairline: "#E1E3E4" },
+  dark: { bar: "#202124", pill: "#303134", text: "#E8EAED", hairline: "#3C4043" },
+} as const;
+
+const TRAFFIC_LIGHTS = ["#FF5F57", "#FEBC2E", "#28C840"] as const;
+
+function paintBrowserWindow(
+  ctx: CanvasRenderingContext2D,
+  drawn: Rect,
+  scheme: "light" | "dark",
+  url: string,
+): number {
+  const theme = WINDOW_THEME[scheme];
+  const chromeH = drawn.width * BROWSER_WINDOW_CHROME_RATIO;
+  const scale = PAINT_SCALE;
+  ctx.fillStyle = theme.bar;
+  ctx.fillRect(drawn.x * scale, drawn.y * scale, drawn.width * scale, chromeH * scale);
+  ctx.fillStyle = theme.hairline;
+  ctx.fillRect(drawn.x * scale, (drawn.y + chromeH) * scale - 1, drawn.width * scale, 1);
+  const lightD = chromeH * 0.32;
+  const lightR = lightD / 2;
+  const gap = lightD * 0.65;
+  const inset = chromeH * 0.4;
+  const lightsLeft = drawn.x + inset;
+  const cy = drawn.y + chromeH / 2;
+  for (const [index, color] of TRAFFIC_LIGHTS.entries()) {
+    const cx = lightsLeft + lightR + index * (lightD + gap);
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.arc(cx * scale, cy * scale, lightR * scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const lightsRight = lightsLeft + 3 * lightD + 2 * gap;
+  const pillLeft = lightsRight + inset;
+  const pillRight = drawn.x + drawn.width - inset;
+  const pillW = pillRight - pillLeft;
+  const pillH = chromeH * 0.52;
+  const pillY = drawn.y + (chromeH - pillH) / 2;
+  if (pillW > 0) {
+    ctx.fillStyle = theme.pill;
+    ctx.beginPath();
+    pathRoundedRect(
+      ctx,
+      pillLeft * scale,
+      pillY * scale,
+      pillW * scale,
+      pillH * scale,
+      (pillH / 2) * scale,
+    );
+    ctx.fill();
+    if (url !== "") {
+      ctx.save();
+      ctx.beginPath();
+      pathRoundedRect(
+        ctx,
+        pillLeft * scale,
+        pillY * scale,
+        pillW * scale,
+        pillH * scale,
+        (pillH / 2) * scale,
+      );
+      ctx.clip();
+      ctx.fillStyle = theme.text;
+      ctx.font = `${String(pillH * 0.55 * scale)}px system-ui`;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillText(url, (pillLeft + pillH * 0.4) * scale, (pillY + pillH / 2) * scale);
+      ctx.restore();
+    }
+  }
+  return chromeH;
+}
+
 async function paintScreenshot(
   ctx: CanvasRenderingContext2D,
   composition: Composition,
@@ -296,12 +382,19 @@ async function paintScreenshot(
     composition.radius * PAINT_SCALE,
   );
   ctx.clip();
+  let shotY = drawn.y;
+  let shotH = drawn.height;
+  if (composition.browserWindow !== "none") {
+    const chromeH = paintBrowserWindow(ctx, drawn, composition.browserWindow, composition.url);
+    shotY = drawn.y + chromeH;
+    shotH = drawn.height - chromeH;
+  }
   ctx.drawImage(
     bitmap,
     drawn.x * PAINT_SCALE,
-    drawn.y * PAINT_SCALE,
+    shotY * PAINT_SCALE,
     drawn.width * PAINT_SCALE,
-    drawn.height * PAINT_SCALE,
+    shotH * PAINT_SCALE,
   );
   ctx.restore();
   if (typeof bitmap.close === "function") {
@@ -347,6 +440,9 @@ export type StudioSession = {
   setBackground(background: Background): "ok" | Refuse;
   uploadBackground(file: Blob, filename: string): Promise<UploadedBackground | UploadRefuse>;
   removeBackground(id: string): Promise<"ok" | Refuse>;
+  setSize(width: number, height: number): "ok" | Refuse;
+  setBrowserWindow(value: BrowserWindow): "ok" | Refuse;
+  setUrl(url: string): "ok";
   setPadding(value: number): "ok" | Refuse;
   setScale(value: number): "ok" | Refuse;
   setPosition(x: number, y: number): "ok" | Refuse;
@@ -377,6 +473,8 @@ export async function createSession(options: {
     shadow: { offset: 16, blur: 32, opacity: 0.25 },
     border: { width: 0, color: "#FFFFFF" },
     radius: 16,
+    browserWindow: "none",
+    url: "",
   };
   async function renderComposition(): Promise<HTMLCanvasElement> {
     const canvas = document.createElement("canvas");
@@ -477,6 +575,24 @@ export async function createSession(options: {
         return "refuse";
       }
       uploadedBackgrounds = uploadedBackgrounds.filter((record) => record.id !== id);
+      return "ok";
+    },
+    setSize(width, height) {
+      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+        return "refuse";
+      }
+      composition = { ...composition, width, height };
+      return "ok";
+    },
+    setBrowserWindow(value) {
+      if (value !== "none" && value !== "light" && value !== "dark") {
+        return "refuse";
+      }
+      composition = { ...composition, browserWindow: value };
+      return "ok";
+    },
+    setUrl(url) {
+      composition = { ...composition, url };
       return "ok";
     },
     setPadding(value) {

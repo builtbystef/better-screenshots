@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Download, Plus, Upload, X } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -9,11 +10,13 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
+import { aspectPresets, catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
 import {
+  clampPosition,
   exportLine,
   isFileDrag,
   isTextFieldTarget,
+  matchingAspectPreset,
   matchingGradient,
   matchingSolid,
   parseHex,
@@ -29,6 +32,7 @@ import {
 import { createIndexedDbStore } from "../indexed-db-store";
 import {
   createSession,
+  type BrowserWindow,
   type GradientBackground,
   type HexColor,
   type StudioSession,
@@ -58,21 +62,40 @@ function HomePage() {
   }
 
   return (
-    <main className="flex h-svh min-h-svh min-w-[48rem] gap-6 p-6">
+    <main className="flex h-svh min-h-svh min-w-[48rem] bg-background">
+      <h1 className="sr-only">Better Screenshots</h1>
       <section className="min-h-0 min-w-0 flex-1">
         <Preview session={session} revision={revision} onPlaced={bump} />
       </section>
-      <aside className="flex w-80 shrink-0 flex-col gap-6 overflow-y-auto rounded-lg border border-border bg-card p-4 text-card-foreground">
-        <section>
-          <h2 className="text-sm font-medium">Background</h2>
+      <aside className="flex w-80 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-border bg-card text-card-foreground">
+        <section className="border-b border-border px-4 py-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Frame
+          </h2>
+          <FrameInspector session={session} onChange={bump} />
+        </section>
+        <section className="border-b border-border px-4 py-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Background
+          </h2>
           <BackgroundInspector session={session} onChange={bump} />
         </section>
-        <section>
-          <h2 className="text-sm font-medium">Placement</h2>
+        <section className="border-b border-border px-4 py-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Placement
+          </h2>
           <PlacementInspector session={session} onChange={bump} />
         </section>
-        <section>
-          <h2 className="text-sm font-medium">Effects</h2>
+        <section className="border-b border-border px-4 py-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Window
+          </h2>
+          <WindowInspector session={session} onChange={bump} />
+        </section>
+        <section className="px-4 py-5">
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Effects
+          </h2>
           <EffectsInspector session={session} onChange={bump} />
         </section>
       </aside>
@@ -176,7 +199,8 @@ function Preview({
         return;
       }
       canvas.className =
-        "block max-h-full max-w-full border border-border object-contain [aspect-ratio:16/9]";
+        "block max-h-full max-w-full border border-border object-contain shadow-[0_28px_80px_-28px_rgba(0,0,0,0.45)]";
+      canvas.style.aspectRatio = `${String(session.composition.width)} / ${String(session.composition.height)}`;
       host.replaceChildren(canvas);
     });
     return () => {
@@ -329,13 +353,16 @@ function Preview({
       return;
     }
     setDragging(true);
-    const next = positionFromDrag({
-      origin: drag.origin,
-      start: drag.start,
-      current: { x: event.clientX, y: event.clientY },
-      previewWidth: drag.previewWidth,
-      compositionWidth: session.composition.width,
-    });
+    const next = clampPosition(
+      positionFromDrag({
+        origin: drag.origin,
+        start: drag.start,
+        current: { x: event.clientX, y: event.clientY },
+        previewWidth: drag.previewWidth,
+        compositionWidth: session.composition.width,
+      }),
+      session.composition,
+    );
     if (session.setPosition(next.x, next.y) === "ok") {
       onPlaced();
     }
@@ -373,7 +400,7 @@ function Preview({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="mb-2 flex shrink-0 justify-end gap-2">
+      <div className="flex shrink-0 items-center justify-end gap-2 px-5 py-3">
         <input
           id={pickerId}
           type="file"
@@ -384,7 +411,7 @@ function Preview({
         {occupied ? (
           <label
             htmlFor={pickerId}
-            className="cursor-pointer rounded-lg px-3 py-1.5 text-sm text-secondary-foreground"
+            className="inline-flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm text-secondary-foreground transition-colors hover:bg-accent"
           >
             Replace
           </label>
@@ -394,20 +421,21 @@ function Preview({
           disabled={exportDisabled}
           className={
             exportDisabled
-              ? "cursor-default rounded-lg px-3 py-1.5 text-sm text-muted-foreground"
-              : "cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground"
+              ? "inline-flex cursor-default items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground"
+              : "inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-opacity hover:opacity-90"
           }
           onClick={() => {
             void onExport();
           }}
         >
+          <Download className="size-3.5" aria-hidden="true" />
           Export
         </button>
       </div>
       <div
         className={
-          "relative min-h-0 flex-1" +
-          (fileDrag ? " ring-2 ring-ring" : "") +
+          "studio-well relative min-h-0 flex-1" +
+          (fileDrag ? " ring-2 ring-inset ring-ring" : "") +
           (occupied ? " touch-none" : "") +
           (dragging ? " cursor-grabbing" : overShot ? " cursor-grab" : "")
         }
@@ -417,23 +445,38 @@ function Preview({
         onPointerCancel={onPointerCancel}
         onPointerLeave={onPointerLeave}
       >
-        <div ref={hostRef} className="h-full w-full" />
+        <div className="absolute inset-0 flex items-center justify-center p-8">
+          <div ref={hostRef} className="flex h-full w-full items-center justify-center" />
+        </div>
+        {fileDrag ? (
+          <div className="pointer-events-none absolute inset-5 rounded-xl border-2 border-dashed border-ring" />
+        ) : null}
         {occupied ? null : (
           <label
             htmlFor={pickerId}
+            aria-label="Drop a screenshot or paste (Ctrl/Cmd+V). Choose a file"
             className="absolute inset-0 flex cursor-pointer items-center justify-center"
           >
-            <span className="flex flex-col items-center gap-2 text-center">
-              <span className="text-base font-medium">Drop a screenshot</span>
-              <span className="text-sm text-muted-foreground">or paste (Ctrl/Cmd+V)</span>
-              <span className="rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground">
+            <span className="flex flex-col items-center gap-3 text-center">
+              <span className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm">
+                <Upload className="size-4" aria-hidden="true" />
+              </span>
+              <span className="flex flex-col items-center gap-1">
+                <span className="text-base font-medium tracking-tight">Drop a screenshot</span>
+                <span className="text-sm text-muted-foreground">or paste (Ctrl/Cmd+V)</span>
+              </span>
+              <span className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground">
                 Choose a file
               </span>
             </span>
           </label>
         )}
+        {line === null ? null : (
+          <p className="pointer-events-none absolute inset-x-0 bottom-4 px-5 text-center text-sm text-muted-foreground">
+            {line}
+          </p>
+        )}
       </div>
-      {line === null ? null : <p className="mt-2 text-sm text-muted-foreground">{line}</p>}
     </div>
   );
 }
@@ -445,8 +488,8 @@ function gradientCss(value: GradientBackground): string {
 
 function chipClass(selected: boolean): string {
   return selected
-    ? "size-7 shrink-0 rounded-none border border-border ring-2 ring-ring ring-offset-2 ring-offset-card"
-    : "size-7 shrink-0 rounded-none border border-border";
+    ? "aspect-square w-full rounded-md border border-border ring-2 ring-ring ring-offset-2 ring-offset-card"
+    : "aspect-square w-full rounded-md border border-border transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
 }
 
 function BackgroundInspector({
@@ -537,10 +580,10 @@ function BackgroundInspector({
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-3">
+    <div className="mt-4 flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Solid</h3>
-        <div className="flex flex-wrap gap-1.5 p-1">
+        <h3 className="text-[11px] text-muted-foreground">Solid</h3>
+        <div className="grid grid-cols-4 gap-2 p-0.5">
           {catalogSolids.map((entry) => {
             const selected = selectedSolid === entry.color;
             return (
@@ -561,14 +604,15 @@ function BackgroundInspector({
             );
           })}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex overflow-hidden rounded-md border border-input">
           <input
             type="text"
             value={hexDraft}
             placeholder="#RRGGBB"
             spellCheck={false}
             autoComplete="off"
-            className="min-w-0 flex-1 border border-input bg-background px-2 py-1 text-sm"
+            aria-label="Background color"
+            className="min-w-0 flex-1 border-0 bg-transparent px-2.5 py-1.5 font-mono text-sm outline-none"
             onChange={(event) => setHexDraft(event.target.value)}
             onBlur={commitHex}
             onKeyDown={onHexKeyDown}
@@ -576,14 +620,20 @@ function BackgroundInspector({
           <input
             type="color"
             value={currentSolid ?? lastSolid}
-            className="size-7 shrink-0 cursor-pointer border border-input bg-background p-0"
+            disabled={currentSolid === null}
+            aria-label="Background color picker"
+            className={
+              currentSolid === null
+                ? "studio-swatch size-8 shrink-0 cursor-default border-0 border-l border-input"
+                : "studio-swatch size-8 shrink-0 cursor-pointer border-0 border-l border-input"
+            }
             onChange={onNativeChange}
           />
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Gradient</h3>
-        <div className="flex flex-wrap gap-1.5 p-1">
+        <h3 className="text-[11px] text-muted-foreground">Gradient</h3>
+        <div className="grid grid-cols-4 gap-2 p-0.5">
           {catalogGradients.map((entry) => {
             const selected = selectedGradient === entry.value;
             return (
@@ -606,19 +656,24 @@ function BackgroundInspector({
         </div>
       </div>
       <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Image</h3>
-        <ul className="flex flex-col gap-1.5">
+        <h3 className="text-[11px] text-muted-foreground">Image</h3>
+        <ul className="grid grid-cols-3 gap-2">
           {images.map((record) => {
             const current = record.id === currentImageId;
             return (
-              <li key={record.id} className="flex items-center gap-2">
+              <li key={record.id} className="relative">
                 <button
                   type="button"
-                  className="flex min-w-0 flex-1 items-center gap-2 text-left text-sm"
+                  title={record.filename}
+                  aria-label={record.filename}
+                  className={
+                    current
+                      ? "block w-full overflow-hidden rounded-md ring-2 ring-ring ring-offset-2 ring-offset-card"
+                      : "block w-full overflow-hidden rounded-md border border-border"
+                  }
                   onClick={() => writeImage(record.id)}
                 >
                   <ImageThumbnail blob={record.blob} />
-                  <span className="min-w-0 truncate">{record.filename}</span>
                 </button>
                 <button
                   type="button"
@@ -626,38 +681,43 @@ function BackgroundInspector({
                   disabled={current}
                   className={
                     current
-                      ? "shrink-0 cursor-default px-1 text-sm text-muted-foreground"
-                      : "shrink-0 cursor-pointer px-1 text-sm"
+                      ? "absolute top-1 right-1 flex size-5 cursor-default items-center justify-center rounded-sm bg-card/90 text-muted-foreground"
+                      : "absolute top-1 right-1 flex size-5 cursor-pointer items-center justify-center rounded-sm bg-card/90 text-foreground shadow-sm"
                   }
                   onClick={() => {
                     void removeImage(record.id);
                   }}
                 >
-                  X
+                  <X className="size-3" aria-hidden="true" />
                 </button>
               </li>
             );
           })}
+          <li>
+            <input
+              id={pickerId}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={addDisabled}
+              onClick={() => setLine(null)}
+              onChange={(event) => {
+                void onAddChange(event);
+              }}
+            />
+            <label
+              htmlFor={pickerId}
+              className={
+                addDisabled
+                  ? "flex aspect-square cursor-default flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px] text-muted-foreground"
+                  : "flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px] transition-colors hover:bg-accent"
+              }
+            >
+              <Plus className="size-3.5" aria-hidden="true" />
+              Add
+            </label>
+          </li>
         </ul>
-        <input
-          id={pickerId}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          disabled={addDisabled}
-          onClick={() => setLine(null)}
-          onChange={(event) => {
-            void onAddChange(event);
-          }}
-        />
-        <label
-          htmlFor={pickerId}
-          className={
-            addDisabled ? "cursor-default text-sm text-muted-foreground" : "cursor-pointer text-sm"
-          }
-        >
-          Add
-        </label>
         {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
       </div>
     </div>
@@ -676,14 +736,14 @@ function ImageThumbnail({ blob }: { blob: Blob }) {
   }, [blob]);
 
   if (src === "") {
-    return <span className="size-7 shrink-0 border border-border bg-background" />;
+    return <span className="block aspect-square w-full bg-muted" />;
   }
-  return <img src={src} alt="" className="size-7 shrink-0 border border-border object-cover" />;
+  return <img src={src} alt="" className="block aspect-square w-full object-cover" />;
 }
 
 const numberChromeClass =
-  "min-w-0 border border-input bg-background px-1.5 py-1 text-sm [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-const numberFieldClass = `${numberChromeClass} w-14`;
+  "min-w-0 rounded-md border border-input bg-background px-1.5 py-1 text-right font-mono text-xs tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+const numberFieldClass = `${numberChromeClass} w-12`;
 
 function parseNonNegativeInteger(raw: string): number | "refuse" {
   const parsed = parseInteger(raw);
@@ -702,6 +762,105 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function textChipClass(selected: boolean): string {
+  return selected
+    ? "rounded-md border border-border bg-background px-2 py-1.5 text-center text-[11px] font-medium ring-2 ring-ring ring-offset-2 ring-offset-card"
+    : "rounded-md border border-border px-2 py-1.5 text-center text-[11px] text-muted-foreground transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
+}
+
+function FrameInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
+  const selected = matchingAspectPreset(
+    session.composition.width,
+    session.composition.height,
+    aspectPresets,
+  );
+
+  function writePreset(width: number, height: number) {
+    if (session.setSize(width, height) !== "ok") {
+      return;
+    }
+    const next = clampPosition(session.composition.position, { width, height });
+    session.setPosition(next.x, next.y);
+    onChange();
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-4 gap-2 p-0.5">
+      {aspectPresets.map((preset) => {
+        const isSelected = selected === preset;
+        return (
+          <button
+            key={preset.name}
+            type="button"
+            title={`${String(preset.width)}×${String(preset.height)}`}
+            aria-label={`${preset.name} ${String(preset.width)}×${String(preset.height)}`}
+            className={textChipClass(isSelected)}
+            onClick={() => {
+              if (isSelected) {
+                return;
+              }
+              writePreset(preset.width, preset.height);
+            }}
+          >
+            {preset.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const windowSchemes: ReadonlyArray<{ name: string; value: BrowserWindow }> = [
+  { name: "None", value: "none" },
+  { name: "Light", value: "light" },
+  { name: "Dark", value: "dark" },
+];
+
+function WindowInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
+  const { browserWindow, url } = session.composition;
+
+  return (
+    <div className="mt-4 flex flex-col gap-3">
+      <div className="grid grid-cols-3 gap-2 p-0.5">
+        {windowSchemes.map((entry) => {
+          const selected = browserWindow === entry.value;
+          return (
+            <button
+              key={entry.value}
+              type="button"
+              aria-label={entry.name}
+              className={textChipClass(selected)}
+              onClick={() => {
+                if (selected) {
+                  return;
+                }
+                if (session.setBrowserWindow(entry.value) === "ok") {
+                  onChange();
+                }
+              }}
+            >
+              {entry.name}
+            </button>
+          );
+        })}
+      </div>
+      <input
+        type="text"
+        value={url}
+        placeholder="example.com"
+        spellCheck={false}
+        autoComplete="off"
+        aria-label="URL"
+        className="min-w-0 rounded-md border border-input bg-background px-2.5 py-1.5 font-mono text-sm outline-none"
+        onChange={(event) => {
+          session.setUrl(event.target.value);
+          onChange();
+        }}
+      />
+    </div>
+  );
+}
+
 function PlacementInspector({
   session,
   onChange,
@@ -712,7 +871,7 @@ function PlacementInspector({
   const { padding, scale, position } = session.composition;
 
   return (
-    <div className="mt-3 flex flex-col gap-2">
+    <div className="mt-4 flex flex-col gap-3">
       <KnobRow
         label="Padding"
         value={padding}
@@ -744,6 +903,7 @@ function PlacementInspector({
       <PositionRow
         x={position.x}
         y={position.y}
+        frame={{ width: session.composition.width, height: session.composition.height }}
         onWrite={(x, y) => {
           if (session.setPosition(x, y) === "ok") {
             onChange();
@@ -776,9 +936,9 @@ function EffectsInspector({ session, onChange }: { session: StudioSession; onCha
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Shadow</h3>
+    <div className="mt-4 flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        <h3 className="text-[11px] text-muted-foreground">Shadow</h3>
         <KnobRow
           label="Offset"
           value={shadow.offset}
@@ -810,8 +970,8 @@ function EffectsInspector({ session, onChange }: { session: StudioSession; onCha
           onWrite={(percent) => writeShadow({ opacity: percent / 100 })}
         />
       </div>
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium text-muted-foreground">Border</h3>
+      <div className="flex flex-col gap-3">
+        <h3 className="text-[11px] text-muted-foreground">Border</h3>
         <KnobRow
           label="Width"
           value={border.width}
@@ -889,17 +1049,23 @@ function KnobRow({
     commit();
   }
 
+  const thumb = clamp(value, min, max);
+  const fill = max === min ? 0 : ((thumb - min) / (max - min)) * 100;
+
   return (
-    <div className="grid grid-cols-[4.5rem_1fr_3.5rem] items-center gap-2">
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <div className="grid grid-cols-[3.75rem_1fr_3rem] items-center gap-2">
+      <span className="text-[11px] text-muted-foreground">{label}</span>
       <input
         type="range"
         min={min}
         max={max}
         step={step}
-        value={clamp(value, min, max)}
+        value={thumb}
         aria-label={label}
-        className="w-full accent-primary"
+        className="studio-slider w-full"
+        style={{
+          background: `linear-gradient(to right, var(--foreground) ${fill}%, var(--muted) ${fill}%)`,
+        }}
         onChange={(event) => onWrite(Number(event.target.value))}
       />
       <input
@@ -921,10 +1087,12 @@ function KnobRow({
 function PositionRow({
   x,
   y,
+  frame,
   onWrite,
 }: {
   x: number;
   y: number;
+  frame: { width: number; height: number };
   onWrite: (x: number, y: number) => void;
 }) {
   const [xDraft, setXDraft] = useState(formatInteger(x));
@@ -943,8 +1111,9 @@ function PositionRow({
       setXDraft(formatInteger(x));
       return;
     }
-    onWrite(parsed, y);
-    setXDraft(formatInteger(parsed));
+    const next = clampPosition({ x: parsed, y }, frame);
+    onWrite(next.x, next.y);
+    setXDraft(formatInteger(next.x));
   }
 
   function commitY() {
@@ -953,8 +1122,9 @@ function PositionRow({
       setYDraft(formatInteger(y));
       return;
     }
-    onWrite(x, parsed);
-    setYDraft(formatInteger(parsed));
+    const next = clampPosition({ x, y: parsed }, frame);
+    onWrite(next.x, next.y);
+    setYDraft(formatInteger(next.y));
   }
 
   function onFieldKeyDown(commit: () => void) {
@@ -972,8 +1142,9 @@ function PositionRow({
   }
 
   return (
-    <div className="grid grid-cols-[4.5rem_1fr_1fr] items-center gap-2">
-      <span className="text-xs text-muted-foreground">Position</span>
+    <div className="grid grid-cols-[3.75rem_auto_1fr_auto_1fr] items-center gap-2">
+      <span className="text-[11px] text-muted-foreground">Position</span>
+      <span className="text-[11px] text-muted-foreground">X</span>
       <input
         type="number"
         value={xDraft}
@@ -981,11 +1152,12 @@ function PositionRow({
         spellCheck={false}
         autoComplete="off"
         aria-label="X"
-        className={`${numberChromeClass} w-full`}
+        className={`${numberChromeClass} min-w-0 w-full`}
         onChange={(event) => setXDraft(event.target.value)}
         onBlur={commitX}
         onKeyDown={onFieldKeyDown(commitX)}
       />
+      <span className="text-[11px] text-muted-foreground">Y</span>
       <input
         type="number"
         value={yDraft}
@@ -993,7 +1165,7 @@ function PositionRow({
         spellCheck={false}
         autoComplete="off"
         aria-label="Y"
-        className={`${numberChromeClass} w-full`}
+        className={`${numberChromeClass} min-w-0 w-full`}
         onChange={(event) => setYDraft(event.target.value)}
         onBlur={commitY}
         onKeyDown={onFieldKeyDown(commitY)}
@@ -1034,27 +1206,29 @@ function BorderColorRow({
   }
 
   return (
-    <div className="grid grid-cols-[4.5rem_1fr_auto] items-center gap-2">
-      <span className="text-xs text-muted-foreground">Color</span>
-      <input
-        type="text"
-        value={hexDraft}
-        placeholder="#RRGGBB"
-        spellCheck={false}
-        autoComplete="off"
-        aria-label="Border color"
-        className="min-w-0 border border-input bg-background px-2 py-1 text-sm"
-        onChange={(event) => setHexDraft(event.target.value)}
-        onBlur={commitHex}
-        onKeyDown={onHexKeyDown}
-      />
-      <input
-        type="color"
-        value={color}
-        aria-label="Border color picker"
-        className="size-7 shrink-0 cursor-pointer border border-input bg-background p-0"
-        onChange={(event) => onWrite(event.target.value)}
-      />
+    <div className="grid grid-cols-[3.75rem_1fr] items-center gap-2">
+      <span className="text-[11px] text-muted-foreground">Color</span>
+      <div className="flex overflow-hidden rounded-md border border-input">
+        <input
+          type="text"
+          value={hexDraft}
+          placeholder="#RRGGBB"
+          spellCheck={false}
+          autoComplete="off"
+          aria-label="Border color"
+          className="min-w-0 flex-1 border-0 bg-transparent px-2 py-1 font-mono text-xs outline-none"
+          onChange={(event) => setHexDraft(event.target.value)}
+          onBlur={commitHex}
+          onKeyDown={onHexKeyDown}
+        />
+        <input
+          type="color"
+          value={color}
+          aria-label="Border color picker"
+          className="studio-swatch size-7 shrink-0 cursor-pointer border-0 border-l border-input"
+          onChange={(event) => onWrite(event.target.value)}
+        />
+      </div>
     </div>
   );
 }

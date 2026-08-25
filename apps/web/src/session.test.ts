@@ -78,6 +78,8 @@ test("createSession opens a default Composition on the given solid", async () =>
     shadow: { offset: 16, blur: 32, opacity: 0.25 },
     border: { width: 0, color: "#FFFFFF" },
     radius: 16,
+    browserWindow: "none",
+    url: "",
   });
 });
 
@@ -143,6 +145,8 @@ test("a second createSession is a fresh default Composition", async () => {
     shadow: { offset: 16, blur: 32, opacity: 0.25 },
     border: { width: 0, color: "#FFFFFF" },
     radius: 16,
+    browserWindow: "none",
+    url: "",
   });
 });
 
@@ -223,6 +227,52 @@ test("setBackground refuses a bad value and leaves the Composition unchanged", a
 
   for (const background of refused) {
     expect(session.setBackground(background)).toBe("refuse");
+    expect(session.composition).toEqual(before);
+  }
+});
+
+test("setBrowserWindow writes light or dark and refuses an unknown value", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+
+  expect(session.setBrowserWindow("light")).toBe("ok");
+  expect(session.composition.browserWindow).toBe("light");
+  expect(session.setBrowserWindow("dark")).toBe("ok");
+  expect(session.composition.browserWindow).toBe("dark");
+  expect(session.setBrowserWindow("none")).toBe("ok");
+  expect(session.composition.browserWindow).toBe("none");
+
+  const before = structuredClone(session.composition);
+  expect(session.setBrowserWindow("chrome" as "none")).toBe("refuse");
+  expect(session.composition).toEqual(before);
+});
+
+test("setUrl writes the typed text including empty", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+
+  expect(session.setUrl("example.com/path")).toBe("ok");
+  expect(session.composition.url).toBe("example.com/path");
+  expect(session.setUrl("")).toBe("ok");
+  expect(session.composition.url).toBe("");
+});
+
+test("setSize writes a Frame and refuses a value at or below 0 or non-finite", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+
+  expect(session.setSize(1080, 1350)).toBe("ok");
+  expect(session.composition.width).toBe(1080);
+  expect(session.composition.height).toBe(1350);
+
+  const before = structuredClone(session.composition);
+  const refused: Array<[number, number]> = [
+    [0, 1080],
+    [1080, 0],
+    [-1, 1080],
+    [1080, -1],
+    [Number.NaN, 1080],
+    [1080, Number.POSITIVE_INFINITY],
+  ];
+  for (const [width, height] of refused) {
+    expect(session.setSize(width, height)).toBe("refuse");
     expect(session.composition).toEqual(before);
   }
 });
@@ -343,6 +393,8 @@ test("a second successful place swaps the Screenshot and keeps fields", async ()
   session.setShadow(1, 2, 0.5);
   session.setBorder(3, "#aAbBcC");
   session.setRadius(8);
+  session.setBrowserWindow("dark");
+  session.setUrl("example.com");
   const second = pngBlob(400, 300);
 
   expect(await session.placeScreenshot([second])).toBe("ok");
@@ -353,6 +405,8 @@ test("a second successful place swaps the Screenshot and keeps fields", async ()
   expect(session.composition.shadow).toEqual({ offset: 1, blur: 2, opacity: 0.5 });
   expect(session.composition.border).toEqual({ width: 3, color: "#aAbBcC" });
   expect(session.composition.radius).toBe(8);
+  expect(session.composition.browserWindow).toBe("dark");
+  expect(session.composition.url).toBe("example.com");
 });
 
 test("placeScreenshot refuses an empty list, undecodable Blob, 0x0 image, or only those", async () => {
@@ -388,6 +442,44 @@ test("placeScreenshot keeps the first decodable non-0x0 image and skips earlier 
 
   expect(await session.placeScreenshot([undecodable, emptySize, firstGood, laterGood])).toBe("ok");
   expect(session.composition.screenshot).toBe(firstGood);
+});
+
+test("a Light Browser window fits the Screenshot plus chrome in the default inner", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setBrowserWindow("light")).toBe("ok");
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.placement?.inner).toEqual({ x: 120, y: 120, width: 1680, height: 840 });
+  expect(session.placement?.fitted.width).toBeCloseTo(1043.4782608695652);
+  expect(session.placement?.fitted.height).toBe(840);
+  expect(session.placement?.drawn.x).toBeCloseTo(438.2608695652174);
+  expect(session.placement?.drawn.y).toBe(120);
+  expect(session.placement?.drawn.width).toBeCloseTo(1043.4782608695652);
+  expect(session.placement?.drawn.height).toBe(840);
+});
+
+test("setSize(1080, 1080) then an 800x600 Screenshot derives placement from that Frame", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setSize(1080, 1080)).toBe("ok");
+
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(session.placement).toEqual({
+    inner: { x: 120, y: 120, width: 840, height: 840 },
+    fitted: { width: 840, height: 630 },
+    drawn: { x: 120, y: 225, width: 840, height: 630 },
+  });
+});
+
+test("setSize writes a render canvas of the Frame at 2x", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setSize(1080, 1080)).toBe("ok");
+
+  const canvas = await session.render();
+
+  expect(canvas.width).toBe(2160);
+  expect(canvas.height).toBe(2160);
 });
 
 test("placement is derived from the default frame after placing an 800x600 Screenshot", async () => {
@@ -686,6 +778,48 @@ test("shadow is black at the stored opacity, offset +x +y, and off when offset a
   expect(pixelAt(none, 1528, 540)).toEqual([0x11, 0x22, 0x33, 255]);
 });
 
+test("a Light Browser window paints its bar above the Screenshot", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(
+    await session.placeScreenshot([
+      pngBlob(800, 600, (ctx) => {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, 800, 600);
+      }),
+    ]),
+  ).toBe("ok");
+  expect(session.setBrowserWindow("light")).toBe("ok");
+  expect(session.setRadius(0)).toBe("ok");
+  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setBorder(0, "#FF0000")).toBe("ok");
+
+  const canvas = await session.render();
+
+  expect(pixelAt(canvas, 960, 122)).toEqual([0xf1, 0xf3, 0xf4, 255]);
+  expect(pixelAt(canvas, 960, 400)).toEqual([255, 255, 255, 255]);
+});
+
+test("a Dark Browser window paints its bar above the Screenshot", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(
+    await session.placeScreenshot([
+      pngBlob(800, 600, (ctx) => {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, 800, 600);
+      }),
+    ]),
+  ).toBe("ok");
+  expect(session.setBrowserWindow("dark")).toBe("ok");
+  expect(session.setRadius(0)).toBe("ok");
+  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setBorder(0, "#FF0000")).toBe("ok");
+
+  const canvas = await session.render();
+
+  expect(pixelAt(canvas, 960, 122)).toEqual([0x20, 0x21, 0x24, 255]);
+  expect(pixelAt(canvas, 960, 400)).toEqual([255, 255, 255, 255]);
+});
+
 test("a placed Screenshot paints inside the drawn rect and the border in the outer ring", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
   expect(
@@ -902,5 +1036,7 @@ test("a second createSession lists this session's uploads and a fresh default Co
     shadow: { offset: 16, blur: 32, opacity: 0.25 },
     border: { width: 0, color: "#FFFFFF" },
     radius: 16,
+    browserWindow: "none",
+    url: "",
   });
 });

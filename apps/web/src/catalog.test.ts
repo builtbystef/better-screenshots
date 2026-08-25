@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { catalogDefaultSolid, catalogGradients, catalogSolids } from "./catalog";
+import { aspectPresets, catalogDefaultSolid, catalogGradients, catalogSolids } from "./catalog";
 
 test("Catalog solids are the eight named hexes in order", () => {
   expect(catalogSolids.map((entry) => [entry.name, entry.color])).toEqual([
@@ -75,4 +75,16 @@ test("Catalog gradients are the six named two-stop values in order", () => {
 
 test("Catalog default solid is Zinc 200", () => {
   expect(catalogDefaultSolid).toEqual({ type: "solid", color: "#E4E4E7" });
+});
+
+test("Aspect presets are the seven named Frame sizes in order", () => {
+  expect(aspectPresets.map((entry) => [entry.name, entry.width, entry.height])).toEqual([
+    ["16:9", 1920, 1080],
+    ["1:1", 1080, 1080],
+    ["4:5", 1080, 1350],
+    ["9:16", 1080, 1920],
+    ["4:3", 1440, 1080],
+    ["3:2", 1620, 1080],
+    ["1.91:1", 1200, 630],
+  ]);
 });

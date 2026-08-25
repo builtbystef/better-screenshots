@@ -1,3 +1,4 @@
+import type { AspectPreset } from "./catalog";
 import type { GradientBackground, HexColor, UploadRefuse } from "./session";
 
 export type PlaceSource = "picker" | "drop" | "paste";
@@ -104,6 +105,14 @@ function sameStops(left: GradientBackground["stops"], right: GradientBackground[
   );
 }
 
+export function matchingAspectPreset(
+  width: number,
+  height: number,
+  presets: readonly AspectPreset[],
+): AspectPreset | null {
+  return presets.find((preset) => preset.width === width && preset.height === height) ?? null;
+}
+
 export function matchingGradient(
   value: GradientBackground,
   gradients: readonly GradientBackground[],
@@ -126,6 +135,18 @@ export function positionFromDrag(input: {
   return {
     x: input.origin.x + Math.round((input.current.x - input.start.x) * scale),
     y: input.origin.y + Math.round((input.current.y - input.start.y) * scale),
+  };
+}
+
+export function clampPosition(
+  position: { x: number; y: number },
+  frame: { width: number; height: number },
+): { x: number; y: number } {
+  const maxX = frame.width / 2;
+  const maxY = frame.height / 2;
+  return {
+    x: Math.min(maxX, Math.max(-maxX, position.x)),
+    y: Math.min(maxY, Math.max(-maxY, position.y)),
   };
 }
 

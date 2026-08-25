@@ -85,3 +85,15 @@ export const catalogGradients: readonly CatalogGradient[] = [
 ];
 
 export const catalogDefaultSolid = { type: "solid" as const, color: "#E4E4E7" };
+
+export type AspectPreset = { name: string; width: number; height: number };
+
+export const aspectPresets: readonly AspectPreset[] = [
+  { name: "16:9", width: 1920, height: 1080 },
+  { name: "1:1", width: 1080, height: 1080 },
+  { name: "4:5", width: 1080, height: 1350 },
+  { name: "9:16", width: 1080, height: 1920 },
+  { name: "4:3", width: 1440, height: 1080 },
+  { name: "3:2", width: 1620, height: 1080 },
+  { name: "1.91:1", width: 1200, height: 630 },
+];

@@ -13,7 +13,7 @@ The Studio when the Composition has no Screenshot.
 _Avoid_: first-run, blank, unoccupied, empty-occupied
 
 **Inspector**:
-The single Studio panel for Background, placement, and Effects.
+The single Studio panel for Frame, Background, placement, Browser window, and Effects.
 _Avoid_: sidebar, properties, settings (when this panel is meant)
 
 **Preview**:
@@ -33,19 +33,31 @@ The finite set of built-in solid and gradient Background values.
 _Avoid_: palette, theme, presets (when the built-in Background set is meant)
 
 **Composition**:
-One arranged result: a background, the screenshots on it, their padding, and their effects.
+One arranged result: a Frame, a background, the screenshots on it, their padding, their effects, and an optional Browser window.
 _Avoid_: design, mockup, poster
 
+**Frame**:
+The stored width and height of a Composition.
+_Avoid_: canvas size, output size, artboard
+
+**Aspect preset**:
+A named Frame size the Inspector can write.
+_Avoid_: social size, ratio (when the named Frame is meant)
+
+**Browser window**:
+The Chrome-style title and address bar drawn around a Screenshot.
+_Avoid_: browser chrome, device frame, chrome (when this wrap is meant)
+
 **Padding**:
-The inset of a Screenshot on the Background — how much Background shows around it.
+The inset of the Screenshot — and its Browser window, when present — on the Background.
 _Avoid_: framing, margin, gap
 
 **Position**:
-The offset of a Screenshot from the center of the Composition.
+The offset of the Screenshot — and its Browser window, when present — from the center of the Composition.
 _Avoid_: translation, location, offset (when the placement is meant)
 
 **Scale**:
-The size of a Screenshot relative to the size that fits it inside the Padding.
+The size of the Screenshot — and its Browser window, when present — relative to the size that fits it inside the Padding.
 _Avoid_: zoom, magnification
 
 **Effect**:

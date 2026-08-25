@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import { catalogGradients, catalogSolids } from "./catalog";
+import { aspectPresets, catalogGradients, catalogSolids } from "./catalog";
 import {
+  clampPosition,
   exportLine,
   isFileDrag,
   isTextFieldTarget,
+  matchingAspectPreset,
   matchingGradient,
   matchingSolid,
   parseHex,
@@ -126,6 +128,18 @@ const zincFade = {
 
 const catalogGradientValues = catalogGradients.map((entry) => entry.value);
 
+test("matchingAspectPreset matches a Catalog Aspect preset by exact Frame", () => {
+  expect(matchingAspectPreset(1920, 1080, aspectPresets)).toEqual({
+    name: "16:9",
+    width: 1920,
+    height: 1080,
+  });
+});
+
+test("matchingAspectPreset returns null when the Frame is not a Catalog Aspect preset", () => {
+  expect(matchingAspectPreset(1920, 1081, aspectPresets)).toBeNull();
+});
+
 test("matchingGradient of Zinc fade against the Catalog is Zinc fade", () => {
   expect(matchingGradient(zincFade, catalogGradientValues)).toEqual(zincFade);
 });
@@ -186,6 +200,20 @@ test("positionFromDrag snaps a fractional Preview drag to integer Position", () 
       compositionWidth: 1920,
     }),
   ).toEqual({ x: 21, y: -6 });
+});
+
+test("clampPosition keeps the Screenshot center inside the frame", () => {
+  expect(clampPosition({ x: 5000, y: -4000 }, { width: 1920, height: 1080 })).toEqual({
+    x: 960,
+    y: -540,
+  });
+});
+
+test("clampPosition leaves a Position already inside the frame", () => {
+  expect(clampPosition({ x: 10, y: -20 }, { width: 1920, height: 1080 })).toEqual({
+    x: 10,
+    y: -20,
+  });
 });
 
 test("a successful upload writes no Image line", () => {
