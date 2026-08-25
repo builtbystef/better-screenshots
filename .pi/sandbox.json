@@ -5,7 +5,9 @@
     "allowAllUnixSockets": true
   },
   "filesystem": {
-    "allowRead": [],
+    "allowRead": [
+      "/"
+    ],
     "denyRead": [
       "~/Main",
       "~/dotfiles",
@@ -28,7 +30,8 @@
       "/run/user/1000/keyring",
       "/run/user/1000/gnupg",
       "/run/docker.sock",
-      "/run/user/1000/podman/podman.sock"
+      "/run/user/1000/podman/podman.sock",
+      "/run/podman/podman.sock"
     ],
     "allowWrite": [
       ".",
