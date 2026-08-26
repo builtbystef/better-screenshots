@@ -1,5 +1,4 @@
-import type { AspectPreset } from "./catalog";
-import type { GradientBackground, HexColor, UploadRefuse } from "./session";
+import type { UploadRefuse } from "./session";
 
 export type PlaceSource = "picker" | "drop" | "paste";
 
@@ -87,41 +86,6 @@ export function parseScale(raw: string): number | "refuse" {
 export function parseOpacityPercent(raw: string): number | "refuse" {
   const parsed = parseInteger(raw);
   return parsed === "refuse" || parsed < 0 || parsed > 100 ? "refuse" : parsed;
-}
-
-export function matchingSolid(color: HexColor, solids: readonly HexColor[]): HexColor | null {
-  const needle = color.toLowerCase();
-  return solids.find((solid) => solid.toLowerCase() === needle) ?? null;
-}
-
-function sameStops(left: GradientBackground["stops"], right: GradientBackground["stops"]): boolean {
-  return (
-    left.length === right.length &&
-    left.every(
-      (stop, index) =>
-        stop.offset === right[index]?.offset &&
-        stop.color.toLowerCase() === right[index].color.toLowerCase(),
-    )
-  );
-}
-
-export function matchingAspectPreset(
-  width: number,
-  height: number,
-  presets: readonly AspectPreset[],
-): AspectPreset | null {
-  return presets.find((preset) => preset.width === width && preset.height === height) ?? null;
-}
-
-export function matchingGradient(
-  value: GradientBackground,
-  gradients: readonly GradientBackground[],
-): GradientBackground | null {
-  return (
-    gradients.find(
-      (gradient) => gradient.angle === value.angle && sameStops(gradient.stops, value.stops),
-    ) ?? null
-  );
 }
 
 export function positionFromDrag(input: {

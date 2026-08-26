@@ -10,15 +10,20 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { aspectPresets, catalogDefaultSolid, catalogGradients, catalogSolids } from "../catalog";
+import {
+  aspectPresetFor,
+  aspectPresets,
+  catalogDefaultSolid,
+  catalogGradientFor,
+  catalogGradients,
+  catalogSolidFor,
+  catalogSolids,
+} from "../catalog";
 import {
   clampPosition,
   exportLine,
   isFileDrag,
   isTextFieldTarget,
-  matchingAspectPreset,
-  matchingGradient,
-  matchingSolid,
   parseHex,
   parseInteger,
   parseOpacityPercent,
@@ -37,9 +42,6 @@ import {
   type HexColor,
   type StudioSession,
 } from "../session";
-
-const catalogSolidColors = catalogSolids.map((entry) => entry.color);
-const catalogGradientValues = catalogGradients.map((entry) => entry.value);
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -503,10 +505,9 @@ function BackgroundInspector({
   const background = session.composition.background;
   const currentSolid = background.type === "solid" ? background.color : null;
   const currentImageId = background.type === "image" ? background.id : null;
-  const selectedSolid =
-    currentSolid === null ? null : matchingSolid(currentSolid, catalogSolidColors);
+  const selectedSolid = currentSolid === null ? undefined : catalogSolidFor(currentSolid);
   const selectedGradient =
-    background.type === "gradient" ? matchingGradient(background, catalogGradientValues) : null;
+    background.type === "gradient" ? catalogGradientFor(background) : undefined;
   const addDisabled = session.storage === "unavailable";
   const images = session.uploadedBackgrounds.toReversed();
   const [hexDraft, setHexDraft] = useState(currentSolid ?? "");
@@ -585,7 +586,7 @@ function BackgroundInspector({
         <h3 className="text-[11px] text-muted-foreground">Solid</h3>
         <div className="grid grid-cols-4 gap-2 p-0.5">
           {catalogSolids.map((entry) => {
-            const selected = selectedSolid === entry.color;
+            const selected = selectedSolid?.name === entry.name;
             return (
               <button
                 key={entry.color}
@@ -635,7 +636,7 @@ function BackgroundInspector({
         <h3 className="text-[11px] text-muted-foreground">Gradient</h3>
         <div className="grid grid-cols-4 gap-2 p-0.5">
           {catalogGradients.map((entry) => {
-            const selected = selectedGradient === entry.value;
+            const selected = selectedGradient?.name === entry.name;
             return (
               <button
                 key={entry.name}
@@ -769,11 +770,7 @@ function textChipClass(selected: boolean): string {
 }
 
 function FrameInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
-  const selected = matchingAspectPreset(
-    session.composition.width,
-    session.composition.height,
-    aspectPresets,
-  );
+  const selected = aspectPresetFor(session.composition.width, session.composition.height);
 
   function writePreset(width: number, height: number) {
     if (session.setSize(width, height) !== "ok") {
@@ -787,7 +784,7 @@ function FrameInspector({ session, onChange }: { session: StudioSession; onChang
   return (
     <div className="mt-4 grid grid-cols-4 gap-2 p-0.5">
       {aspectPresets.map((preset) => {
-        const isSelected = selected === preset;
+        const isSelected = selected?.name === preset.name;
         return (
           <button
             key={preset.name}

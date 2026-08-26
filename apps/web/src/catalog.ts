@@ -13,6 +13,11 @@ export const catalogSolids: readonly CatalogSolid[] = [
   { name: "Rose", color: "#FECDD3" },
 ];
 
+export function catalogSolidFor(color: HexColor): CatalogSolid | undefined {
+  const needle = color.toLowerCase();
+  return catalogSolids.find((entry) => entry.color.toLowerCase() === needle);
+}
+
 export type CatalogGradient = { name: string; value: GradientBackground };
 
 export const catalogGradients: readonly CatalogGradient[] = [
@@ -84,6 +89,23 @@ export const catalogGradients: readonly CatalogGradient[] = [
   },
 ];
 
+function sameStops(left: GradientBackground["stops"], right: GradientBackground["stops"]): boolean {
+  return (
+    left.length === right.length &&
+    left.every(
+      (stop, index) =>
+        stop.offset === right[index]?.offset &&
+        stop.color.toLowerCase() === right[index].color.toLowerCase(),
+    )
+  );
+}
+
+export function catalogGradientFor(value: GradientBackground): CatalogGradient | undefined {
+  return catalogGradients.find(
+    (entry) => entry.value.angle === value.angle && sameStops(entry.value.stops, value.stops),
+  );
+}
+
 export const catalogDefaultSolid = { type: "solid" as const, color: "#E4E4E7" };
 
 export type AspectPreset = { name: string; width: number; height: number };
@@ -97,3 +119,7 @@ export const aspectPresets: readonly AspectPreset[] = [
   { name: "3:2", width: 1620, height: 1080 },
   { name: "1.91:1", width: 1200, height: 630 },
 ];
+
+export function aspectPresetFor(width: number, height: number): AspectPreset | undefined {
+  return aspectPresets.find((preset) => preset.width === width && preset.height === height);
+}

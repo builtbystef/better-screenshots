@@ -1,14 +1,15 @@
 ---
 id: 1o9amb
 title: Move the Catalog matchers into catalog.ts and stop matching by reference identity
-state: todo
+state: done
+assignee: agent
 priority: high
 labels:
     - maintenance
 depends_on:
     - 4cagyi
 created: 2026-08-26T16:35:13Z
-updated: 2026-08-26T17:41:14Z
+updated: 2026-08-26T18:12:23Z
 ---
 
 ## Finding
@@ -48,3 +49,9 @@ The matchers take no collection parameter. Chip selection does not depend on ref
 ## Order
 
 Runs after `4cagyi` and before `dwzqq1`, so the chrome.ts split has three fewer functions to place.
+
+## Notes
+
+**agent** — 2026-08-26T18:12:23Z
+
+Completed the Catalog matcher extraction. catalogSolidFor, catalogGradientFor, and aspectPresetFor now close over Catalog data and return Catalog entries or undefined; Catalog tests are the public Node seam. The Studio compares each selected entry by name, so chip selection no longer relies on object identity. Removed the old chrome.ts matchers and caller-side projections. Format, lint, typecheck, and all 101 tests pass.
