@@ -1,14 +1,15 @@
 ---
 id: 11cr8l
 title: Correct factual rot in README and ADR 0001
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - 4cagyi
 created: 2026-08-26T16:33:28Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:30:19Z
 ---
 
 ## Finding
@@ -57,3 +58,9 @@ This issue touches `README.md`, `docs/adr/0001-canvas-2d-draw-path.md`, and `doc
 ## Order
 
 Runs after `4cagyi`. Independent of the code queue.
+
+## Notes
+
+**agent** — 2026-08-26T18:30:19Z
+
+Corrected the README to describe one Screenshot, use the glossary terms Frame, Padding, and Effects, and identify Export as PNG. Corrected ADR 0001 to state that Preview and Export re-run the same 2x draw and that shadows use offset, blur, and opacity over black. Updated Catalog to include built-in Background values and Aspect presets, and defined an Aspect preset as a named Frame size in the Catalog. Left the settled ShadCN line and Composition entry unchanged. All four checks pass.

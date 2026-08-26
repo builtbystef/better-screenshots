@@ -25,7 +25,7 @@ The surface a composition's screenshots sit on.
 _Avoid_: canvas, backdrop, scene
 
 **Catalog**:
-The finite set of built-in solid and gradient Background values.
+The finite set of built-in Background values and Aspect presets the Inspector can write.
 _Avoid_: palette, theme, presets (when the built-in Background set is meant)
 
 **Composition**:
@@ -37,7 +37,7 @@ The stored width and height of a Composition.
 _Avoid_: canvas size, output size, artboard
 
 **Aspect preset**:
-A named Frame size the Inspector can write.
+A named Frame size in the Catalog.
 _Avoid_: social size, ratio (when the named Frame is meant)
 
 **Browser window**:

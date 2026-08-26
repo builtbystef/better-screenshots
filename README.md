@@ -6,11 +6,11 @@ Better Screenshots is a simple, browser-based studio for creating polished produ
 
 Users can:
 
-- Upload one or more screenshots
-- Place screenshots on customizable backgrounds
-- Adjust positioning, scale, padding, and framing
-- Apply lightweight visual treatments such as shadows, borders, and rounded corners
-- Export finished compositions as high-quality images
+- Upload a Screenshot
+- Place the Screenshot on a customizable Background
+- Adjust Position, Scale, Padding, and Frame
+- Apply lightweight Effects such as shadows, borders, and rounded corners
+- Export the Composition as a PNG
 
 The product should feel fast, minimal, and focused—more like a lightweight design utility than a full graphics editor.
 
