@@ -1,7 +1,8 @@
 ---
 id: sy3fen
 title: Land the shadcn base and reconcile the CSS tokens
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
@@ -11,7 +12,7 @@ depends_on:
     - 99rxue
 parent: u5l5hp
 created: 2026-08-26T17:33:20Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:47:32Z
 ---
 
 Land the shadcn base so the later sub-issues are pure component swaps.
@@ -35,3 +36,29 @@ If the `shadcn` CLI cannot run under the sandbox, vendor the component source fr
 - Every production dependency has a stated reason.
 - All 101 existing tests still pass unchanged.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T19:47:32Z
+
+# Done
+
+Landed the shadcn base so later sub-issues can swap components.
+
+## Work
+
+- `components.json` already matched the required style, CSS path, baseColor, cssVariables, and aliases. Created `apps/web/src/components/ui/` (`.gitkeep` only). Did not run the shadcn CLI and did not vendor component source — this slice does not add Button/Input/Label/etc.
+- Exercised `@/*`: `routes/index.tsx` and `lib/utils.test.ts` import `cn` from `@/lib/utils`. Root `vite.config.ts` now has `resolve.tsconfigPaths: true` so Vitest resolves the alias (apps/web already had it for build). Confirmed in `vp check`, `vp test`, and `vp build`.
+- Defined `--destructive-foreground` in `:root` and `.dark` (`oklch(0.985 0 0)`), so `--color-destructive-foreground` resolves.
+- Deleted `--color-chart-1..5`, all eight `--color-sidebar*`, and `--radius-lg/2xl/3xl/4xl` (no landed component references those radii). Kept `--radius-sm/md/xl` (`rounded-sm/md/xl` on the page). Kept `--color-popover*`, `--color-secondary*`, `--color-destructive*`, and `--color-accent-foreground` for Button / ToggleGroup (and the issue's named keep-list).
+- Removed `tw-animate-css` import and dependency — no component this spec lands uses `animate-*`.
+- Recorded production-dependency reasons in `docs/CODING_STANDARDS.md`.
+- Adopted `cn` in the seven class ternaries (`chipClass`, `textChipClass`, export button, color swatch, image thumb, remove control, add label) and the Preview well's conditional suffixes. Helpers themselves stay for later issues.
+
+## Tests
+
+Added `lib/utils.test.ts` (alias + `cn` merge). Existing tests unchanged: 131 prior + 1 new = 132. Four checks pass.
+
+## Reviewer
+
+No shadcn primitives were added. Token keep-list for unused-today colors is the parent spec's named set plus Button/ToggleGroup consumers.

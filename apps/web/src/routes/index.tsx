@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Download, Plus, Upload, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import {
   useCallback,
   useEffect,
@@ -389,11 +390,12 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
         <button
           type="button"
           disabled={exportDisabled}
-          className={
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm",
             exportDisabled
-              ? "inline-flex cursor-default items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground"
-              : "inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-opacity hover:opacity-90"
-          }
+              ? "cursor-default text-muted-foreground"
+              : "cursor-pointer bg-primary text-primary-foreground transition-opacity hover:opacity-90",
+          )}
           onClick={() => {
             void onExport();
           }}
@@ -403,12 +405,12 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
         </button>
       </div>
       <div
-        className={
-          "studio-well relative min-h-0 flex-1" +
-          (fileDrag ? " ring-2 ring-inset ring-ring" : "") +
-          (occupied ? " touch-none" : "") +
-          (dragging ? " cursor-grabbing" : overScreenshot ? " cursor-grab" : "")
-        }
+        className={cn(
+          "studio-well relative min-h-0 flex-1",
+          fileDrag && "ring-2 ring-inset ring-ring",
+          occupied && "touch-none",
+          dragging ? "cursor-grabbing" : overScreenshot && "cursor-grab",
+        )}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -457,9 +459,12 @@ function gradientCss(value: GradientBackground): string {
 }
 
 function chipClass(selected: boolean): string {
-  return selected
-    ? "aspect-square w-full rounded-md border border-border ring-2 ring-ring ring-offset-2 ring-offset-card"
-    : "aspect-square w-full rounded-md border border-border transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
+  return cn(
+    "aspect-square w-full rounded-md border border-border",
+    selected
+      ? "ring-2 ring-ring ring-offset-2 ring-offset-card"
+      : "transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card",
+  );
 }
 
 function formatText(value: string): string {
@@ -568,11 +573,10 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
             value={currentSolid ?? lastSolid}
             disabled={currentSolid === null}
             aria-label="Background color picker"
-            className={
-              currentSolid === null
-                ? "studio-swatch size-8 shrink-0 cursor-default border-0 border-l border-input"
-                : "studio-swatch size-8 shrink-0 cursor-pointer border-0 border-l border-input"
-            }
+            className={cn(
+              "studio-swatch size-8 shrink-0 border-0 border-l border-input",
+              currentSolid === null ? "cursor-default" : "cursor-pointer",
+            )}
             onChange={onNativeChange}
           />
         </div>
@@ -612,11 +616,12 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
                   type="button"
                   title={record.filename}
                   aria-label={record.filename}
-                  className={
+                  className={cn(
+                    "block w-full overflow-hidden rounded-md",
                     current
-                      ? "block w-full overflow-hidden rounded-md ring-2 ring-ring ring-offset-2 ring-offset-card"
-                      : "block w-full overflow-hidden rounded-md border border-border"
-                  }
+                      ? "ring-2 ring-ring ring-offset-2 ring-offset-card"
+                      : "border border-border",
+                  )}
                   onClick={() => writeImage(record.id)}
                 >
                   <ImageThumbnail blob={record.blob} />
@@ -625,11 +630,12 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
                   type="button"
                   aria-label={`Remove ${record.filename}`}
                   disabled={current}
-                  className={
+                  className={cn(
+                    "absolute top-1 right-1 flex size-5 items-center justify-center rounded-sm bg-card/90",
                     current
-                      ? "absolute top-1 right-1 flex size-5 cursor-default items-center justify-center rounded-sm bg-card/90 text-muted-foreground"
-                      : "absolute top-1 right-1 flex size-5 cursor-pointer items-center justify-center rounded-sm bg-card/90 text-foreground shadow-sm"
-                  }
+                      ? "cursor-default text-muted-foreground"
+                      : "cursor-pointer text-foreground shadow-sm",
+                  )}
                   onClick={() => {
                     void removeImage(record.id);
                   }}
@@ -653,11 +659,12 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
             />
             <label
               htmlFor={pickerId}
-              className={
+              className={cn(
+                "flex aspect-square flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px]",
                 addDisabled
-                  ? "flex aspect-square cursor-default flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px] text-muted-foreground"
-                  : "flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px] transition-colors hover:bg-accent"
-              }
+                  ? "cursor-default text-muted-foreground"
+                  : "cursor-pointer transition-colors hover:bg-accent",
+              )}
             >
               <Plus className="size-3.5" aria-hidden="true" />
               Add
@@ -696,9 +703,12 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function textChipClass(selected: boolean): string {
-  return selected
-    ? "rounded-md border border-border bg-background px-2 py-1.5 text-center text-[11px] font-medium ring-2 ring-ring ring-offset-2 ring-offset-card"
-    : "rounded-md border border-border px-2 py-1.5 text-center text-[11px] text-muted-foreground transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
+  return cn(
+    "rounded-md border border-border px-2 py-1.5 text-center text-[11px]",
+    selected
+      ? "bg-background font-medium ring-2 ring-ring ring-offset-2 ring-offset-card"
+      : "text-muted-foreground transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card",
+  );
 }
 
 function FrameInspector({ session }: { session: StudioSession }) {
