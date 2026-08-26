@@ -6,7 +6,6 @@ priority: medium
 labels:
     - maintenance
 depends_on:
-    - rdenqt
     - aofakr
     - dza8bk
     - el94on
@@ -14,7 +13,7 @@ depends_on:
     - f1vkwy
     - t5q19d
 created: 2026-08-26T16:32:53Z
-updated: 2026-08-26T17:41:33Z
+updated: 2026-08-26T17:55:10Z
 ---
 
 ## Finding
@@ -56,7 +55,7 @@ Do **not** set a per-file threshold on `routes/index.tsx` in this issue. The pag
 
 **`passWithNoTests`: delete the flag.** It was presumably added for the empty `packages/`, which holds only a `.gitkeep` and stays empty by decision (`0abxd5`). Also delete the `tools/*` glob from `pnpm-workspace.yaml` — that directory does not exist at all. With no member project legitimately lacking tests, the flag has nothing left to serve and only hides discovery breakage.
 
-**CI runs coverage.** Add `--coverage` to the test step so the floor is enforced where it matters. `rdenqt` consolidates CI onto `pnpm ci` and runs before this — put `--coverage` into whichever command that issue left standing, not into a second one.
+**CI runs coverage.** Add `--coverage` to the test step so the floor is enforced where it matters. Today `.github/workflows/ci.yml` runs `pnpm check`, `pnpm test`, `pnpm build` inline, and `package.json` defines `"ci"` as the same sequence. Put `--coverage` in **both** — the workflow step and the `ci` script — so it survives whichever one wins. `rdenqt` runs after this and consolidates the workflow onto `pnpm ci`; it is told to preserve the flag.
 
 ## Acceptance additions
 
@@ -67,4 +66,4 @@ Do **not** set a per-file threshold on `routes/index.tsx` in this issue. The pag
 
 ## Order
 
-Runs near the end: after `rdenqt` (which owns the CI file) and after `aofakr`, `dza8bk`, and `el94on` (which add the tests the floor is measured against).
+Runs near the end, after `aofakr`, `dza8bk`, `el94on`, `yju1dp`, `f1vkwy`, and `t5q19d` — every issue that changes the number the floor is measured against. `rdenqt` runs after this, not before: it ends in `needs-review` by design, and blocking this issue behind it would strand the coverage floor.

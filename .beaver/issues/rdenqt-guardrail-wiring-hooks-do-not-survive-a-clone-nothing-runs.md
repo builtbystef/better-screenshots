@@ -5,8 +5,10 @@ state: todo
 priority: medium
 labels:
     - maintenance
+depends_on:
+    - y21uby
 created: 2026-08-26T16:34:42Z
-updated: 2026-08-26T17:41:14Z
+updated: 2026-08-26T17:55:10Z
 ---
 
 ## Finding
@@ -36,7 +38,7 @@ A fresh clone plus install has working hooks. A red test suite cannot be pushed 
 
 ## Decisions (settled 2026-08-26)
 
-**Correction: `vp hooks install` does not work.** `vp --help` lists a `hooks` command, but `vp hooks` on this toolchain (`vp v0.2.9`) fails with `error: Command 'hooks' not found`. `vp config` is the documented hook installer and it also failed here, on a stale `.git/config.lock` rather than on the command itself.
+**Correction: `vp hooks install` does not work.** `vp --help` lists a `hooks` command, but `vp hooks` on this toolchain (`vp v0.2.9`) fails with `error: Command 'hooks' not found`. `vp config` is the documented hook installer. It could not be tested: the audit ran in a sandbox that bind-mounts `/dev/null` over `.git/config.lock`, so every write to `.git/config` fails with `could not lock config file .git/config: File exists`. That is the sandbox, not the toolchain — `vp config` may work perfectly in a normal shell. `vite-plus` is installed locally (`node_modules/vite-plus`), so the missing `hooks` subcommand is not a missing-install problem.
 
 So do not put an unverified `vp` subcommand in `prepare`. **Use the plain git command:**
 
@@ -44,7 +46,7 @@ So do not put an unverified `vp` subcommand in `prepare`. **Use the plain git co
 "prepare": "git config core.hooksPath .vite-hooks/_"
 ```
 
-It is one line, it has no toolchain dependency, and it is exactly what the missing local config does. Verify it by clearing `core.hooksPath`, running `pnpm install`, and confirming the hook fires. If `vp config` turns out to work once the lock is cleared, prefer it and say so in the closing note — but the acceptance criterion is a working hook after a clone, not a particular command.
+It is one line, it has no toolchain dependency, and it is exactly what the missing local config does. Try `vp config` first in a normal shell; if it works, prefer it and say so in the closing note. The criterion is a working hook after a clone, not a particular command.
 
 **Note that `.vite-hooks/_/` was regenerated on 2026-08-26**, so something in the local toolchain does reinstall the dispatcher. That does not change the finding: the directory is `*`-gitignored and `core.hooksPath` is local-only, so a fresh clone still gets nothing.
 
@@ -57,13 +59,23 @@ It is one line, it has no toolchain dependency, and it is exactly what the missi
 
 **`.vite-hooks/pre-push` contains `vp test`.** The dispatcher at `.vite-hooks/_/pre-push` already exists and exits 0 when the script is missing, so this is one new file.
 
-## Acceptance additions
+## Acceptance — what this session verifies
 
-- A fresh clone plus `pnpm install` has a firing pre-commit hook, verified by clearing `core.hooksPath` first.
-- `git push` with a failing test is rejected locally.
+- `.vite-hooks/pre-push` exists and contains `vp test`.
 - A test fails when the three deny lists disagree, and the current `/run/podman/podman.sock` drift is fixed.
-- `.github/workflows/ci.yml` runs `pnpm ci` and nothing else.
+- `.github/workflows/ci.yml` runs `pnpm ci` and nothing else, and `pnpm ci` still carries the `--coverage` flag `y21uby` added to the test step.
+- `AGENTS.md` and the README point at `pnpm ci` for the sequence, while `AGENTS.md` keeps listing the four commands individually.
+- The four checks pass.
+
+## Acceptance — what the user verifies, once
+
+**This issue does not close itself.** A sandboxed session cannot write `.git/config`, so it cannot clear `core.hooksPath`, reinstall, and watch the hook fire — the one criterion that actually proves the fix. Make the change, then end with a note naming these two steps, apply `needs-review`, release the claim, and stop:
+
+1. `git config --unset core.hooksPath && pnpm install` — the pre-commit hook fires again.
+2. A commit with a failing test is rejected by `git push`.
+
+Do not claim either one passed on the strength of reading the script.
 
 ## Order
 
-Runs before `y21uby`, which adds `--coverage` to whatever CI command this issue leaves standing.
+Runs after `y21uby`, so this issue is the last thing to touch `.github/workflows/ci.yml` and the consolidation lands on top of the coverage flag rather than under it.
