@@ -18,6 +18,7 @@ export default defineConfig({
       "**/coverage/**",
       ".agents/**",
       ".claude/**",
+      ".pi/**",
       ".beaver/**",
       "**/routeTree.gen.ts",
     ],
