@@ -148,3 +148,28 @@ test("Aspect presets are the seven named Frame sizes in order", () => {
     ["1.91:1", 1200, 630],
   ]);
 });
+
+test("each Aspect preset's name describes its Frame ratio", () => {
+  for (const preset of aspectPresets) {
+    const namedRatio = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(preset.name);
+    expect(namedRatio).not.toBeNull();
+    if (namedRatio === null) {
+      continue;
+    }
+    const namedWidth = Number(namedRatio[1]);
+    const namedHeight = Number(namedRatio[2]);
+    expect(Math.abs(preset.width / preset.height - namedWidth / namedHeight)).toBeLessThan(0.01);
+  }
+});
+
+test("every Catalog color is a six-digit hex", () => {
+  const colors = [
+    ...catalogSolids.map((solid) => solid.color),
+    ...catalogGradients.flatMap((gradient) => gradient.value.stops.map((stop) => stop.color)),
+    catalogDefaultSolid.color,
+  ];
+
+  for (const color of colors) {
+    expect(color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+  }
+});

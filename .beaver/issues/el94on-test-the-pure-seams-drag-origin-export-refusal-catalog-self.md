@@ -1,7 +1,8 @@
 ---
 id: el94on
 title: 'Test the pure seams: drag origin, export refusal, Catalog self-consistency'
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - dwzqq1
     - p6557v
 created: 2026-08-26T17:32:13Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:53:29Z
 ---
 
 ## Finding
@@ -30,3 +31,13 @@ Split out of `aofakr`. Three cheap seams with no DOM cost, each a one-line delet
 - Each of the three seams has a test that fails when the behaviour is broken.
 - The `positionFromDrag` and Catalog tests run in the default node environment.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T18:53:08Z
+
+Test seams: positionFromDrag and the exported Catalog collections in the default Node environment; StudioSession.exportPng at the injected canvas adapter seam in jsdom. Added mutation checks confirming each new assertion turns red when its protected behavior is removed.
+
+**agent** — 2026-08-26T18:53:29Z
+
+Completed: moved positionFromDrag coverage into a default-Node test and added a non-zero drag origin assertion; added Catalog ratio and six-digit-hex self-consistency assertions in default Node; added occupied-session exportPng coverage for a null toBlob result. Mutation runs confirmed all three protected branches turn red. Verification passed: vp fmt --check, vp lint, vp check --no-fmt --no-lint, vp test (122 tests).

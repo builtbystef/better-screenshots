@@ -486,6 +486,19 @@ test("exportPng writes a timestamped PNG from the rendered bitmap", async () => 
   expect(result.blob.size).toBeGreaterThan(0);
 });
 
+test("exportPng refuses when PNG encoding fails", async () => {
+  const canvas = document.createElement("canvas");
+  canvas.toBlob = (callback) => callback(null);
+  const session = await createSession({
+    defaultSolid,
+    store: emptyStore(),
+    createCanvas: () => canvas,
+  });
+  expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
+
+  expect(await session.exportPng(new Date(2026, 7, 19, 14, 5, 3))).toBe("refuse");
+});
+
 test("exportPng refuses when screenshot is null", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
