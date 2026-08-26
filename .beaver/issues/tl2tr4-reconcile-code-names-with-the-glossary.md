@@ -11,7 +11,7 @@ depends_on:
     - mqab43
     - p6557v
 created: 2026-08-26T16:34:00Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T17:52:26Z
 ---
 
 ## Finding
@@ -64,3 +64,25 @@ No _Avoid_ synonym appears in production identifiers for the concept it is banne
 ## Order
 
 Runs after `dwzqq1`, `mqab43`, and `p6557v` — renaming before the moves settle means renaming twice.
+
+## Notes
+
+**claude** — 2026-08-26T17:52:26Z
+
+Glossary: the Browser window placement rule is settled, do not re-litigate it.
+
+Padding, Position, and Scale all act on the Screenshot together with its Browser window — `derivePlacement` (session.ts:85-99) computes `objectHeight = screenshot.height + chromeHeight(...)` and derives the fit, the drawn size, and the center from that. The three entries carried a repeated "— and its Browser window, when present —" qualifier; it was trimmed on 2026-08-26, which made them inaccurate.
+
+Settled by stating it once in the Browser window entry, which sits directly above the three it governs:
+
+  The Chrome-style title and address bar drawn around a Screenshot. The two
+  are placed as one, so Padding, Position, and Scale act on both.
+
+Leave Padding, Position, and Scale as one sentence each. Do not reintroduce the per-entry qualifier.
+
+Two more glossary mismatches to sweep while you are in the file, neither covered by 11cr8l:
+
+- **Background**: "The surface a composition's screenshots sit on." Lowercase "composition", and plural "screenshots" against `screenshot: Blob | null`.
+- **Effect**: "A visual change applied to a screenshot". Lowercase.
+
+Both are the same singular/capitalisation fix as the Composition entry this issue already carries.

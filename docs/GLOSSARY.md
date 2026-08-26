@@ -41,7 +41,7 @@ A named Frame size the Inspector can write.
 _Avoid_: social size, ratio (when the named Frame is meant)
 
 **Browser window**:
-The Chrome-style title and address bar drawn around a Screenshot.
+The Chrome-style title and address bar drawn around a Screenshot. The two are placed as one, so Padding, Position, and Scale act on both.
 _Avoid_: browser chrome, device frame, chrome (when this wrap is meant)
 
 **Padding**:
