@@ -1,7 +1,8 @@
 ---
 id: tl2tr4
 title: Reconcile code names with the glossary
-state: todo
+state: done
+assignee: agent
 priority: low
 labels:
     - maintenance
@@ -11,7 +12,7 @@ depends_on:
     - mqab43
     - p6557v
 created: 2026-08-26T16:34:00Z
-updated: 2026-08-26T17:52:26Z
+updated: 2026-08-26T19:22:52Z
 ---
 
 ## Finding
@@ -86,3 +87,7 @@ Two more glossary mismatches to sweep while you are in the file, neither covered
 - **Effect**: "A visual change applied to a screenshot". Lowercase.
 
 Both are the same singular/capitalisation fix as the Composition entry this issue already carries.
+
+**agent** — 2026-08-26T19:22:51Z
+
+Completed the remaining vocabulary reconciliation: renamed Preview hover state from overShot/setOverShot to overScreenshot/setOverScreenshot; added Uploaded background, Session, and Refuse to the glossary with the settled definitions and avoided terms; and corrected Background, Composition, and Effect to use singular, capitalized domain terms. No new decisions were needed. Verified the banned identifier grep is empty and format, lint, typecheck, and all 131 tests pass.

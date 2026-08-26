@@ -8,6 +8,14 @@ The project's shared language. The rules: use one term for each concept — the 
 The browser app where the user makes a Composition.
 _Avoid_: editor, app, site
 
+**Session**:
+The live Composition and its writers, opened when the Studio loads.
+_Avoid_: store, state, model
+
+**Refuse**:
+The result a writer returns when it will not accept a value.
+_Avoid_: error, reject, fail
+
 **Inspector**:
 The single Studio panel for Frame, Background, placement, Browser window, and Effects.
 _Avoid_: sidebar, properties, settings (when this panel is meant)
@@ -21,15 +29,19 @@ The source image the user brings into the Studio.
 _Avoid_: capture, shot, image (when the upload is meant)
 
 **Background**:
-The surface a composition's screenshots sit on.
+The surface a Composition's Screenshot sits on.
 _Avoid_: canvas, backdrop, scene
+
+**Uploaded background**:
+A Background image the user supplied, stored in the browser and listed in the Inspector's Image group. It is distinct from a Catalog value and from a Screenshot.
+_Avoid_: custom background, user image
 
 **Catalog**:
 The finite set of built-in Background values and Aspect presets the Inspector can write.
 _Avoid_: palette, theme, presets (when the built-in Background set is meant)
 
 **Composition**:
-One arranged result: a Frame, a background, the screenshots on it, their padding, their effects, and an optional Browser window.
+One arranged result: a Frame, a Background, the Screenshot on it, its Padding, its Effects, and an optional Browser window.
 _Avoid_: design, mockup, poster
 
 **Frame**:
@@ -57,7 +69,7 @@ The size of the Screenshot relative to the size that fits it inside the Padding.
 _Avoid_: zoom, magnification
 
 **Effect**:
-A visual change applied to a screenshot — shadow, border, or rounded corners.
+A visual change applied to a Screenshot — shadow, border, or rounded corners.
 _Avoid_: treatment, filter, style
 
 **Export**:

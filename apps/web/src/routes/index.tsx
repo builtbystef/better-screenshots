@@ -133,7 +133,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
   const [fileDrag, setFileDrag] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [overShot, setOverShot] = useState(false);
+  const [overScreenshot, setOverScreenshot] = useState(false);
   const occupied = session.composition.screenshot !== null;
   const exportDisabled = !occupied || exporting;
 
@@ -311,7 +311,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
       previewWidth: canvas.clientWidth,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
-    setOverShot(true);
+    setOverScreenshot(true);
   }
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -320,7 +320,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
     }
     const drag = dragRef.current;
     if (drag === null) {
-      setOverShot(occupied && screenshotHit(event.clientX, event.clientY));
+      setOverScreenshot(occupied && screenshotHit(event.clientX, event.clientY));
       return;
     }
     if (event.clientX === drag.start.x && event.clientY === drag.start.y) {
@@ -351,7 +351,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
       return;
     }
     endDrag();
-    setOverShot(occupied && screenshotHit(event.clientX, event.clientY));
+    setOverScreenshot(occupied && screenshotHit(event.clientX, event.clientY));
   }
 
   function onPointerCancel(event: PointerEvent<HTMLDivElement>) {
@@ -359,12 +359,12 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
       return;
     }
     endDrag();
-    setOverShot(false);
+    setOverScreenshot(false);
   }
 
   function onPointerLeave() {
     if (dragRef.current === null) {
-      setOverShot(false);
+      setOverScreenshot(false);
     }
   }
 
@@ -407,7 +407,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
           "studio-well relative min-h-0 flex-1" +
           (fileDrag ? " ring-2 ring-inset ring-ring" : "") +
           (occupied ? " touch-none" : "") +
-          (dragging ? " cursor-grabbing" : overShot ? " cursor-grab" : "")
+          (dragging ? " cursor-grabbing" : overScreenshot ? " cursor-grab" : "")
         }
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
