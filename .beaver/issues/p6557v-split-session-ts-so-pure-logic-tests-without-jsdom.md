@@ -1,14 +1,15 @@
 ---
 id: p6557v
 title: Split session.ts so pure logic tests without jsdom
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - 4cagyi
 created: 2026-08-26T16:31:01Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:45:58Z
 ---
 
 ## Finding
@@ -66,3 +67,9 @@ Related, fix while here: `session.ts:81-83` `chromeHeight` computes the bar heig
 ## Order
 
 Runs after `4cagyi`. Independent of the `chrome.ts` chain — different files — so it can run alongside it. `t5q19d`, `v4l2o5`, `dza8bk`, `el94on`, and `f1vkwy` all run after it.
+
+## Notes
+
+**agent** — 2026-08-26T18:45:58Z
+
+Completed the placement/paint extraction: placement.ts now owns direct-tested geometry, paint.ts owns Canvas 2D passes and rendering, and session.ts coordinates state with an optional defaulted canvas factory. Split default-Node session/validator and placement tests from jsdom pixel tests; retained compositing, clipping, cover-fit, gradient, Preview/Export parity pixel coverage. Replaced the rounded-rect pass-through with scaled Rect paths, unified Browser window bar height, applied settled terminology, and marked both architecture rows current. All four checks pass (110 tests).

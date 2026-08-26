@@ -6,7 +6,9 @@ The Studio is one browser application under `apps/web`. Its modules expose small
 
 | Module                             | Interface                                                                                                                      | Hides                                                                                                                                                                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web/src/session.ts`          | `createSession(...) -> StudioSession`, plus the Composition and storage port types                                             | The Composition shape and state machine, validation, `derivePlacement` geometry, and the background, shadow, Browser window, and Screenshot paint passes                                                    |
+| `apps/web/src/session.ts`          | `createSession(...) -> StudioSession`, plus the Composition and storage port types                                             | The Composition shape, state machine, and validation                                                                                                                                                        |
+| `apps/web/src/placement.ts`        | `derivePlacement`, `browserWindowHeight`, and `gradientLine`                                                                   | Composition geometry; loads in Node                                                                                                                                                                         |
+| `apps/web/src/paint.ts`            | The four paint passes and `renderComposition`                                                                                  | Canvas 2D drawing and image decoding                                                                                                                                                                        |
 | `apps/web/src/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                                                            | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
 | `apps/web/src/catalog.ts`          | `catalogSolids`, `catalogGradients`, `catalogDefaultSolid`, and `aspectPresets`                                                | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
 | `apps/web/src/scheme.ts`           | `schemeBootScript`                                                                                                             | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
@@ -20,12 +22,12 @@ The current source dependency direction is:
 
 ```text
 routes/index.tsx -> session, catalog, messages, parse, drag, scheme, indexed-db-store
+session.ts       -> placement, paint
+paint.ts         -> placement, session types
 messages.ts      -> session types
 catalog.ts       -> session types
 indexed-db-store.ts -> session's UploadedBackgroundStore port
 ```
-
-`session.ts` currently has no source imports. It nevertheless combines state, geometry, Canvas 2D painting, and browser image decoding; the target map separates those responsibilities.
 
 ## Target module map
 
@@ -34,8 +36,8 @@ Structural issues move one row at a time from **Target** to current. Keep this m
 | Status     | Module                | Interface                                                                   | Hides                                                        |
 | ---------- | --------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | Current    | `session.ts`          | `StudioSession` and the `createSession` coordinator                         | The Composition state machine and writer validation          |
-| **Target** | `placement.ts`        | `derivePlacement`, `browserWindowHeight`, `gradientLine`                    | Composition geometry; loads in Node                          |
-| **Target** | `paint.ts`            | The four paint passes and `renderComposition`                               | Canvas 2D drawing and image decoding                         |
+| Current    | `placement.ts`        | `derivePlacement`, `browserWindowHeight`, `gradientLine`                    | Composition geometry; loads in Node                          |
+| Current    | `paint.ts`            | The four paint passes and `renderComposition`                               | Canvas 2D drawing and image decoding                         |
 | Current    | `catalog.ts`          | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor` | Built-in Background and Aspect preset lookup                 |
 | Current    | `messages.ts`         | Refusal and affordance message functions                                    | User-facing outcome copy; loads in Node                      |
 | Current    | `parse.ts`            | `parseHex`, `parseOpacityPercent`, formatters, and `commitDraft`            | Text-field parsing and commit rules; loads in Node           |
