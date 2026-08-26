@@ -19,22 +19,16 @@ import {
   catalogSolidFor,
   catalogSolids,
 } from "../catalog";
+import { clampPosition, isFileDrag, isTextFieldTarget, positionFromDrag } from "../drag";
+import { createIndexedDbStore } from "../indexed-db-store";
 import {
-  clampPosition,
   exportLine,
-  isFileDrag,
-  isTextFieldTarget,
-  parseHex,
-  parseInteger,
-  parseOpacityPercent,
-  parseScale,
   placeLine,
-  positionFromDrag,
   uploadLine,
   type PlaceOutcome,
   type PlaceSource,
-} from "../chrome";
-import { createIndexedDbStore } from "../indexed-db-store";
+} from "../messages";
+import { parseHex, parseInteger, parseOpacityPercent, parseScale } from "../parse";
 import {
   createSession,
   type BrowserWindow,

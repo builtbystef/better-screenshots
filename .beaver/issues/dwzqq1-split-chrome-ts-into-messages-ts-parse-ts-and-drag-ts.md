@@ -1,7 +1,8 @@
 ---
 id: dwzqq1
 title: Split chrome.ts into messages.ts, parse.ts, and drag.ts
-state: todo
+state: done
+assignee: agent
 priority: high
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - i57ovz
     - 1o9amb
 created: 2026-08-26T17:31:27Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:22:35Z
 ---
 
 ## Finding
@@ -43,3 +44,9 @@ Keep `clampPosition` here for now even though `jcden7` deletes it next — movin
 - The test count is unchanged: this move adds and removes no assertions.
 - `docs/ARCHITECTURE.md` shows the three modules as current, not target.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T18:22:35Z
+
+Completed the pure split: moved copy helpers to messages.ts, parsers to parse.ts, and DOM/drag helpers to drag.ts; updated route imports and architecture; removed chrome.ts. Test seams are the three new module interfaces; the original 27 assertions are unchanged, with only drag.test.ts using jsdom. All four checks pass (102 tests total).

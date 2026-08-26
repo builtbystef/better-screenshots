@@ -10,20 +10,22 @@ The Studio is one browser application under `apps/web`. Its modules expose small
 | `apps/web/src/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
 | `apps/web/src/catalog.ts`          | `catalogSolids`, `catalogGradients`, `catalogDefaultSolid`, and `aspectPresets`    | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
 | `apps/web/src/scheme.ts`           | `schemeBootScript`                                                                 | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
-| `apps/web/src/chrome.ts`           | Pure helpers for messages, parsing, Catalog matching, and drag geometry            | Refusal copy, input syntax, chip matching, and Position calculations                                                                                                                                        |
+| `apps/web/src/messages.ts`         | Refusal and affordance message functions                                           | User-facing outcome copy; loads in Node                                                                                                                                                                     |
+| `apps/web/src/parse.ts`            | Text-field parsing functions                                                       | Input syntax and commit rules; loads in Node                                                                                                                                                                |
+| `apps/web/src/drag.ts`             | DOM event predicates and drag geometry                                             | DataTransfer and pointer geometry                                                                                                                                                                           |
 | `apps/web/src/routes/index.tsx`    | TanStack Router's `/` route with `HomePage`                                        | The Studio shell, Preview, the five Inspector sections, DOM event handling, and React state                                                                                                                 |
 | `apps/web/src/lib/utils.ts`        | `cn(...)`                                                                          | Tailwind class merging                                                                                                                                                                                      |
 
 The current source dependency direction is:
 
 ```text
-routes/index.tsx -> session, catalog, chrome, scheme, indexed-db-store
-chrome.ts        -> session and catalog types
+routes/index.tsx -> session, catalog, messages, parse, drag, scheme, indexed-db-store
+messages.ts      -> session types
 catalog.ts       -> session types
 indexed-db-store.ts -> session's UploadedBackgroundStore port
 ```
 
-`session.ts` currently has no source imports. It nevertheless combines state, geometry, Canvas 2D painting, and browser image decoding; the target map separates those responsibilities. Likewise, `chrome.ts` is a temporary collection, not an architectural layer.
+`session.ts` currently has no source imports. It nevertheless combines state, geometry, Canvas 2D painting, and browser image decoding; the target map separates those responsibilities.
 
 ## Target module map
 
@@ -35,17 +37,15 @@ Structural issues move one row at a time from **Target** to current. Keep this m
 | **Target** | `placement.ts`        | `derivePlacement`, `browserWindowHeight`, `gradientLine`                    | Composition geometry; loads in Node                          |
 | **Target** | `paint.ts`            | The four paint passes and `renderComposition`                               | Canvas 2D drawing and image decoding                         |
 | Current    | `catalog.ts`          | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor` | Built-in Background and Aspect preset lookup                 |
-| **Target** | `messages.ts`         | Refusal and affordance message functions                                    | User-facing outcome copy; loads in Node                      |
-| **Target** | `parse.ts`            | `parseHex`, `parseOpacityPercent`, formatters, and `commitDraft`            | Text-field parsing and commit rules; loads in Node           |
-| **Target** | `drag.ts`             | `isFileDrag`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`              | DataTransfer and pointer geometry                            |
+| Current    | `messages.ts`         | Refusal and affordance message functions                                    | User-facing outcome copy; loads in Node                      |
+| Current    | `parse.ts`            | `parseHex`, `parseOpacityPercent`, formatters, and `commitDraft`            | Text-field parsing and commit rules; loads in Node           |
+| Current    | `drag.ts`             | `isFileDrag`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`              | DataTransfer and pointer geometry                            |
 | Current    | `scheme.ts`           | `schemeBootScript`                                                          | The single light/dark rule and colour-scheme DOM integration |
 | Current    | `indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                         | The production persistence adapter                           |
 | **Target** | `hooks/use-draft.ts`  | The draft/commit/revert hook                                                | React draft-input lifecycle                                  |
 | Current    | `lib/utils.ts`        | `cn(...)`                                                                   | Tailwind class merging                                       |
 | **Target** | `components/ui/`      | shadcn components                                                           | Reusable presentation primitives, after spec `u5l5hp`        |
 | Current    | `routes/index.tsx`    | `HomePage`                                                                  | JSX and React state only                                     |
-
-`chrome.ts` is absent from the target. Issue `dwzqq1` replaces it with `messages.ts`, `parse.ts`, and `drag.ts` rather than creating another umbrella module.
 
 Target dependencies point one way:
 
@@ -56,7 +56,7 @@ paint.ts         -> placement
 placement.ts, parse.ts, messages.ts, scheme.ts -> nothing
 ```
 
-In the target, DOM access is permitted in exactly five places: `paint.ts`, `drag.ts`, `scheme.ts`, `indexed-db-store.ts`, and the route tree. Every other module must load and test in the default Node environment. A `@vitest-environment jsdom` pragma on another module's test is therefore a layering violation. Until the target extractions land, the current `session.ts` and `chrome.ts` necessarily retain the DOM access assigned to their target replacements.
+In the target, DOM access is permitted in exactly five places: `paint.ts`, `drag.ts`, `scheme.ts`, `indexed-db-store.ts`, and the route tree. Every other module must load and test in the default Node environment. A `@vitest-environment jsdom` pragma on another module's test is therefore a layering violation. Until the remaining target extractions land, the current `session.ts` necessarily retains the DOM access assigned to its target replacements.
 
 ## Composition invariants
 
