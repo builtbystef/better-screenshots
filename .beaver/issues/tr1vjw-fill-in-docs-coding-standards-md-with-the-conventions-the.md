@@ -1,17 +1,18 @@
 ---
 id: tr1vjw
 title: Fill in docs/CODING_STANDARDS.md with the conventions the code enforces
-state: todo
+state: in-progress
 priority: low
 labels:
     - maintenance
+    - needs-review
 depends_on:
     - f1vkwy
     - msmb41
     - dwzqq1
     - tl2tr4
 created: 2026-08-26T16:35:13Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:24:01Z
 ---
 
 ## Finding
@@ -63,3 +64,9 @@ Every rule in the file is one a reviewer can check against a diff. The four chec
 ## Order
 
 Last. After `f1vkwy`, `msmb41`, `dwzqq1`, and `tl2tr4`.
+
+## Notes
+
+**agent** — 2026-08-26T19:24:01Z
+
+The acceptance criteria contradict the settled rule count. “Record all five, plus three” requires the five listed conventions and three queue conventions (eight before dependencies), while the acceptance additions require exactly eight total rules and also require retaining the existing dependency rule (nine total). Options: (1) require nine rules; (2) identify which one of the eight listed conventions the dependency rule replaces; or (3) combine two conventions into one rule and specify which pair. User must decide, record the decision in a note, and remove the needs-review label.
