@@ -6,6 +6,7 @@ import {
   useId,
   useRef,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type KeyboardEvent,
   type PointerEvent,
@@ -22,6 +23,7 @@ import {
 import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "../drag";
 import { createIndexedDbStore } from "../indexed-db-store";
 import {
+  changeLine,
   exportLine,
   placeLine,
   uploadLine,
@@ -51,8 +53,6 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const [session, setSession] = useState<StudioSession | null>(null);
-  const [revision, setRevision] = useState(0);
-  const bump = useCallback(() => setRevision((current) => current + 1), []);
 
   useEffect(() => {
     void createSession({
@@ -61,46 +61,52 @@ function HomePage() {
     }).then(setSession);
   }, []);
 
-  if (session === null) {
-    return null;
-  }
+  return session === null ? null : <Studio session={session} />;
+}
+
+function Studio({ session }: { session: StudioSession }) {
+  const sessionVersion = useSyncExternalStore(
+    session.subscribe,
+    () => session.version,
+    () => session.version,
+  );
 
   return (
     <main className="flex h-svh min-h-svh min-w-[48rem] bg-background">
       <h1 className="sr-only">Better Screenshots</h1>
       <section className="min-h-0 min-w-0 flex-1">
-        <Preview session={session} revision={revision} onPlaced={bump} />
+        <Preview session={session} sessionVersion={sessionVersion} />
       </section>
       <aside className="flex w-80 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-border bg-card text-card-foreground">
         <section className="border-b border-border px-4 py-5">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Frame
           </h2>
-          <FrameInspector session={session} onChange={bump} />
+          <FrameInspector session={session} />
         </section>
         <section className="border-b border-border px-4 py-5">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Background
           </h2>
-          <BackgroundInspector session={session} onChange={bump} />
+          <BackgroundInspector session={session} />
         </section>
         <section className="border-b border-border px-4 py-5">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Placement
           </h2>
-          <PlacementInspector session={session} onChange={bump} />
+          <PlacementInspector session={session} />
         </section>
         <section className="border-b border-border px-4 py-5">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Window
           </h2>
-          <WindowInspector session={session} onChange={bump} />
+          <WindowInspector session={session} />
         </section>
         <section className="px-4 py-5">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
             Effects
           </h2>
-          <EffectsInspector session={session} onChange={bump} />
+          <EffectsInspector session={session} />
         </section>
       </aside>
     </main>
@@ -112,15 +118,7 @@ function previewCanvas(host: HTMLDivElement | null): HTMLCanvasElement | null {
   return child instanceof HTMLCanvasElement ? child : null;
 }
 
-function Preview({
-  session,
-  revision,
-  onPlaced,
-}: {
-  session: StudioSession;
-  revision: number;
-  onPlaced: () => void;
-}) {
+function Preview({ session, sessionVersion }: { session: StudioSession; sessionVersion: number }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
     origin: { x: number; y: number };
@@ -146,11 +144,8 @@ function Preview({
             ? "ok"
             : "refuse";
       setLine(placeLine(source, outcome));
-      if (outcome === "ok") {
-        onPlaced();
-      }
     },
-    [onPlaced, session],
+    [session],
   );
 
   useEffect(() => {
@@ -171,7 +166,7 @@ function Preview({
     return () => {
       cancelled = true;
     };
-  }, [revision, session]);
+  }, [session, sessionVersion]);
 
   useEffect(() => {
     let dragDepth = 0;
@@ -336,9 +331,8 @@ function Preview({
       previewWidth: drag.previewWidth,
       compositionWidth: session.composition.width,
     });
-    if (session.setPosition(next.x, next.y) === "ok") {
-      onPlaced();
-    }
+    const outcome = session.setPosition(next.x, next.y);
+    setLine(changeLine(outcome));
   }
 
   function endDrag() {
@@ -465,13 +459,7 @@ function chipClass(selected: boolean): string {
     : "aspect-square w-full rounded-md border border-border transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
 }
 
-function BackgroundInspector({
-  session,
-  onChange,
-}: {
-  session: StudioSession;
-  onChange: () => void;
-}) {
+function BackgroundInspector({ session }: { session: StudioSession }) {
   const pickerId = useId();
   const background = session.composition.background;
   const currentSolid = background.type === "solid" ? background.color : null;
@@ -491,7 +479,6 @@ function BackgroundInspector({
     }
     setLastSolid(color);
     setHexDraft(color);
-    onChange();
   }
 
   function writeGradient(value: GradientBackground) {
@@ -499,7 +486,6 @@ function BackgroundInspector({
       return;
     }
     setHexDraft("");
-    onChange();
   }
 
   function commitHex() {
@@ -528,12 +514,10 @@ function BackgroundInspector({
       return;
     }
     setHexDraft("");
-    onChange();
   }
 
   async function removeImage(id: string) {
-    await session.removeBackground(id);
-    onChange();
+    setLine(changeLine(await session.removeBackground(id)));
   }
 
   async function onAddChange(event: ChangeEvent<HTMLInputElement>) {
@@ -727,13 +711,11 @@ function textChipClass(selected: boolean): string {
     : "rounded-md border border-border px-2 py-1.5 text-center text-[11px] text-muted-foreground transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
 }
 
-function FrameInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
+function FrameInspector({ session }: { session: StudioSession }) {
   const selected = aspectPresetFor(session.composition.width, session.composition.height);
 
   function writePreset(width: number, height: number) {
-    if (session.setSize(width, height) === "ok") {
-      onChange();
-    }
+    session.setSize(width, height);
   }
 
   return (
@@ -768,8 +750,9 @@ const windowSchemes: ReadonlyArray<{ name: string; value: BrowserWindow }> = [
   { name: "Dark", value: "dark" },
 ];
 
-function WindowInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
+function WindowInspector({ session }: { session: StudioSession }) {
   const { browserWindow, url } = session.composition;
+  const [line, setLine] = useState<string | null>(null);
 
   return (
     <div className="mt-4 flex flex-col gap-3">
@@ -786,9 +769,7 @@ function WindowInspector({ session, onChange }: { session: StudioSession; onChan
                 if (selected) {
                   return;
                 }
-                if (session.setBrowserWindow(entry.value) === "ok") {
-                  onChange();
-                }
+                session.setBrowserWindow(entry.value);
               }}
             >
               {entry.name}
@@ -805,21 +786,15 @@ function WindowInspector({ session, onChange }: { session: StudioSession; onChan
         aria-label="URL"
         className="min-w-0 rounded-md border border-input bg-background px-2.5 py-1.5 font-mono text-sm outline-none"
         onChange={(event) => {
-          session.setUrl(event.target.value);
-          onChange();
+          setLine(changeLine(session.setUrl(event.target.value)));
         }}
       />
+      {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
     </div>
   );
 }
 
-function PlacementInspector({
-  session,
-  onChange,
-}: {
-  session: StudioSession;
-  onChange: () => void;
-}) {
+function PlacementInspector({ session }: { session: StudioSession }) {
   const { padding, scale, position } = session.composition;
 
   return (
@@ -833,9 +808,7 @@ function PlacementInspector({
         format={formatInteger}
         parse={parseNonNegativeInteger}
         onWrite={(value) => {
-          if (session.setPadding(value) === "ok") {
-            onChange();
-          }
+          session.setPadding(value);
         }}
       />
       <KnobRow
@@ -847,43 +820,33 @@ function PlacementInspector({
         format={formatScale}
         parse={parseScale}
         onWrite={(value) => {
-          if (session.setScale(value) === "ok") {
-            onChange();
-          }
+          session.setScale(value);
         }}
       />
       <PositionRow
         x={position.x}
         y={position.y}
         onWrite={(x, y) => {
-          if (session.setPosition(x, y) === "ok") {
-            onChange();
-          }
+          session.setPosition(x, y);
         }}
       />
     </div>
   );
 }
 
-function EffectsInspector({ session, onChange }: { session: StudioSession; onChange: () => void }) {
+function EffectsInspector({ session }: { session: StudioSession }) {
   const { shadow, border, radius } = session.composition;
 
   function writeShadow(next: { offset?: number; blur?: number; opacity?: number }) {
-    if (
-      session.setShadow(
-        next.offset ?? shadow.offset,
-        next.blur ?? shadow.blur,
-        next.opacity ?? shadow.opacity,
-      ) === "ok"
-    ) {
-      onChange();
-    }
+    session.setShadow(
+      next.offset ?? shadow.offset,
+      next.blur ?? shadow.blur,
+      next.opacity ?? shadow.opacity,
+    );
   }
 
   function writeBorder(next: { width?: number; color?: HexColor }) {
-    if (session.setBorder(next.width ?? border.width, next.color ?? border.color) === "ok") {
-      onChange();
-    }
+    session.setBorder(next.width ?? border.width, next.color ?? border.color);
   }
 
   return (
@@ -944,9 +907,7 @@ function EffectsInspector({ session, onChange }: { session: StudioSession; onCha
         format={formatInteger}
         parse={parseNonNegativeInteger}
         onWrite={(value) => {
-          if (session.setRadius(value) === "ok") {
-            onChange();
-          }
+          session.setRadius(value);
         }}
       />
     </div>

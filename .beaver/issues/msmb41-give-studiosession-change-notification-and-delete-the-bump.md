@@ -1,14 +1,15 @@
 ---
 id: msmb41
 title: Give StudioSession change notification and delete the bump() protocol
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - mqab43
 created: 2026-08-26T16:31:56Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:40:05Z
 ---
 
 ## Finding
@@ -66,3 +67,13 @@ The page becomes `useSyncExternalStore(session.subscribe, () => session.version)
 ## Order
 
 Runs after `mqab43`. `yju1dp` rewrites the same rows and runs after this — taking the `onChange` prop out first means `yju1dp` rewrites each row once, not twice.
+
+## Notes
+
+**agent** — 2026-08-26T18:34:38Z
+
+Testing seams: StudioSession public interface for subscription delivery and unsubscribe behavior; route compile/type checks for useSyncExternalStore integration and refusal handling.
+
+**agent** — 2026-08-26T18:40:05Z
+
+Completed: StudioSession now exposes a stable subscribe function and numeric version, and every Composition, uploaded-Background, and storage-state change notifies through one commit path. Studio uses useSyncExternalStore; route revision/bump and Inspector onChange plumbing are removed. The drag Position, URL, and Background removal outcomes now flow through refusal copy. Added subscriber delivery, refusal, unsubscribe, stability, and copy tests. Verified format, lint, typecheck, and all 111 tests.

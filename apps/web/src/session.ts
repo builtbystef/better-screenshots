@@ -433,6 +433,8 @@ export type UploadRefuse = "undecodable" | "quota" | "unavailable";
 
 export type StudioSession = {
   readonly composition: Composition;
+  readonly version: number;
+  subscribe: (listener: () => void) => () => void;
   readonly uploadedBackgrounds: readonly UploadedBackground[];
   readonly placement: Placement | null;
   readonly storage: "ok" | "unavailable";
@@ -462,6 +464,8 @@ export async function createSession(options: {
   let storage: "ok" | "unavailable" = storeUnavailable ? "unavailable" : "ok";
   let uploadedBackgrounds: UploadedBackground[] = storeUnavailable ? [] : [...listed];
   let screenshotSize: Size | null = null;
+  let version = 0;
+  const listeners = new Set<() => void>();
   let composition: Composition = {
     width: 1920,
     height: 1080,
@@ -475,6 +479,17 @@ export async function createSession(options: {
     radius: 16,
     browserWindow: "none",
     url: "",
+  };
+  function commit(next: Composition): void {
+    composition = next;
+    version += 1;
+    for (const listener of [...listeners]) {
+      listener();
+    }
+  }
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
   };
   async function renderComposition(): Promise<HTMLCanvasElement> {
     const canvas = document.createElement("canvas");
@@ -506,6 +521,10 @@ export async function createSession(options: {
     get composition() {
       return composition;
     },
+    get version() {
+      return version;
+    },
+    subscribe,
     get uploadedBackgrounds() {
       return uploadedBackgrounds;
     },
@@ -521,8 +540,8 @@ export async function createSession(options: {
         if (size === null) {
           continue;
         }
-        composition = { ...composition, screenshot: blob };
         screenshotSize = size;
+        commit({ ...composition, screenshot: blob });
         return "ok";
       }
       return "refuse";
@@ -531,7 +550,7 @@ export async function createSession(options: {
       if (!isUsableBackground(background)) {
         return "refuse";
       }
-      composition = { ...composition, background };
+      commit({ ...composition, background });
       return "ok";
     },
     async uploadBackground(file, filename) {
@@ -557,9 +576,11 @@ export async function createSession(options: {
       }
       if (put === "unavailable") {
         storage = "unavailable";
+        commit(composition);
         return "unavailable";
       }
       uploadedBackgrounds = [...uploadedBackgrounds, record];
+      commit(composition);
       return record;
     },
     async removeBackground(id) {
@@ -572,48 +593,50 @@ export async function createSession(options: {
       const removed = await options.store.remove(id);
       if (removed === "unavailable") {
         storage = "unavailable";
+        commit(composition);
         return "refuse";
       }
       uploadedBackgrounds = uploadedBackgrounds.filter((record) => record.id !== id);
+      commit(composition);
       return "ok";
     },
     setSize(width, height) {
       if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
         return "refuse";
       }
-      composition = { ...composition, width, height };
+      commit({ ...composition, width, height });
       return "ok";
     },
     setBrowserWindow(value) {
       if (value !== "none" && value !== "light" && value !== "dark") {
         return "refuse";
       }
-      composition = { ...composition, browserWindow: value };
+      commit({ ...composition, browserWindow: value });
       return "ok";
     },
     setUrl(url) {
-      composition = { ...composition, url };
+      commit({ ...composition, url });
       return "ok";
     },
     setPadding(value) {
       if (!Number.isFinite(value) || value < 0) {
         return "refuse";
       }
-      composition = { ...composition, padding: value };
+      commit({ ...composition, padding: value });
       return "ok";
     },
     setScale(value) {
       if (!Number.isFinite(value) || value <= 0) {
         return "refuse";
       }
-      composition = { ...composition, scale: value };
+      commit({ ...composition, scale: value });
       return "ok";
     },
     setPosition(x, y) {
       if (!Number.isFinite(x) || !Number.isFinite(y)) {
         return "refuse";
       }
-      composition = { ...composition, position: { x, y } };
+      commit({ ...composition, position: { x, y } });
       return "ok";
     },
     setShadow(offset, blur, opacity) {
@@ -628,21 +651,21 @@ export async function createSession(options: {
       ) {
         return "refuse";
       }
-      composition = { ...composition, shadow: { offset, blur, opacity } };
+      commit({ ...composition, shadow: { offset, blur, opacity } });
       return "ok";
     },
     setBorder(width, color) {
       if (!Number.isFinite(width) || width < 0 || !isHexColor(color)) {
         return "refuse";
       }
-      composition = { ...composition, border: { width, color } };
+      commit({ ...composition, border: { width, color } });
       return "ok";
     },
     setRadius(value) {
       if (!Number.isFinite(value) || value < 0) {
         return "refuse";
       }
-      composition = { ...composition, radius: value };
+      commit({ ...composition, radius: value });
       return "ok";
     },
     render: renderComposition,

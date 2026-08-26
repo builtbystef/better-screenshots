@@ -14,6 +14,10 @@ export function placeLine(source: PlaceSource, outcome: PlaceOutcome): string | 
   return "That file isn't an image.";
 }
 
+export function changeLine(outcome: "ok" | "refuse"): string | null {
+  return outcome === "ok" ? null : "Couldn't apply that change.";
+}
+
 export function exportLine(outcome: "ok" | "refuse"): string | null {
   return outcome === "ok" ? null : "Couldn't export that image.";
 }

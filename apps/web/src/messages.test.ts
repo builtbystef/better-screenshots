@@ -1,5 +1,5 @@
 import { expect, test } from "vite-plus/test";
-import { exportLine, placeLine, uploadLine } from "./messages";
+import { changeLine, exportLine, placeLine, uploadLine } from "./messages";
 
 test("a successful place writes no Preview line", () => {
   expect(placeLine("picker", "ok")).toBeNull();
@@ -20,6 +20,11 @@ test("paste with no image writes the clipboard line", () => {
 test("an empty picker or drop writes no Preview line", () => {
   expect(placeLine("picker", "empty")).toBeNull();
   expect(placeLine("drop", "empty")).toBeNull();
+});
+
+test("a refused session change writes the change line", () => {
+  expect(changeLine("ok")).toBeNull();
+  expect(changeLine("refuse")).toBe("Couldn't apply that change.");
 });
 
 test("a successful Export writes no Preview line", () => {

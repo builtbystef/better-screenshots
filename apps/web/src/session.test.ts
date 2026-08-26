@@ -64,6 +64,34 @@ function memoryStore(): UploadedBackgroundStore {
   };
 }
 
+test("a subscriber receives one notification for a successful write and none for a refusal", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  const versions: number[] = [];
+
+  session.subscribe(() => versions.push(session.version));
+
+  expect(session.setPadding(40)).toBe("ok");
+  expect(session.setPadding(-1)).toBe("refuse");
+  expect(versions).toEqual([1]);
+  expect(session.version).toBe(1);
+  expect(session.subscribe).toBe(session.subscribe);
+});
+
+test("unsubscribe stops session change notifications", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  let deliveries = 0;
+  const unsubscribe = session.subscribe(() => {
+    deliveries += 1;
+  });
+
+  expect(session.setPadding(40)).toBe("ok");
+  unsubscribe();
+  expect(session.setPadding(80)).toBe("ok");
+
+  expect(deliveries).toBe(1);
+  expect(session.version).toBe(2);
+});
+
 test("createSession opens a default Composition on the given solid", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
