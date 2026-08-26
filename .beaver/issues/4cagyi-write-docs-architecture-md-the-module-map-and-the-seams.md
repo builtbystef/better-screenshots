@@ -1,12 +1,13 @@
 ---
 id: 4cagyi
 title: 'Write docs/ARCHITECTURE.md: the module map and the seams'
-state: todo
+state: done
+assignee: agent
 priority: high
 labels:
     - maintenance
 created: 2026-08-26T16:31:01Z
-updated: 2026-08-26T16:31:01Z
+updated: 2026-08-26T18:09:18Z
 ---
 
 ## Finding
@@ -97,3 +98,9 @@ State that a validator, a clamp, or a parse rule appearing in `routes/index.tsx`
 ## Order
 
 **This issue runs first in the queue.** Nine later issues read the target layout from this file, and a cold session cannot infer it.
+
+## Notes
+
+**agent** — 2026-08-26T18:09:18Z
+
+Completed docs/ARCHITECTURE.md with the current and settled target module maps, current and target dependency direction, DOM boundary, Composition invariants, outcome and storage ports, shared Preview/Export canvas path, test shim, and empty-package decision. This documentation-only issue has no behavior test seam; all four repository checks pass.
