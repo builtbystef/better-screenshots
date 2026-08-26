@@ -158,7 +158,7 @@ export async function createSession(options: {
   function commit(next: Composition): void {
     composition = next;
     version += 1;
-    for (const listener of [...listeners]) {
+    for (const listener of Array.from(listeners)) {
       listener();
     }
   }

@@ -8,7 +8,7 @@ export default defineConfig({
     ignorePatterns: [".agents/**", ".claude/**", ".pi/**", ".beaver/**", "**/routeTree.gen.ts"],
   },
   lint: {
-    plugins: ["typescript"],
+    plugins: ["typescript", "unicorn", "oxc", "react", "jsx-a11y"],
     options: {
       typeAware: true,
       typeCheck: true,
@@ -21,13 +21,6 @@ export default defineConfig({
       ".pi/**",
       ".beaver/**",
       "**/routeTree.gen.ts",
-    ],
-    overrides: [
-      {
-        // `plugins` in an override replaces the base list, so repeat it.
-        files: ["**/*.test.ts", "**/*.spec.ts"],
-        plugins: ["typescript", "vitest"],
-      },
     ],
   },
   test: {

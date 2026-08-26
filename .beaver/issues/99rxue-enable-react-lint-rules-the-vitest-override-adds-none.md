@@ -1,7 +1,8 @@
 ---
 id: 99rxue
 title: Enable React lint rules; the vitest override adds none
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - yju1dp
     - f1vkwy
 created: 2026-08-26T16:32:53Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:13:30Z
 ---
 
 ## Finding
@@ -63,3 +64,13 @@ So this is a zero-finding change today. It closes the gap without a cleanup tail
 ## Order
 
 Runs late — after `yju1dp` and `f1vkwy`. Enabling `react/exhaustive-deps` mid-refactor would flag intermediate states of code those issues are rewriting.
+
+## Notes
+
+**agent** — 2026-08-26T19:12:37Z
+
+AFK test seam: use vp lint --print-config at the lint configuration boundary for apps/web/src/routes/index.tsx and a .test.ts file; verify resolved rule counts and react/exhaustive-deps before and after the config change.
+
+**agent** — 2026-08-26T19:13:30Z
+
+Completed the lint plugin configuration: enabled typescript, unicorn, oxc, react, and jsx-a11y; removed the no-op vitest override; and fixed the newly exposed unicorn finding while preserving snapshot iteration over session listeners. Both apps/web/src/routes/index.tsx and apps/web/src/session.test.ts resolve 165 rules, including react/exhaustive-deps. Oxlint still provides no react-hooks/rules-of-hooks rule, so rules-of-hooks remains unguarded as documented in the issue. All four checks pass: format, lint with zero findings, typecheck, and 130 tests.
