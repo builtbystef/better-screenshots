@@ -1,18 +1,18 @@
 ---
 id: tr1vjw
 title: Fill in docs/CODING_STANDARDS.md with the conventions the code enforces
-state: in-progress
+state: done
+assignee: agent
 priority: low
 labels:
     - maintenance
-    - needs-review
 depends_on:
     - f1vkwy
     - msmb41
     - dwzqq1
     - tl2tr4
 created: 2026-08-26T16:35:13Z
-updated: 2026-08-26T19:24:01Z
+updated: 2026-08-26T19:57:06Z
 ---
 
 ## Finding
@@ -45,7 +45,7 @@ Every rule in the file is one a reviewer can check against a diff. The four chec
 - "Refusal copy lives in exactly one module" becomes `messages.ts`, not `chrome.ts` (`dwzqq1`).
 - Composition writes go through one `commit` that also notifies (`msmb41`), which is a stronger rule than "replaced, never mutated" — record the stronger one.
 
-**Record all five, plus three the queue establishes:**
+**Record all five, plus three the queue establishes. Together with the retained dependency rule, the file has nine rules:**
 
 6. **The page holds no logic.** No validator, parse rule, clamp, or geometry in `routes/index.tsx` — it composes components and holds React state. `docs/ARCHITECTURE.md` names the modules each kind of rule belongs to; this file states it as the reviewable rule.
 7. **A `@vitest-environment jsdom` pragma is a claim about the module under test.** Only `paint`, `drag`, `scheme`, `indexed-db-store`, and route tests may carry one. A pragma anywhere else means the module reached for the DOM and should not have.
@@ -57,7 +57,7 @@ Every rule in the file is one a reviewer can check against a diff. The four chec
 
 ## Acceptance additions
 
-- Eight rules, each phrased so a reviewer can point at a diff and say yes or no.
+- Nine rules, each phrased so a reviewer can point at a diff and say yes or no.
 - No rule in the file describes a module or a convention that the queue changed.
 - The dependency rule keeps its checkable half and loses the other.
 
@@ -70,3 +70,11 @@ Last. After `f1vkwy`, `msmb41`, `dwzqq1`, and `tl2tr4`.
 **agent** — 2026-08-26T19:24:01Z
 
 The acceptance criteria contradict the settled rule count. “Record all five, plus three” requires the five listed conventions and three queue conventions (eight before dependencies), while the acceptance additions require exactly eight total rules and also require retaining the existing dependency rule (nine total). Options: (1) require nine rules; (2) identify which one of the eight listed conventions the dependency rule replaces; or (3) combine two conventions into one rule and specify which pair. User must decide, record the decision in a note, and remove the needs-review label.
+
+**agent** — 2026-08-26T19:34:02Z
+
+User decision: require nine rules. The five existing conventions plus three queue-established conventions make eight, and the retained dependency rule is the ninth.
+
+**agent** — 2026-08-26T19:57:06Z
+
+Completed docs/CODING_STANDARDS.md with exactly nine reviewable rules covering seam outcomes, refusal copy, Composition commits, readonly exposed collections, HexColor parsing, route boundaries, jsdom pragmas, production comments, and dependency justification. Kept the dependency rule's checkable requirement and removed the subjective small-problem wording. No test seam was added because this is documentation-only; format, lint, typecheck, and all 131 tests pass.
