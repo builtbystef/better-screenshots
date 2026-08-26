@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import { clampPosition, isFileDrag, isTextFieldTarget, positionFromDrag } from "./drag";
+import {
+  clampPosition,
+  filesFrom,
+  hitsDrawn,
+  isFileDrag,
+  isTextFieldTarget,
+  positionFromDrag,
+} from "./drag";
 
 test("a drag is a file drag when types include Files", () => {
   expect(isFileDrag(["Files"])).toBe(true);
@@ -33,6 +40,66 @@ test("file, button, and a plain element are not text field targets", () => {
   expect(isTextFieldTarget(button)).toBe(false);
   expect(isTextFieldTarget(div)).toBe(false);
   expect(isTextFieldTarget(null)).toBe(false);
+});
+
+test("filesFrom prefers a non-empty file list over transfer items", () => {
+  const listed = new File(["listed"], "listed.png", { type: "image/png" });
+  const item = new File(["item"], "item.png", { type: "image/png" });
+
+  expect(
+    filesFrom({
+      files: [listed],
+      items: [{ kind: "file", getAsFile: () => item }],
+    }),
+  ).toEqual([listed]);
+});
+
+test("filesFrom uses image items when the file list is empty", () => {
+  const image = new File(["image"], "image.png", { type: "image/png" });
+
+  expect(
+    filesFrom({
+      files: [],
+      items: [{ kind: "file", type: "image/png", getAsFile: () => image }],
+    }),
+  ).toEqual([image]);
+});
+
+test("filesFrom skips string items and files that cannot be read", () => {
+  expect(
+    filesFrom({
+      files: [],
+      items: [
+        { kind: "string", getAsFile: () => null },
+        { kind: "file", getAsFile: () => null },
+      ],
+    }),
+  ).toEqual([]);
+  expect(filesFrom({ files: [], items: [] })).toEqual([]);
+  expect(filesFrom(null)).toEqual([]);
+});
+
+test("hitsDrawn includes points inside every edge and excludes points outside", () => {
+  const rect = { left: 100, top: 50, clientWidth: 500, clientLeft: 2 };
+  const drawn = { x: 20, y: 40, width: 200, height: 100 };
+  const compositionWidth = 1000;
+
+  for (const point of [
+    { x: 112.1, y: 95 },
+    { x: 211.9, y: 95 },
+    { x: 160, y: 72.1 },
+    { x: 160, y: 121.9 },
+  ]) {
+    expect(hitsDrawn({ point, rect, drawn, compositionWidth })).toBe(true);
+  }
+  for (const point of [
+    { x: 111.9, y: 95 },
+    { x: 212.1, y: 95 },
+    { x: 160, y: 71.9 },
+    { x: 160, y: 122.1 },
+  ]) {
+    expect(hitsDrawn({ point, rect, drawn, compositionWidth })).toBe(false);
+  }
 });
 
 test("positionFromDrag maps a horizontal Preview drag into Composition Position", () => {

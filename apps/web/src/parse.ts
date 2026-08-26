@@ -23,6 +23,19 @@ export function parseScale(raw: string): number | "refuse" {
   return value <= 0 ? "refuse" : value;
 }
 
+export function parseNonNegativeInteger(raw: string): number | "refuse" {
+  const parsed = parseInteger(raw);
+  return parsed === "refuse" || parsed < 0 ? "refuse" : parsed;
+}
+
+export function formatInteger(value: number): string {
+  return String(value);
+}
+
+export function formatScale(value: number): string {
+  return value.toFixed(2);
+}
+
 export function parseOpacityPercent(raw: string): number | "refuse" {
   const parsed = parseInteger(raw);
   return parsed === "refuse" || parsed < 0 || parsed > 100 ? "refuse" : parsed;

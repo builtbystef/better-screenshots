@@ -19,7 +19,14 @@ import {
   catalogSolidFor,
   catalogSolids,
 } from "../catalog";
-import { clampPosition, isFileDrag, isTextFieldTarget, positionFromDrag } from "../drag";
+import {
+  clampPosition,
+  filesFrom,
+  hitsDrawn,
+  isFileDrag,
+  isTextFieldTarget,
+  positionFromDrag,
+} from "../drag";
 import { createIndexedDbStore } from "../indexed-db-store";
 import {
   exportLine,
@@ -28,7 +35,15 @@ import {
   type PlaceOutcome,
   type PlaceSource,
 } from "../messages";
-import { parseHex, parseInteger, parseOpacityPercent, parseScale } from "../parse";
+import {
+  formatInteger,
+  formatScale,
+  parseHex,
+  parseInteger,
+  parseNonNegativeInteger,
+  parseOpacityPercent,
+  parseScale,
+} from "../parse";
 import {
   createSession,
   type BrowserWindow,
@@ -99,48 +114,9 @@ function HomePage() {
   );
 }
 
-function filesFrom(data: DataTransfer | null): File[] {
-  if (data === null) {
-    return [];
-  }
-  if (data.files.length > 0) {
-    return Array.from(data.files);
-  }
-  const files: File[] = [];
-  for (const item of data.items) {
-    if (item.kind !== "file") {
-      continue;
-    }
-    const file = item.getAsFile();
-    if (file !== null) {
-      files.push(file);
-    }
-  }
-  return files;
-}
-
 function previewCanvas(host: HTMLDivElement | null): HTMLCanvasElement | null {
   const child = host?.firstElementChild;
   return child instanceof HTMLCanvasElement ? child : null;
-}
-
-function hitsDrawn(
-  clientX: number,
-  clientY: number,
-  canvas: HTMLCanvasElement,
-  drawn: { x: number; y: number; width: number; height: number },
-  compositionWidth: number,
-): boolean {
-  const bounds = canvas.getBoundingClientRect();
-  const scale = canvas.clientWidth / compositionWidth;
-  const left = bounds.left + canvas.clientLeft + drawn.x * scale;
-  const top = bounds.top + canvas.clientTop + drawn.y * scale;
-  return (
-    clientX >= left &&
-    clientX < left + drawn.width * scale &&
-    clientY >= top &&
-    clientY < top + drawn.height * scale
-  );
 }
 
 function Preview({
@@ -313,7 +289,18 @@ function Preview({
     if (canvas === null || drawn === undefined || canvas.clientWidth === 0) {
       return false;
     }
-    return hitsDrawn(clientX, clientY, canvas, drawn, session.composition.width);
+    const bounds = canvas.getBoundingClientRect();
+    return hitsDrawn({
+      point: { x: clientX, y: clientY },
+      rect: {
+        left: bounds.left,
+        top: bounds.top,
+        clientWidth: canvas.clientWidth,
+        clientLeft: canvas.clientLeft,
+      },
+      drawn,
+      compositionWidth: session.composition.width,
+    });
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -739,19 +726,6 @@ function ImageThumbnail({ blob }: { blob: Blob }) {
 const numberChromeClass =
   "min-w-0 rounded-md border border-input bg-background px-1.5 py-1 text-right font-mono text-xs tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 const numberFieldClass = `${numberChromeClass} w-12`;
-
-function parseNonNegativeInteger(raw: string): number | "refuse" {
-  const parsed = parseInteger(raw);
-  return parsed === "refuse" || parsed < 0 ? "refuse" : parsed;
-}
-
-function formatInteger(value: number): string {
-  return String(value);
-}
-
-function formatScale(value: number): string {
-  return value.toFixed(2);
-}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

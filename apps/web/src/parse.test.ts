@@ -1,5 +1,13 @@
 import { expect, test } from "vite-plus/test";
-import { parseHex, parseInteger, parseOpacityPercent, parseScale } from "./parse";
+import {
+  formatInteger,
+  formatScale,
+  parseHex,
+  parseInteger,
+  parseNonNegativeInteger,
+  parseOpacityPercent,
+  parseScale,
+} from "./parse";
 
 test("parseHex accepts six digits without a hash and keeps case", () => {
   expect(parseHex("aabbcc")).toBe("#aabbcc");
@@ -34,6 +42,21 @@ test("parseScale accepts an integer and rounds to two decimals", () => {
 test("parseScale refuses zero and a comma decimal", () => {
   expect(parseScale("0")).toBe("refuse");
   expect(parseScale("1,25")).toBe("refuse");
+});
+
+test("parseNonNegativeInteger accepts zero and a positive integer", () => {
+  expect(parseNonNegativeInteger("0")).toBe(0);
+  expect(parseNonNegativeInteger("42")).toBe(42);
+});
+
+test("parseNonNegativeInteger refuses a negative value and a non-integer", () => {
+  expect(parseNonNegativeInteger("-1")).toBe("refuse");
+  expect(parseNonNegativeInteger("2.5")).toBe("refuse");
+});
+
+test("formatters prepare integer and Scale field values", () => {
+  expect(formatInteger(12)).toBe("12");
+  expect(formatScale(1.2)).toBe("1.20");
 });
 
 test("parseOpacityPercent accepts a percent integer", () => {

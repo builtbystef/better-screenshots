@@ -1,14 +1,15 @@
 ---
 id: mqab43
 title: Move page logic into the tested seam
-state: todo
+state: done
+assignee: agent
 priority: high
 labels:
     - maintenance
 depends_on:
     - dwzqq1
 created: 2026-08-26T16:30:30Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:25:45Z
 ---
 
 ## Finding
@@ -62,3 +63,9 @@ Move these into `chrome.ts` beside their siblings and test them there. `hitsDraw
 ## Order
 
 Runs after `dwzqq1`. `msmb41` and `yju1dp` both rewrite the same JSX and run after this.
+
+## Notes
+
+**agent** — 2026-08-26T18:25:45Z
+
+Completed the tested-seam move: filesFrom and plain-rect hitsDrawn now live in drag.ts; parseNonNegativeInteger, formatInteger, and formatScale now live in parse.ts; the route delegates to them; tests cover transfer fallback/skip behavior, non-unit-scale hit edges, parsing, and formatting; and ARCHITECTURE.md lists the expanded interfaces. Preserved the settled generic page clamp. All format, lint, typecheck, and test checks pass (109 tests).
