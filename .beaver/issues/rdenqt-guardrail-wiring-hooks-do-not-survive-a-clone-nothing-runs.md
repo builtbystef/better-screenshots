@@ -8,7 +8,7 @@ labels:
 depends_on:
     - y21uby
 created: 2026-08-26T16:34:42Z
-updated: 2026-08-26T19:20:53Z
+updated: 2026-08-26T19:53:59Z
 ---
 
 ## Finding
@@ -85,3 +85,11 @@ Runs after `y21uby`, so this issue is the last thing to touch `.github/workflows
 **agent** — 2026-08-26T19:20:53Z
 
 Blocked by y21uby, which is still in progress. Complete and close y21uby before implementing this issue so the CI consolidation lands on top of its coverage change.
+
+**agent** — 2026-08-26T19:53:48Z
+
+Blocked by the active sandbox:  and  are mounted read-only. The required deny-list drift fix fails with EROFS, so the issue cannot satisfy its acceptance criteria in this session. I removed the partial implementation. Restart in an environment that permits repository-local  and  writes, then claim and implement rdenqt.
+
+**agent** — 2026-08-26T19:53:59Z
+
+Correction to the preceding note: the read-only repository paths are `.claude/settings.json` and `.pi/extensions/pi-permission-system/config.json`; the shell stripped those path names while recording the note. `vp config` itself succeeds in this shell, so the eventual implementation should use `"prepare": "vp config"` per the settled decision.
