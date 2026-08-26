@@ -1,10 +1,11 @@
 ---
 id: y21uby
 title: Install coverage measurement and stop passWithNoTests masking discovery breakage
-state: todo
+state: in-progress
 priority: medium
 labels:
     - maintenance
+    - needs-review
 depends_on:
     - aofakr
     - dza8bk
@@ -13,7 +14,7 @@ depends_on:
     - f1vkwy
     - t5q19d
 created: 2026-08-26T16:32:53Z
-updated: 2026-08-26T17:55:10Z
+updated: 2026-08-26T19:20:06Z
 ---
 
 ## Finding
@@ -67,3 +68,16 @@ Do **not** set a per-file threshold on `routes/index.tsx` in this issue. The pag
 ## Order
 
 Runs near the end, after `aofakr`, `dza8bk`, `el94on`, `yju1dp`, `f1vkwy`, and `t5q19d` — every issue that changes the number the floor is measured against. `rdenqt` runs after this, not before: it ends in `needs-review` by design, and blocking this issue behind it would strand the coverage floor.
+
+## Notes
+
+**agent** — 2026-08-26T19:16:48Z
+
+Test seams selected from the acceptance criteria: the  CLI boundary for coverage reporting and thresholds, and 
+ RUN  v4.1.10 /home/stefan/Code/personal/better-screenshots
+
+No test files found, exiting with code 0 for test-discovery failure. CI command wiring is verified through the workflow and root script plus the full checks.
+
+**agent** — 2026-08-26T19:20:06Z
+
+Implementation uncovered a contradiction in the acceptance criteria. With the mandated global floors (measured 95.88% statements, 92.46% branches, 96.9% functions, 96% lines; prescribed floors 93/90/94/94), deleting 9 of the 12 test files still lets coverage pass; only drag.test.ts, paint.test.ts, and session.test.ts cross a floor. Options: (1) keep the measured-minus-two rule and weaken acceptance to require that deleting a materially covering test file fails; (2) add a separate minimum test-file/discovery manifest guard so deleting any test file fails; or (3) choose tighter or per-file coverage thresholds, reversing the settled threshold constraints. Decide which guard is intended, record the decision in a note, and remove needs-review.
