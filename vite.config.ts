@@ -1,9 +1,6 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
-  resolve: {
-    tsconfigPaths: true,
-  },
   staged: {
     "*": "vp check --fix",
   },
