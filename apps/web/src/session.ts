@@ -478,8 +478,8 @@ export async function createSession(options: {
   };
   async function renderComposition(): Promise<HTMLCanvasElement> {
     const canvas = document.createElement("canvas");
-    canvas.width = composition.width * 2;
-    canvas.height = composition.height * 2;
+    canvas.width = composition.width * PAINT_SCALE;
+    canvas.height = composition.height * PAINT_SCALE;
     const ctx = canvas.getContext("2d");
     if (ctx === null) {
       return canvas;

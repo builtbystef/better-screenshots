@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "verbatimModuleSyntax": false,
     "noEmit": true
   },
   "include": ["src", "vite.config.ts"]
