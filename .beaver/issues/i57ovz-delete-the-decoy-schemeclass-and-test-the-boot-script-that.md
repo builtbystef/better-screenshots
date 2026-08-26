@@ -1,14 +1,15 @@
 ---
 id: i57ovz
 title: Delete the decoy schemeClass and test the boot script that ships
-state: todo
+state: done
+assignee: agent
 priority: high
 labels:
     - maintenance
 depends_on:
     - 4cagyi
 created: 2026-08-26T16:30:30Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:17:53Z
 ---
 
 ## Finding
@@ -48,3 +49,9 @@ Add `scheme.ts` to the list of modules permitted to touch browser globals, and f
 ## Order
 
 Runs after `4cagyi` and before `dwzqq1`.
+
+## Notes
+
+**agent** — 2026-08-26T18:17:53Z
+
+Moved the shipped schemeBootScript and colour-scheme change listener into scheme.ts, removed the unused TypeScript schemeClass and its decoy tests, pointed the root route at the new module, and updated the architecture map. Added jsdom coverage that evaluates the shipped script for dark, light, no-preference, and mid-session changes. All four checks pass.

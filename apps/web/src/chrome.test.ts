@@ -12,21 +12,8 @@ import {
   parseScale,
   placeLine,
   positionFromDrag,
-  schemeClass,
   uploadLine,
 } from "./chrome";
-
-test("schemeClass maps dark to the dark class", () => {
-  expect(schemeClass("dark")).toBe("dark");
-});
-
-test("schemeClass maps light to no class", () => {
-  expect(schemeClass("light")).toBeNull();
-});
-
-test("schemeClass maps no-preference to no class", () => {
-  expect(schemeClass("no-preference")).toBeNull();
-});
 
 test("a successful place writes no Preview line", () => {
   expect(placeLine("picker", "ok")).toBeNull();
