@@ -78,9 +78,7 @@ export async function paintBackground(
       const x = ((composition.width - drawnWidth) / 2) * PAINT_SCALE;
       const y = ((composition.height - drawnHeight) / 2) * PAINT_SCALE;
       ctx.drawImage(bitmap, x, y, drawnWidth * PAINT_SCALE, drawnHeight * PAINT_SCALE);
-      if (typeof bitmap.close === "function") {
-        bitmap.close();
-      }
+      bitmap.close();
     }
   }
 }
@@ -262,9 +260,7 @@ export async function paintScreenshot(
     screenshotHeight * PAINT_SCALE,
   );
   ctx.restore();
-  if (typeof bitmap.close === "function") {
-    bitmap.close();
-  }
+  bitmap.close();
 }
 
 export async function renderComposition(

@@ -1,7 +1,8 @@
 ---
 id: t5q19d
 title: Small cleanups in session.ts and the store
-state: todo
+state: done
+assignee: agent
 priority: low
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - p6557v
     - v4l2o5
 created: 2026-08-26T16:34:42Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:15:55Z
 ---
 
 ## Finding
@@ -35,3 +36,13 @@ Narrowed from the original eleven-item list. Each item below has a settled repai
 - No `typeof bitmap.close === "function"` remains.
 - The `typecheck` script is gone.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T19:14:33Z
+
+Test seam: StudioSession is the outermost public boundary that observes storage downgrade behavior; the crossing test will fail a store put, then call removeBackground and verify refusal without another store call.
+
+**agent** — 2026-08-26T19:15:55Z
+
+Completed the settled cleanups: storage now has one mutable source of truth and a StudioSession crossing test proves a failed put prevents remove from touching the store; the unreachable Browser window guard and cast test are removed while numeric validators remain; ImageBitmap.close() is unconditional at all three production call sites; and the unused web typecheck script is removed. Verified vp fmt --check, vp lint, vp check --no-fmt --no-lint, and vp test (131 tests).

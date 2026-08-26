@@ -232,7 +232,7 @@ test("setBackground refuses a bad value and leaves the Composition unchanged", a
   }
 });
 
-test("setBrowserWindow writes light or dark and refuses an unknown value", async () => {
+test("setBrowserWindow writes each Browser window value", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
   expect(session.setBrowserWindow("light")).toBe("ok");
@@ -241,10 +241,6 @@ test("setBrowserWindow writes light or dark and refuses an unknown value", async
   expect(session.composition.browserWindow).toBe("dark");
   expect(session.setBrowserWindow("none")).toBe("ok");
   expect(session.composition.browserWindow).toBe("none");
-
-  const before = structuredClone(session.composition);
-  expect(session.setBrowserWindow("chrome" as "none")).toBe("refuse");
-  expect(session.composition).toEqual(before);
 });
 
 test("setUrl writes the typed text including empty", async () => {
@@ -533,6 +529,23 @@ test("uploadBackground returns unavailable when put is unavailable", async () =>
   expect(await session.uploadBackground(imageBlob(100, 80), "x.png")).toBe("unavailable");
   expect(session.uploadedBackgrounds).toEqual([]);
   expect(session.storage).toBe("unavailable");
+});
+
+test("removeBackground does not touch the store after an upload makes storage unavailable", async () => {
+  let removeCalls = 0;
+  const store: UploadedBackgroundStore = {
+    ...emptyStore(),
+    put: async () => "unavailable",
+    remove: async () => {
+      removeCalls += 1;
+      return "ok";
+    },
+  };
+  const session = await createSession({ defaultSolid, store });
+
+  expect(await session.uploadBackground(imageBlob(100, 80), "wall.png")).toBe("unavailable");
+  expect(await session.removeBackground("wall")).toBe("refuse");
+  expect(removeCalls).toBe(0);
 });
 
 test("uploadBackground returns unavailable when createSession could not list the store", async () => {

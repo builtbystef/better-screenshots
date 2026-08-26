@@ -11,9 +11,7 @@ async function decodeImageSize(blob: Blob): Promise<Frame | null> {
   try {
     const bitmap = await createImageBitmap(blob);
     const { width, height } = bitmap;
-    if (typeof bitmap.close === "function") {
-      bitmap.close();
-    }
+    bitmap.close();
     if (width === 0 || height === 0) {
       return null;
     }
@@ -135,9 +133,8 @@ export async function createSession(options: {
 }): Promise<StudioSession> {
   const createCanvas = options.createCanvas ?? (() => document.createElement("canvas"));
   const listed = await options.store.list();
-  const storeUnavailable = listed === "unavailable";
-  let storage: "ok" | "unavailable" = storeUnavailable ? "unavailable" : "ok";
-  let uploadedBackgrounds: UploadedBackground[] = storeUnavailable ? [] : [...listed];
+  let storage: "ok" | "unavailable" = listed === "unavailable" ? "unavailable" : "ok";
+  let uploadedBackgrounds: UploadedBackground[] = listed === "unavailable" ? [] : [...listed];
   let screenshotSize: Frame | null = null;
   let version = 0;
   const listeners = new Set<() => void>();
@@ -234,7 +231,7 @@ export async function createSession(options: {
     },
     async removeBackground(id) {
       if (
-        storeUnavailable ||
+        storage === "unavailable" ||
         (composition.background.type === "image" && composition.background.id === id)
       ) {
         return "refuse";
@@ -257,9 +254,6 @@ export async function createSession(options: {
       return "ok";
     },
     setBrowserWindow(value) {
-      if (value !== "none" && value !== "light" && value !== "dark") {
-        return "refuse";
-      }
       commit({ ...composition, browserWindow: value });
       return "ok";
     },

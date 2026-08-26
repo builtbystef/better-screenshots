@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vp dev --port 3000",
     "build": "vp build",
-    "preview": "vp preview --port 4173",
-    "typecheck": "tsc --noEmit"
+    "preview": "vp preview --port 4173"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
