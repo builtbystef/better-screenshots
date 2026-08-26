@@ -8,7 +8,6 @@ import {
   useState,
   useSyncExternalStore,
   type ChangeEvent,
-  type KeyboardEvent,
   type PointerEvent,
 } from "react";
 import {
@@ -21,6 +20,7 @@ import {
   catalogSolids,
 } from "../catalog";
 import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "../drag";
+import { useDraft } from "../hooks/use-draft";
 import { createIndexedDbStore } from "../indexed-db-store";
 import {
   changeLine,
@@ -459,6 +459,10 @@ function chipClass(selected: boolean): string {
     : "aspect-square w-full rounded-md border border-border transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
 }
 
+function formatText(value: string): string {
+  return value;
+}
+
 function BackgroundInspector({ session }: { session: StudioSession }) {
   const pickerId = useId();
   const background = session.composition.background;
@@ -469,40 +473,23 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
     background.type === "gradient" ? catalogGradientFor(background) : undefined;
   const addDisabled = session.storage === "unavailable";
   const images = session.uploadedBackgrounds.toReversed();
-  const [hexDraft, setHexDraft] = useState(currentSolid ?? "");
   const [lastSolid, setLastSolid] = useState(currentSolid ?? "#000000");
   const [line, setLine] = useState<string | null>(null);
+  const {
+    draft: hexDraft,
+    setDraft: setHexDraft,
+    onBlur: commitHex,
+    onKeyDown: onHexKeyDown,
+  } = useDraft(currentSolid ?? "", formatText, parseHex, writeSolid);
 
   function writeSolid(color: HexColor) {
-    if (session.setBackground({ type: "solid", color }) !== "ok") {
-      return;
+    if (session.setBackground({ type: "solid", color }) === "ok") {
+      setLastSolid(color);
     }
-    setLastSolid(color);
-    setHexDraft(color);
   }
 
   function writeGradient(value: GradientBackground) {
-    if (session.setBackground(value) !== "ok") {
-      return;
-    }
-    setHexDraft("");
-  }
-
-  function commitHex() {
-    const parsed = parseHex(hexDraft);
-    if (parsed === "refuse") {
-      setHexDraft(currentSolid ?? "");
-      return;
-    }
-    writeSolid(parsed);
-  }
-
-  function onHexKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    commitHex();
+    session.setBackground(value);
   }
 
   function onNativeChange(event: ChangeEvent<HTMLInputElement>) {
@@ -510,10 +497,7 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
   }
 
   function writeImage(id: string) {
-    if (session.setBackground({ type: "image", id }) !== "ok") {
-      return;
-    }
-    setHexDraft("");
+    session.setBackground({ type: "image", id });
   }
 
   async function removeImage(id: string) {
@@ -933,33 +917,7 @@ function KnobRow({
   parse: (raw: string) => number | "refuse";
   onWrite: (value: number) => void;
 }) {
-  const [draft, setDraft] = useState(format(value));
-
-  useEffect(() => {
-    setDraft(format(value));
-  }, [format, value]);
-
-  function commit() {
-    const parsed = parse(draft);
-    if (parsed === "refuse") {
-      setDraft(format(value));
-      return;
-    }
-    onWrite(parsed);
-    setDraft(format(parsed));
-  }
-
-  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-      event.preventDefault();
-      return;
-    }
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    commit();
-  }
+  const { draft, setDraft, onBlur, onKeyDown } = useDraft(value, format, parse, onWrite);
 
   const thumb = clamp(value, min, max);
   const fill = max === min ? 0 : ((thumb - min) / (max - min)) * 100;
@@ -989,7 +947,7 @@ function KnobRow({
         aria-label={label}
         className={numberFieldClass}
         onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
+        onBlur={onBlur}
         onKeyDown={onKeyDown}
       />
     </div>
@@ -1005,49 +963,18 @@ function PositionRow({
   y: number;
   onWrite: (x: number, y: number) => void;
 }) {
-  const [xDraft, setXDraft] = useState(formatInteger(x));
-  const [yDraft, setYDraft] = useState(formatInteger(y));
-
-  useEffect(() => {
-    setXDraft(formatInteger(x));
-  }, [x]);
-  useEffect(() => {
-    setYDraft(formatInteger(y));
-  }, [y]);
-
-  function commitX() {
-    const parsed = parseInteger(xDraft);
-    if (parsed === "refuse") {
-      setXDraft(formatInteger(x));
-      return;
-    }
-    onWrite(parsed, y);
-    setXDraft(formatInteger(parsed));
-  }
-
-  function commitY() {
-    const parsed = parseInteger(yDraft);
-    if (parsed === "refuse") {
-      setYDraft(formatInteger(y));
-      return;
-    }
-    onWrite(x, parsed);
-    setYDraft(formatInteger(parsed));
-  }
-
-  function onFieldKeyDown(commit: () => void) {
-    return (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        event.preventDefault();
-        return;
-      }
-      if (event.key !== "Enter") {
-        return;
-      }
-      event.preventDefault();
-      commit();
-    };
-  }
+  const {
+    draft: xDraft,
+    setDraft: setXDraft,
+    onBlur: commitX,
+    onKeyDown: onXKeyDown,
+  } = useDraft(x, formatInteger, parseInteger, (nextX) => onWrite(nextX, y));
+  const {
+    draft: yDraft,
+    setDraft: setYDraft,
+    onBlur: commitY,
+    onKeyDown: onYKeyDown,
+  } = useDraft(y, formatInteger, parseInteger, (nextY) => onWrite(x, nextY));
 
   return (
     <div className="grid grid-cols-[3.75rem_auto_1fr_auto_1fr] items-center gap-2">
@@ -1063,7 +990,7 @@ function PositionRow({
         className={`${numberChromeClass} min-w-0 w-full`}
         onChange={(event) => setXDraft(event.target.value)}
         onBlur={commitX}
-        onKeyDown={onFieldKeyDown(commitX)}
+        onKeyDown={onXKeyDown}
       />
       <span className="text-[11px] text-muted-foreground">Y</span>
       <input
@@ -1076,7 +1003,7 @@ function PositionRow({
         className={`${numberChromeClass} min-w-0 w-full`}
         onChange={(event) => setYDraft(event.target.value)}
         onBlur={commitY}
-        onKeyDown={onFieldKeyDown(commitY)}
+        onKeyDown={onYKeyDown}
       />
     </div>
   );
@@ -1089,29 +1016,12 @@ function BorderColorRow({
   color: HexColor;
   onWrite: (color: HexColor) => void;
 }) {
-  const [hexDraft, setHexDraft] = useState(color);
-
-  useEffect(() => {
-    setHexDraft(color);
-  }, [color]);
-
-  function commitHex() {
-    const parsed = parseHex(hexDraft);
-    if (parsed === "refuse") {
-      setHexDraft(color);
-      return;
-    }
-    onWrite(parsed);
-    setHexDraft(parsed);
-  }
-
-  function onHexKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.key !== "Enter") {
-      return;
-    }
-    event.preventDefault();
-    commitHex();
-  }
+  const {
+    draft: hexDraft,
+    setDraft: setHexDraft,
+    onBlur: commitHex,
+    onKeyDown: onHexKeyDown,
+  } = useDraft(color, formatText, parseHex, onWrite);
 
   return (
     <div className="grid grid-cols-[3.75rem_1fr] items-center gap-2">

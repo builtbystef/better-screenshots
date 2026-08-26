@@ -1,7 +1,8 @@
 ---
 id: yju1dp
 title: Extract the draft-field commit/revert state machine
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - mqab43
     - msmb41
 created: 2026-08-26T16:31:27Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:06:35Z
 ---
 
 ## Finding
@@ -66,3 +67,9 @@ One `useDraft(value, format, parse, onWrite)` hook returning `{ draft, setDraft,
 ## Order
 
 Runs after `mqab43` and `msmb41`.
+
+## Notes
+
+**agent** — 2026-08-26T19:06:35Z
+
+Completed the pure commitDraft decision in parse.ts and selected that node-loadable public interface as the direct test seam. Added the useDraft hook for draft state, stored-value re-sync, blur/Enter commit wiring, and revert behavior; migrated Background, Knob, Position, and Border color fields to it, including the previously missing Background re-sync. Tests cover abc, -1, 12, and the 0.25/25 opacity round-trip. Updated the architecture map. All format, lint, typecheck, and test checks pass.

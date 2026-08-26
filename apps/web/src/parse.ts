@@ -1,3 +1,13 @@
+export function commitDraft<StoredValue, WrittenValue = StoredValue>(
+  draft: string,
+  storedValue: StoredValue,
+  parse: (raw: string) => WrittenValue | "refuse",
+  format: (value: StoredValue | WrittenValue) => string,
+): { write: WrittenValue } | { revert: string } {
+  const parsed = parse(draft);
+  return parsed === "refuse" ? { revert: format(storedValue) } : { write: parsed };
+}
+
 const HEX_DIGITS = /^#?([0-9A-Fa-f]{6})$/;
 
 export function parseHex(raw: string): `#${string}` | "refuse" {
