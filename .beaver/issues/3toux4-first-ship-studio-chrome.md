@@ -1,7 +1,7 @@
 ---
 id: 3toux4
 title: First-ship Studio chrome
-state: todo
+state: done
 labels:
     - spec
 depends_on:
@@ -13,7 +13,7 @@ depends_on:
     - 4iz55l
     - adfte6
 created: 2026-08-19T12:34:54Z
-updated: 2026-08-19T12:34:54Z
+updated: 2026-08-26T16:02:41Z
 ---
 
 # First-ship Studio chrome
@@ -280,3 +280,9 @@ None.
 ## Further Notes
 
 The session spec is the contract for `createSession`, placement math, paint, and `exportPng`. This spec writes those commands; it does not redefine them. Catalog names exist only as chip `title`s — the Composition stores values, not ids.
+
+## Notes
+
+**claude** — 2026-08-26T16:02:41Z
+
+Closed in triage — the spec is fully built. All eight sub-issues are done (866rvo, hp3l6u, m8b0jw, 9vtbbf, 7d3jia, q460vv, su8i9j, k50xag), and every named seam exists in the code: parseHex/parseInteger/parseScale/parseOpacityPercent/matchingSolid/matchingGradient/positionFromDrag/schemeClass in apps/web/src/chrome.ts, and UploadRefuse plus storage in apps/web/src/session.ts. A spec issue is never built directly, so leaving it todo only put it in 'beaver list --ready' as a trap for the next session. Its sibling spec erb9py is already done. The spec text stays in .beaver/issues/ as the record.

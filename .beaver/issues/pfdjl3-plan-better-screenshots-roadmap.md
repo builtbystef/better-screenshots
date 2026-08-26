@@ -6,7 +6,7 @@ assignee: builtbystef
 labels:
     - roadmap
 created: 2026-08-18T22:57:21Z
-updated: 2026-08-25T13:18:03Z
+updated: 2026-08-26T16:00:49Z
 ---
 
 ## Goal
@@ -16,8 +16,7 @@ A developer can open Better Screenshots in the browser, upload one or more Scree
 ## Frontier
 
 - Extract the Canvas 2D draw into a `packages/*` package (waits; trigger is a second consumer — 0abxd5).
-- Aspect-ratio and social-size presets (waits; not first ship — cx9cwz).
-- Device frames and browser chrome (waits; not first ship).
+- Device frames (waits). Aspect presets and the Browser window shipped in ape56b.
 - Crop, rotate, perspective (waits).
 - Text, arrows, and other annotations (waits).
 - Multi-screenshot layout / collage (waits; first ship is one Screenshot per Composition).
