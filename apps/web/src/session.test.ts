@@ -1,29 +1,6 @@
 import { expect, test } from "vite-plus/test";
-import {
-  createSession,
-  type UploadRefuse,
-  type UploadedBackground,
-  type UploadedBackgroundStore,
-} from "./session";
-
-const imageSizes = new WeakMap<Blob, { width: number; height: number }>();
-globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
-  if (!(image instanceof Blob)) throw new TypeError("expected Blob");
-  const size = imageSizes.get(image);
-  if (size === undefined) throw new TypeError("undecodable test image");
-  return { ...size, close() {} } as ImageBitmap;
-}) as typeof createImageBitmap;
-function imageBlob(width: number, height: number): Blob {
-  const blob = new Blob([new Uint8Array([width, height])], { type: "image/png" });
-  imageSizes.set(blob, { width, height });
-  return blob;
-}
-
-const defaultSolid = { type: "solid" as const, color: "#112233" };
-
-function isUploaded(result: UploadedBackground | UploadRefuse): result is UploadedBackground {
-  return typeof result !== "string";
-}
+import { createSession, type UploadedBackground, type UploadedBackgroundStore } from "./session";
+import { defaultSolid, imageBlob, isUploaded } from "./test/helpers";
 
 function emptyStore(): UploadedBackgroundStore {
   return {

@@ -1,28 +1,8 @@
-import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { IDBFactory, IDBObjectStore } from "fake-indexeddb";
 import { expect, test } from "vite-plus/test";
 import { createIndexedDbStore } from "./indexed-db-store";
-import { createSession, type UploadRefuse, type UploadedBackground } from "./session";
-
-if (typeof globalThis.createImageBitmap !== "function") {
-  globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
-    if (!(image instanceof Blob)) {
-      throw new TypeError("test createImageBitmap polyfill accepts a Blob");
-    }
-    return loadImage(await image.arrayBuffer());
-  }) as unknown as typeof createImageBitmap;
-}
-
-function pngBlob(width: number, height: number): Blob {
-  const canvas = createCanvas(width, height);
-  return new Blob([Uint8Array.from(canvas.toBuffer("image/png"))], { type: "image/png" });
-}
-
-const defaultSolid = { type: "solid" as const, color: "#112233" };
-
-function isUploaded(result: UploadedBackground | UploadRefuse): result is UploadedBackground {
-  return typeof result !== "string";
-}
+import { createSession } from "./session";
+import { defaultSolid, isUploaded, pngBlob } from "./test/helpers";
 
 function indexedDbStore() {
   globalThis.indexedDB = new IDBFactory();
