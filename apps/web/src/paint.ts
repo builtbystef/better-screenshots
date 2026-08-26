@@ -125,12 +125,12 @@ export function paintShadow(
   ctx.drawImage(layer, 0, 0);
 }
 
-const WINDOW_THEME = {
+export const BROWSER_WINDOW_THEME = {
   light: { bar: "#F1F3F4", pill: "#FFFFFF", text: "#202124", hairline: "#E1E3E4" },
   dark: { bar: "#202124", pill: "#303134", text: "#E8EAED", hairline: "#3C4043" },
 } as const;
 
-const TRAFFIC_LIGHTS = ["#FF5F57", "#FEBC2E", "#28C840"] as const;
+export const BROWSER_WINDOW_TRAFFIC_LIGHTS = ["#FF5F57", "#FEBC2E", "#28C840"] as const;
 
 export function paintBrowserWindow(
   ctx: CanvasRenderingContext2D,
@@ -138,7 +138,7 @@ export function paintBrowserWindow(
   scheme: "light" | "dark",
   url: string,
 ): number {
-  const theme = WINDOW_THEME[scheme];
+  const theme = BROWSER_WINDOW_THEME[scheme];
   const barHeight = browserWindowHeight(drawn.width);
   ctx.fillStyle = theme.bar;
   ctx.fillRect(
@@ -160,7 +160,7 @@ export function paintBrowserWindow(
   const inset = barHeight * 0.4;
   const lightsLeft = drawn.x + inset;
   const centerY = drawn.y + barHeight / 2;
-  for (const [index, color] of TRAFFIC_LIGHTS.entries()) {
+  for (const [index, color] of BROWSER_WINDOW_TRAFFIC_LIGHTS.entries()) {
     const centerX = lightsLeft + lightRadius + index * (lightDiameter + gap);
     ctx.beginPath();
     ctx.fillStyle = color;

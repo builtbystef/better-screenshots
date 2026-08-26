@@ -1,14 +1,15 @@
 ---
 id: dza8bk
 title: 'Test the paint seams: window chrome, screenshot squeeze, diagonal gradients'
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - p6557v
 created: 2026-08-26T17:32:13Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:49:54Z
 ---
 
 ## Finding
@@ -30,3 +31,9 @@ Split out of `aofakr`. Three seams in the draw path that the suite cannot fail. 
 - The `gradientLine` tests run in the default node environment with no jsdom pragma.
 - The traffic-light and pill colours appear as named constants shared with `paint.ts`, not as literals restated in the test.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T18:49:54Z
+
+Added direct Canvas 2D seam tests for Browser window traffic-light and pill colours, non-empty URL text, and Screenshot squeezing with a bottom-stripe fixture. Added default-Node worked examples for every distinct diagonal angle shipped by the Catalog. Exported the Browser window theme and traffic-light constants so paint and pixel expectations share named colours. Mutation checks confirmed each new seam test fails for its targeted regression. All four checks pass (119 tests).

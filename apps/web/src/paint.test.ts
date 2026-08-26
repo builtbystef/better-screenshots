@@ -3,6 +3,13 @@
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import { expect, test } from "vite-plus/test";
 import {
+  BROWSER_WINDOW_THEME,
+  BROWSER_WINDOW_TRAFFIC_LIGHTS,
+  paintBrowserWindow,
+  paintScreenshot,
+} from "./paint";
+import type { Placement } from "./placement";
+import {
   createSession,
   type UploadRefuse,
   type UploadedBackground,
@@ -77,6 +84,94 @@ function pixelAt(
   const data = ctx.getImageData(Math.round(cssX * 2), Math.round(cssY * 2), 1, 1).data;
   return [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0, data[3] ?? 0];
 }
+
+function opaquePixel(color: string): [number, number, number, number] {
+  return [
+    Number.parseInt(color.slice(1, 3), 16),
+    Number.parseInt(color.slice(3, 5), 16),
+    Number.parseInt(color.slice(5, 7), 16),
+    255,
+  ];
+}
+
+function paintBrowserWindowFixture(scheme: "light" | "dark", url = ""): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;
+  canvas.height = 200;
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    throw new Error("expected a 2d context");
+  }
+  paintBrowserWindow(ctx, { x: 0, y: 0, width: 400, height: 100 }, scheme, url);
+  return canvas;
+}
+
+test.each(["light", "dark"] as const)(
+  "a %s Browser window paints its first traffic light and address pill",
+  (scheme) => {
+    const canvas = paintBrowserWindowFixture(scheme);
+
+    expect(pixelAt(canvas, 12.32, 11)).toEqual(opaquePixel(BROWSER_WINDOW_TRAFFIC_LIGHTS[0]));
+    expect(pixelAt(canvas, 200, 11)).toEqual(opaquePixel(BROWSER_WINDOW_THEME[scheme].pill));
+  },
+);
+
+test("a Browser window paints a non-empty URL inside the address pill", () => {
+  const empty = paintBrowserWindowFixture("light");
+  const withUrl = paintBrowserWindowFixture("light", "example.com");
+  const emptyContext = empty.getContext("2d");
+  const urlContext = withUrl.getContext("2d");
+  if (emptyContext === null || urlContext === null) {
+    throw new Error("expected 2d contexts");
+  }
+
+  const emptyPill = emptyContext.getImageData(96, 10, 220, 24).data;
+  const urlPill = urlContext.getImageData(96, 10, 220, 24).data;
+
+  expect(urlPill).not.toEqual(emptyPill);
+});
+
+test("a Browser window squeezes the Screenshot so its bottom stripe remains visible", async () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = 280;
+  canvas.height = 280;
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    throw new Error("expected a 2d context");
+  }
+  const screenshot = pngBlob(100, 100, (source) => {
+    source.fillStyle = "#0000FF";
+    source.fillRect(0, 0, 100, 100);
+    source.fillStyle = "#FF0000";
+    source.fillRect(0, 98, 100, 2);
+  });
+  const drawn = { x: 20, y: 20, width: 100, height: 100 };
+  const placement: Placement = {
+    inner: drawn,
+    fitted: { width: drawn.width, height: drawn.height },
+    drawn,
+  };
+  const composition = {
+    width: 140,
+    height: 140,
+    background: defaultSolid,
+    screenshot,
+    padding: 0,
+    scale: 1,
+    position: { x: 0, y: 0 },
+    shadow: { offset: 0, blur: 0, opacity: 0 },
+    border: { width: 0, color: "#FFFFFF" },
+    radius: 0,
+    browserWindow: "light" as const,
+    url: "",
+  };
+
+  await paintScreenshot(ctx, composition, placement, screenshot, () =>
+    document.createElement("canvas"),
+  );
+
+  expect(pixelAt(canvas, 70, 119)).toEqual([255, 0, 0, 255]);
+});
 
 test("a Screenshot positioned past the Frame edge is clipped, not moved", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });

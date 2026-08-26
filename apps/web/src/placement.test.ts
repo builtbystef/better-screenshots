@@ -54,7 +54,7 @@ test("placement applies Scale and Position around the Frame center", () => {
   expect(placement.drawn).toEqual({ x: -60, y: -350, width: 2240, height: 1680 });
 });
 
-test("gradient lines follow CSS angles", () => {
+test("gradient lines follow horizontal and vertical CSS angles", () => {
   expect(gradientLine(1920, 1080, 0)).toEqual({
     start: { x: 960, y: 1080 },
     end: { x: 960, y: 0 },
@@ -65,3 +65,35 @@ test("gradient lines follow CSS angles", () => {
   expect(horizontal.end.x).toBeCloseTo(1920);
   expect(horizontal.end.y).toBeCloseTo(540);
 });
+
+const catalogGradientLines = [
+  { angle: 180, start: [960, 0], end: [960, 1080] },
+  {
+    angle: 160,
+    start: [674.148678082, -245.370052292],
+    end: [1245.851321918, 1325.370052292],
+  },
+  { angle: 135, start: [210, -210], end: [1710, 1290] },
+  {
+    angle: 150,
+    start: [486.173140978, -280.692193817],
+    end: [1433.826859022, 1360.692193817],
+  },
+  {
+    angle: 140,
+    start: [297.453031967, -249.592729416],
+    end: [1622.546968033, 1329.592729416],
+  },
+] as const;
+
+test.each(catalogGradientLines)(
+  "a $angle degree Catalog gradient spans the full Frame diagonal",
+  ({ angle, start, end }) => {
+    const line = gradientLine(1920, 1080, angle);
+
+    expect(line.start.x).toBeCloseTo(start[0]);
+    expect(line.start.y).toBeCloseTo(start[1]);
+    expect(line.end.x).toBeCloseTo(end[0]);
+    expect(line.end.y).toBeCloseTo(end[1]);
+  },
+);
