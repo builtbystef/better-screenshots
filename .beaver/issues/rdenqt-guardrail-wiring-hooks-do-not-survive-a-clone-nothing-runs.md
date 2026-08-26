@@ -1,14 +1,14 @@
 ---
 id: rdenqt
 title: 'Guardrail wiring: hooks do not survive a clone, nothing runs tests before main'
-state: todo
+state: in-progress
 priority: medium
 labels:
     - maintenance
 depends_on:
     - y21uby
 created: 2026-08-26T16:34:42Z
-updated: 2026-08-26T17:55:10Z
+updated: 2026-08-26T19:20:53Z
 ---
 
 ## Finding
@@ -79,3 +79,9 @@ Do not claim either one passed on the strength of reading the script.
 ## Order
 
 Runs after `y21uby`, so this issue is the last thing to touch `.github/workflows/ci.yml` and the consolidation lands on top of the coverage flag rather than under it.
+
+## Notes
+
+**agent** — 2026-08-26T19:20:53Z
+
+Blocked by y21uby, which is still in progress. Complete and close y21uby before implementing this issue so the CI consolidation lands on top of its coverage change.
