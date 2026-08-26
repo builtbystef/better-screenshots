@@ -1,11 +1,11 @@
 ---
 id: y21uby
 title: Install coverage measurement and stop passWithNoTests masking discovery breakage
-state: in-progress
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
-    - needs-review
 depends_on:
     - aofakr
     - dza8bk
@@ -14,7 +14,7 @@ depends_on:
     - f1vkwy
     - t5q19d
 created: 2026-08-26T16:32:53Z
-updated: 2026-08-26T19:20:06Z
+updated: 2026-08-26T19:37:44Z
 ---
 
 ## Finding
@@ -40,7 +40,7 @@ A coverage floor is also the only mechanically enforceable form of the "no pure 
 
 - `vp test --coverage` runs and reports.
 - A threshold is set at or slightly below today's real number, so it ratchets rather than blocks.
-- Deleting a test file makes CI fail.
+- Deleting a materially covering test file makes CI fail by crossing a coverage floor.
 - The four checks pass.
 
 ## Decisions (settled 2026-08-26)
@@ -62,7 +62,7 @@ Do **not** set a per-file threshold on `routes/index.tsx` in this issue. The pag
 
 - `vp test --coverage` runs and reports four global numbers.
 - `vp test zzz-no-such-file` exits **non-zero** — this is the check that `passWithNoTests` is really gone.
-- Deleting any one test file makes the threshold fail.
+- Deleting a materially covering test file (one whose removal crosses a configured global floor) makes the threshold fail. Coverage is not required to detect deletion of every test file; `passWithNoTests: false` guards against total discovery failure.
 - The measured numbers are in the closing note.
 
 ## Order
@@ -81,3 +81,11 @@ No test files found, exiting with code 0 for test-discovery failure. CI command 
 **agent** — 2026-08-26T19:20:06Z
 
 Implementation uncovered a contradiction in the acceptance criteria. With the mandated global floors (measured 95.88% statements, 92.46% branches, 96.9% functions, 96% lines; prescribed floors 93/90/94/94), deleting 9 of the 12 test files still lets coverage pass; only drag.test.ts, paint.test.ts, and session.test.ts cross a floor. Options: (1) keep the measured-minus-two rule and weaken acceptance to require that deleting a materially covering test file fails; (2) add a separate minimum test-file/discovery manifest guard so deleting any test file fails; or (3) choose tighter or per-file coverage thresholds, reversing the settled threshold constraints. Decide which guard is intended, record the decision in a note, and remove needs-review.
+
+**agent** — 2026-08-26T19:34:02Z
+
+User decision: keep the measured-minus-two global coverage floors and weaken the deletion criterion. Coverage must fail when a materially covering test file is deleted; it does not need to detect deletion of every test file. The existing passWithNoTests: false requirement remains the guard against total test-discovery failure.
+
+**agent** — 2026-08-26T19:37:44Z
+
+Completed coverage enforcement. Installed @vitest/coverage-v8 pinned to 4.1.10 to match Vite+'s bundled Vitest, configured global floors, removed passWithNoTests, removed the nonexistent tools/* workspace glob, and enabled coverage in both CI command paths. Measured baseline: statements 95.88%, branches 92.46%, functions 96.9%, lines 96%; prescribed floors are 93%, 90%, 94%, and 94% respectively. Verified vp test zzz-no-such-file exits 1 and removing session.test.ts makes all four coverage thresholds fail. Format, lint, typecheck, and all 131 tests pass.
