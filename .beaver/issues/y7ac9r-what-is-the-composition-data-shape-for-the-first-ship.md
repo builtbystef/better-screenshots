@@ -11,7 +11,7 @@ depends_on:
     - bdkac8
 parent: pfdjl3
 created: 2026-08-19T00:44:14Z
-updated: 2026-08-19T02:14:00Z
+updated: 2026-08-26T18:33:09Z
 ---
 
 Grill session, limited to the first-ship Composition data shape. The cut is closed in bdkac8: one Screenshot, one Background (solid, gradient, or user-uploaded image), position, scale, padding, shadow, border, rounded corners.
@@ -74,3 +74,7 @@ Added **Position** and **Scale**.
 # Not this node
 
 Export format, filename, and 1x/2x (`cx9cwz`). Effect knobs (`eivufq`). Default solid/gradient (`dt8gtk`). Studio chrome. Draw path (already Canvas 2D). Persistence of this object (already out).
+
+**agent** — 2026-08-26T18:33:09Z
+
+Issue jcden7 brought the code back into agreement with this decision: Position is unbounded, Frame clipping handles out-of-bounds Screenshot pixels, and Studio callers no longer clamp Position.

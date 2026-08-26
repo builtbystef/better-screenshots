@@ -303,11 +303,13 @@ test("setScale writes 2 and refuses a value at or below 0 or non-finite", async 
   }
 });
 
-test("setPosition writes an offset and refuses a non-finite value", async () => {
+test("Position is unbounded and a smaller Frame leaves it unchanged", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
-  expect(session.setPosition(10, -20)).toBe("ok");
-  expect(session.composition.position).toEqual({ x: 10, y: -20 });
+  expect(session.setPosition(5000, -4000)).toBe("ok");
+  expect(session.composition.position).toEqual({ x: 5000, y: -4000 });
+  expect(session.setSize(100, 100)).toBe("ok");
+  expect(session.composition.position).toEqual({ x: 5000, y: -4000 });
 
   const before = structuredClone(session.composition);
   const bad = [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
@@ -702,6 +704,29 @@ function pixelAt(
   const data = ctx.getImageData(Math.round(cssX * 2), Math.round(cssY * 2), 1, 1).data;
   return [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0, data[3] ?? 0];
 }
+
+test("a Screenshot positioned past the Frame edge is clipped, not moved", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setSize(100, 100)).toBe("ok");
+  expect(session.setPadding(0)).toBe("ok");
+  expect(session.setPosition(75, 0)).toBe("ok");
+  expect(session.setRadius(0)).toBe("ok");
+  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(
+    await session.placeScreenshot([
+      pngBlob(100, 100, (ctx) => {
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, 100, 100);
+      }),
+    ]),
+  ).toBe("ok");
+
+  const canvas = await session.render();
+
+  expect(pixelAt(canvas, 0, 50)).toEqual([0x11, 0x22, 0x33, 255]);
+  expect(pixelAt(canvas, 60, 50)).toEqual([0x11, 0x22, 0x33, 255]);
+  expect(pixelAt(canvas, 99, 50)).toEqual([255, 255, 255, 255]);
+});
 
 test("border width and shadow offset do not change with Scale", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });

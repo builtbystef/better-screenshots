@@ -1,14 +1,7 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import {
-  clampPosition,
-  filesFrom,
-  hitsDrawn,
-  isFileDrag,
-  isTextFieldTarget,
-  positionFromDrag,
-} from "./drag";
+import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "./drag";
 
 test("a drag is a file drag when types include Files", () => {
   expect(isFileDrag(["Files"])).toBe(true);
@@ -124,18 +117,4 @@ test("positionFromDrag snaps a fractional Preview drag to integer Position", () 
       compositionWidth: 1920,
     }),
   ).toEqual({ x: 21, y: -6 });
-});
-
-test("clampPosition keeps the Screenshot center inside the frame", () => {
-  expect(clampPosition({ x: 5000, y: -4000 }, { width: 1920, height: 1080 })).toEqual({
-    x: 960,
-    y: -540,
-  });
-});
-
-test("clampPosition leaves a Position already inside the frame", () => {
-  expect(clampPosition({ x: 10, y: -20 }, { width: 1920, height: 1080 })).toEqual({
-    x: 10,
-    y: -20,
-  });
 });

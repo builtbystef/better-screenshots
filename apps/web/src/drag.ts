@@ -80,15 +80,3 @@ export function positionFromDrag(input: {
     y: input.origin.y + Math.round((input.current.y - input.start.y) * scale),
   };
 }
-
-export function clampPosition(
-  position: { x: number; y: number },
-  frame: { width: number; height: number },
-): { x: number; y: number } {
-  const maxX = frame.width / 2;
-  const maxY = frame.height / 2;
-  return {
-    x: Math.min(maxX, Math.max(-maxX, position.x)),
-    y: Math.min(maxY, Math.max(-maxY, position.y)),
-  };
-}

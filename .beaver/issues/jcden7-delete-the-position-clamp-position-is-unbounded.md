@@ -1,14 +1,15 @@
 ---
 id: jcden7
 title: Delete the Position clamp; Position is unbounded
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - dwzqq1
 created: 2026-08-26T16:31:27Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T18:33:50Z
 ---
 
 ## Decision (settled 2026-08-26)
@@ -45,3 +46,9 @@ A Screenshot may now sit partly outside the Frame; the draw clips it at the Fram
 - `routes/index.tsx:782-783` is a single `setSize` call.
 - `docs/ARCHITECTURE.md` records the invariant and `y7ac9r` carries the note.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T18:33:50Z
+
+Completed the unbounded Position repair. The Studio now writes drag and Inspector Position values directly, aspect presets only call setSize, and clampPosition plus its tests were deleted. Session-seam coverage records out-of-Frame Position surviving a smaller Frame; render-seam coverage verifies the Screenshot is clipped without being moved. Architecture's drag interface is updated, and all four project checks pass.

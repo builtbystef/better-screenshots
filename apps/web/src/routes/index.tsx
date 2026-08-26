@@ -19,14 +19,7 @@ import {
   catalogSolidFor,
   catalogSolids,
 } from "../catalog";
-import {
-  clampPosition,
-  filesFrom,
-  hitsDrawn,
-  isFileDrag,
-  isTextFieldTarget,
-  positionFromDrag,
-} from "../drag";
+import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "../drag";
 import { createIndexedDbStore } from "../indexed-db-store";
 import {
   exportLine,
@@ -336,16 +329,13 @@ function Preview({
       return;
     }
     setDragging(true);
-    const next = clampPosition(
-      positionFromDrag({
-        origin: drag.origin,
-        start: drag.start,
-        current: { x: event.clientX, y: event.clientY },
-        previewWidth: drag.previewWidth,
-        compositionWidth: session.composition.width,
-      }),
-      session.composition,
-    );
+    const next = positionFromDrag({
+      origin: drag.origin,
+      start: drag.start,
+      current: { x: event.clientX, y: event.clientY },
+      previewWidth: drag.previewWidth,
+      compositionWidth: session.composition.width,
+    });
     if (session.setPosition(next.x, next.y) === "ok") {
       onPlaced();
     }
@@ -741,12 +731,9 @@ function FrameInspector({ session, onChange }: { session: StudioSession; onChang
   const selected = aspectPresetFor(session.composition.width, session.composition.height);
 
   function writePreset(width: number, height: number) {
-    if (session.setSize(width, height) !== "ok") {
-      return;
+    if (session.setSize(width, height) === "ok") {
+      onChange();
     }
-    const next = clampPosition(session.composition.position, { width, height });
-    session.setPosition(next.x, next.y);
-    onChange();
   }
 
   return (
@@ -868,7 +855,6 @@ function PlacementInspector({
       <PositionRow
         x={position.x}
         y={position.y}
-        frame={{ width: session.composition.width, height: session.composition.height }}
         onWrite={(x, y) => {
           if (session.setPosition(x, y) === "ok") {
             onChange();
@@ -1052,12 +1038,10 @@ function KnobRow({
 function PositionRow({
   x,
   y,
-  frame,
   onWrite,
 }: {
   x: number;
   y: number;
-  frame: { width: number; height: number };
   onWrite: (x: number, y: number) => void;
 }) {
   const [xDraft, setXDraft] = useState(formatInteger(x));
@@ -1076,9 +1060,8 @@ function PositionRow({
       setXDraft(formatInteger(x));
       return;
     }
-    const next = clampPosition({ x: parsed, y }, frame);
-    onWrite(next.x, next.y);
-    setXDraft(formatInteger(next.x));
+    onWrite(parsed, y);
+    setXDraft(formatInteger(parsed));
   }
 
   function commitY() {
@@ -1087,9 +1070,8 @@ function PositionRow({
       setYDraft(formatInteger(y));
       return;
     }
-    const next = clampPosition({ x, y: parsed }, frame);
-    onWrite(next.x, next.y);
-    setYDraft(formatInteger(next.y));
+    onWrite(x, parsed);
+    setYDraft(formatInteger(parsed));
   }
 
   function onFieldKeyDown(commit: () => void) {
