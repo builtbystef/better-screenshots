@@ -1,7 +1,8 @@
 ---
 id: f1vkwy
 title: Name the data clumps and take patches instead of positional arguments
-state: todo
+state: done
+assignee: agent
 priority: low
 labels:
     - maintenance
@@ -9,7 +10,7 @@ depends_on:
     - p6557v
     - msmb41
 created: 2026-08-26T16:34:00Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:11:47Z
 ---
 
 ## Finding
@@ -59,3 +60,13 @@ The Repair section offers three either/ors. All are settled:
 ## Order
 
 Runs after `p6557v` (the modules must be split before their types move) and `msmb41` (both edit the same setters and the same call sites).
+
+## Notes
+
+**agent** — 2026-08-26T19:11:07Z
+
+Test seam: StudioSession's public writer interface, where partial Effect writes and refusal behavior are observable; compile-time checking verifies narrowed HexColor inputs at route call sites.
+
+**agent** — 2026-08-26T19:11:47Z
+
+Completed: exported Point, Frame, Shadow, and Border and replaced the corresponding inline shapes; changed shadow and border writers to merge and validate partial patches; narrowed HexColor and routed DOM colour strings through parseHex; removed Refuse. StudioSession tests cover partial patch preservation and invalid patch refusal. Verified format, lint, typecheck, and all 130 tests.

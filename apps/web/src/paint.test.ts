@@ -8,7 +8,12 @@ import {
   paintScreenshot,
 } from "./paint";
 import type { Placement } from "./placement";
-import { createSession, type UploadedBackground, type UploadedBackgroundStore } from "./session";
+import {
+  createSession,
+  type Composition,
+  type UploadedBackground,
+  type UploadedBackgroundStore,
+} from "./session";
 import { defaultSolid, isUploaded, pngBlob } from "./test/helpers";
 function emptyStore(): UploadedBackgroundStore {
   return {
@@ -124,7 +129,7 @@ test("a Browser window squeezes the Screenshot so its bottom stripe remains visi
     fitted: { width: drawn.width, height: drawn.height },
     drawn,
   };
-  const composition = {
+  const composition: Composition = {
     width: 140,
     height: 140,
     background: defaultSolid,
@@ -152,7 +157,7 @@ test("a Screenshot positioned past the Frame edge is clipped, not moved", async 
   expect(session.setPadding(0)).toBe("ok");
   expect(session.setPosition(75, 0)).toBe("ok");
   expect(session.setRadius(0)).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
   expect(
     await session.placeScreenshot([
       pngBlob(100, 100, (ctx) => {
@@ -181,8 +186,8 @@ test("border width and shadow offset do not change with Scale", async () => {
   ).toBe("ok");
   expect(session.setScale(2)).toBe("ok");
   expect(session.setPosition(200, 0)).toBe("ok");
-  expect(session.setBorder(8, "#FF0000")).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setBorder({ width: 8, color: "#FF0000" })).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -193,8 +198,8 @@ test("border width and shadow offset do not change with Scale", async () => {
 test("Screenshot alpha composites over the Background", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
   expect(await session.placeScreenshot([pngBlob(800, 600)])).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -211,8 +216,8 @@ test("a glow with offset 0 and blur above 0 is painted", async () => {
       }),
     ]),
   ).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
-  expect(session.setShadow(0, 32, 1)).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 32, opacity: 1 })).toBe("ok");
 
   const canvas = await session.render();
   const [r, g, b] = pixelAt(canvas, 390, 540);
@@ -232,14 +237,14 @@ test("shadow is black at the stored opacity, offset +x +y, and off when offset a
       }),
     ]),
   ).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
-  expect(session.setShadow(16, 0, 1)).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
+  expect(session.setShadow({ offset: 16, blur: 0, opacity: 1 })).toBe("ok");
 
   const canvas = await session.render();
 
   expect(pixelAt(canvas, 1528, 540)).toEqual([0, 0, 0, 255]);
   expect(pixelAt(canvas, 960, 540)).toEqual([255, 255, 255, 255]);
-  expect(session.setShadow(0, 0, 1)).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 1 })).toBe("ok");
   const none = await session.render();
   expect(pixelAt(none, 1528, 540)).toEqual([0x11, 0x22, 0x33, 255]);
 });
@@ -256,8 +261,8 @@ test("a Light Browser window paints its bar above the Screenshot", async () => {
   ).toBe("ok");
   expect(session.setBrowserWindow("light")).toBe("ok");
   expect(session.setRadius(0)).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -277,8 +282,8 @@ test("a Dark Browser window paints its bar above the Screenshot", async () => {
   ).toBe("ok");
   expect(session.setBrowserWindow("dark")).toBe("ok");
   expect(session.setRadius(0)).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -296,8 +301,8 @@ test("a placed Screenshot paints inside the drawn rect and the border in the out
       }),
     ]),
   ).toBe("ok");
-  expect(session.setBorder(8, "#FF0000")).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setBorder({ width: 8, color: "#FF0000" })).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -318,8 +323,8 @@ test("border width 0 makes the outer rect equal the drawn rect", async () => {
       }),
     ]),
   ).toBe("ok");
-  expect(session.setBorder(0, "#FF0000")).toBe("ok");
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setBorder({ width: 0, color: "#FF0000" })).toBe("ok");
+  expect(session.setShadow({ offset: 0, blur: 0, opacity: 0 })).toBe("ok");
 
   const canvas = await session.render();
 
@@ -329,8 +334,8 @@ test("border width 0 makes the outer rect equal the drawn rect", async () => {
 
 test("effects do not apply when the Screenshot is absent", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
-  session.setShadow(16, 0, 1);
-  session.setBorder(8, "#FFFFFF");
+  session.setShadow({ offset: 16, blur: 0, opacity: 1 });
+  session.setBorder({ width: 8, color: "#FFFFFF" });
   session.setRadius(16);
 
   const canvas = await session.render();

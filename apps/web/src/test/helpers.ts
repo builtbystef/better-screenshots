@@ -1,7 +1,7 @@
 import { createCanvas, loadImage } from "@napi-rs/canvas";
-import type { UploadRefuse, UploadedBackground } from "../session";
+import type { Frame, SolidBackground, UploadRefuse, UploadedBackground } from "../session";
 
-const imageSizes = new WeakMap<Blob, { width: number; height: number }>();
+const imageSizes = new WeakMap<Blob, Frame>();
 
 if (typeof globalThis.createImageBitmap !== "function") {
   globalThis.createImageBitmap = (async (image: ImageBitmapSource) => {
@@ -29,7 +29,7 @@ export function pngBlob(
   return new Blob([Uint8Array.from(canvas.toBuffer("image/png"))], { type: "image/png" });
 }
 
-export const defaultSolid = { type: "solid" as const, color: "#112233" };
+export const defaultSolid = { type: "solid", color: "#112233" } satisfies SolidBackground;
 
 export function isUploaded(
   result: UploadedBackground | UploadRefuse,

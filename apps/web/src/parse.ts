@@ -1,3 +1,5 @@
+import type { HexColor } from "./session";
+
 export function commitDraft<StoredValue, WrittenValue = StoredValue>(
   draft: string,
   storedValue: StoredValue,
@@ -10,7 +12,7 @@ export function commitDraft<StoredValue, WrittenValue = StoredValue>(
 
 const HEX_DIGITS = /^#?([0-9A-Fa-f]{6})$/;
 
-export function parseHex(raw: string): `#${string}` | "refuse" {
+export function parseHex(raw: string): HexColor | "refuse" {
   const match = HEX_DIGITS.exec(raw);
   return match === null ? "refuse" : `#${match[1]}`;
 }

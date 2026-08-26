@@ -1,5 +1,12 @@
 import { expect, test } from "vite-plus/test";
-import { createSession, type UploadedBackground, type UploadedBackgroundStore } from "./session";
+import {
+  createSession,
+  type Background,
+  type Border,
+  type GradientBackground,
+  type UploadedBackground,
+  type UploadedBackgroundStore,
+} from "./session";
 import { defaultSolid, imageBlob, isUploaded } from "./test/helpers";
 
 function emptyStore(): UploadedBackgroundStore {
@@ -153,8 +160,8 @@ test("setBackground writes a solid and keeps hex case", async () => {
 
 test("setBackground writes a gradient with two or more valid stops", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
-  const gradient = {
-    type: "gradient" as const,
+  const gradient: GradientBackground = {
+    type: "gradient",
     angle: 90,
     stops: [
       { offset: 0, color: "#000000" },
@@ -220,7 +227,7 @@ test("setBackground refuses a bad value and leaves the Composition unchanged", a
   ];
 
   for (const background of refused) {
-    expect(session.setBackground(background)).toBe("refuse");
+    expect(session.setBackground(background as Background)).toBe("refuse");
     expect(session.composition).toEqual(before);
   }
 });
@@ -314,47 +321,49 @@ test("Position is unbounded and a smaller Frame leaves it unchanged", async () =
   }
 });
 
-test("setShadow writes zeros and refuses a value out of range or non-finite", async () => {
+test("setShadow merges valid patches and refuses a patch with an invalid field", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
-  expect(session.setShadow(0, 0, 0)).toBe("ok");
+  expect(session.setShadow({ offset: 0 })).toBe("ok");
+  expect(session.composition.shadow).toEqual({ offset: 0, blur: 32, opacity: 0.25 });
+  expect(session.setShadow({ blur: 0, opacity: 0 })).toBe("ok");
   expect(session.composition.shadow).toEqual({ offset: 0, blur: 0, opacity: 0 });
 
   const before = structuredClone(session.composition);
-  const refused: Array<[number, number, number]> = [
-    [-1, 0, 0],
-    [0, -1, 0],
-    [0, 0, -0.01],
-    [0, 0, 1.01],
-    [Number.NaN, 0, 0],
-    [0, Number.POSITIVE_INFINITY, 0],
-    [0, 0, Number.NEGATIVE_INFINITY],
+  const refused = [
+    { offset: -1 },
+    { blur: -1 },
+    { opacity: -0.01 },
+    { opacity: 1.01 },
+    { offset: Number.NaN },
+    { blur: Number.POSITIVE_INFINITY },
+    { opacity: Number.NEGATIVE_INFINITY },
   ];
-  for (const [offset, blur, opacity] of refused) {
-    expect(session.setShadow(offset, blur, opacity)).toBe("refuse");
+  for (const patch of refused) {
+    expect(session.setShadow(patch)).toBe("refuse");
     expect(session.composition).toEqual(before);
   }
 });
 
-test("setBorder writes zeros and keeps color case, and refuses a bad width or color", async () => {
+test("setBorder merges valid patches and refuses a patch with an invalid field", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
-  expect(session.setBorder(0, "#000000")).toBe("ok");
-  expect(session.composition.border).toEqual({ width: 0, color: "#000000" });
-  expect(session.setBorder(2, "#aAbBcC")).toBe("ok");
+  expect(session.setBorder({ width: 2 })).toBe("ok");
+  expect(session.composition.border).toEqual({ width: 2, color: "#FFFFFF" });
+  expect(session.setBorder({ color: "#aAbBcC" })).toBe("ok");
   expect(session.composition.border).toEqual({ width: 2, color: "#aAbBcC" });
 
   const before = structuredClone(session.composition);
-  const refused: Array<[number, string]> = [
-    [-1, "#000000"],
-    [Number.NaN, "#000000"],
-    [Number.POSITIVE_INFINITY, "#000000"],
-    [1, "#RGB"],
-    [1, "#00000000"],
-    [1, "000000"],
+  const refused = [
+    { width: -1 },
+    { width: Number.NaN },
+    { width: Number.POSITIVE_INFINITY },
+    { color: "#RGB" },
+    { color: "#00000000" },
+    { color: "000000" },
   ];
-  for (const [width, color] of refused) {
-    expect(session.setBorder(width, color)).toBe("refuse");
+  for (const patch of refused) {
+    expect(session.setBorder(patch as Partial<Border>)).toBe("refuse");
     expect(session.composition).toEqual(before);
   }
 });
@@ -386,8 +395,8 @@ test("a second successful place swaps the Screenshot and keeps fields", async ()
   session.setPadding(40);
   session.setScale(2);
   session.setPosition(10, -20);
-  session.setShadow(1, 2, 0.5);
-  session.setBorder(3, "#aAbBcC");
+  session.setShadow({ offset: 1, blur: 2, opacity: 0.5 });
+  session.setBorder({ width: 3, color: "#aAbBcC" });
   session.setRadius(8);
   session.setBrowserWindow("dark");
   session.setUrl("example.com");

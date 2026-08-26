@@ -41,9 +41,12 @@ import {
 } from "../parse";
 import {
   createSession,
+  type Border,
   type BrowserWindow,
   type GradientBackground,
   type HexColor,
+  type Point,
+  type Shadow,
   type StudioSession,
 } from "../session";
 
@@ -121,8 +124,8 @@ function previewCanvas(host: HTMLDivElement | null): HTMLCanvasElement | null {
 function Preview({ session, sessionVersion }: { session: StudioSession; sessionVersion: number }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{
-    origin: { x: number; y: number };
-    start: { x: number; y: number };
+    origin: Point;
+    start: Point;
     previewWidth: number;
   } | null>(null);
   const pickerId = useId();
@@ -493,7 +496,10 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
   }
 
   function onNativeChange(event: ChangeEvent<HTMLInputElement>) {
-    writeSolid(event.target.value);
+    const color = parseHex(event.target.value);
+    if (color !== "refuse") {
+      writeSolid(color);
+    }
   }
 
   function writeImage(id: string) {
@@ -821,16 +827,12 @@ function PlacementInspector({ session }: { session: StudioSession }) {
 function EffectsInspector({ session }: { session: StudioSession }) {
   const { shadow, border, radius } = session.composition;
 
-  function writeShadow(next: { offset?: number; blur?: number; opacity?: number }) {
-    session.setShadow(
-      next.offset ?? shadow.offset,
-      next.blur ?? shadow.blur,
-      next.opacity ?? shadow.opacity,
-    );
+  function writeShadow(patch: Partial<Shadow>) {
+    session.setShadow(patch);
   }
 
-  function writeBorder(next: { width?: number; color?: HexColor }) {
-    session.setBorder(next.width ?? border.width, next.color ?? border.color);
+  function writeBorder(patch: Partial<Border>) {
+    session.setBorder(patch);
   }
 
   return (
@@ -1044,7 +1046,12 @@ function BorderColorRow({
           value={color}
           aria-label="Border color picker"
           className="studio-swatch size-7 shrink-0 cursor-pointer border-0 border-l border-input"
-          onChange={(event) => onWrite(event.target.value)}
+          onChange={(event) => {
+            const next = parseHex(event.target.value);
+            if (next !== "refuse") {
+              onWrite(next);
+            }
+          }}
         />
       </div>
     </div>

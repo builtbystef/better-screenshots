@@ -1,11 +1,13 @@
 import { renderComposition } from "./paint";
-import { derivePlacement, type Placement, type Size } from "./placement";
+import { derivePlacement, type Placement } from "./placement";
 
 export type { Placement, Rect } from "./placement";
 
-export type Refuse = "refuse";
+export type Point = { x: number; y: number };
 
-async function decodeImageSize(blob: Blob): Promise<Size | null> {
+export type Frame = { width: number; height: number };
+
+async function decodeImageSize(blob: Blob): Promise<Frame | null> {
   try {
     const bitmap = await createImageBitmap(blob);
     const { width, height } = bitmap;
@@ -21,7 +23,7 @@ async function decodeImageSize(blob: Blob): Promise<Size | null> {
   }
 }
 
-export type HexColor = string;
+export type HexColor = `#${string}`;
 
 export type SolidBackground = { type: "solid"; color: HexColor };
 
@@ -39,16 +41,18 @@ export type Background = SolidBackground | GradientBackground | ImageBackground;
 
 export type BrowserWindow = "none" | "light" | "dark";
 
-export type Composition = {
-  width: number;
-  height: number;
+export type Shadow = { offset: number; blur: number; opacity: number };
+
+export type Border = { width: number; color: HexColor };
+
+export type Composition = Frame & {
   background: Background;
   screenshot: Blob | null;
   padding: number;
   scale: number;
-  position: { x: number; y: number };
-  shadow: { offset: number; blur: number; opacity: number };
-  border: { width: number; color: HexColor };
+  position: Point;
+  shadow: Shadow;
+  border: Border;
   radius: number;
   browserWindow: BrowserWindow;
   url: string;
@@ -73,7 +77,7 @@ export type UploadedBackgroundStore = {
 
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
 
-function isHexColor(value: string): boolean {
+function isHexColor(value: string): value is HexColor {
   return HEX_COLOR.test(value);
 }
 
@@ -107,21 +111,21 @@ export type StudioSession = {
   readonly uploadedBackgrounds: readonly UploadedBackground[];
   readonly placement: Placement | null;
   readonly storage: "ok" | "unavailable";
-  placeScreenshot(sources: readonly Blob[]): Promise<"ok" | Refuse>;
-  setBackground(background: Background): "ok" | Refuse;
+  placeScreenshot(sources: readonly Blob[]): Promise<"ok" | "refuse">;
+  setBackground(background: Background): "ok" | "refuse";
   uploadBackground(file: Blob, filename: string): Promise<UploadedBackground | UploadRefuse>;
-  removeBackground(id: string): Promise<"ok" | Refuse>;
-  setSize(width: number, height: number): "ok" | Refuse;
-  setBrowserWindow(value: BrowserWindow): "ok" | Refuse;
+  removeBackground(id: string): Promise<"ok" | "refuse">;
+  setSize(width: number, height: number): "ok" | "refuse";
+  setBrowserWindow(value: BrowserWindow): "ok" | "refuse";
   setUrl(url: string): "ok";
-  setPadding(value: number): "ok" | Refuse;
-  setScale(value: number): "ok" | Refuse;
-  setPosition(x: number, y: number): "ok" | Refuse;
-  setShadow(offset: number, blur: number, opacity: number): "ok" | Refuse;
-  setBorder(width: number, color: HexColor): "ok" | Refuse;
-  setRadius(value: number): "ok" | Refuse;
+  setPadding(value: number): "ok" | "refuse";
+  setScale(value: number): "ok" | "refuse";
+  setPosition(x: number, y: number): "ok" | "refuse";
+  setShadow(patch: Partial<Shadow>): "ok" | "refuse";
+  setBorder(patch: Partial<Border>): "ok" | "refuse";
+  setRadius(value: number): "ok" | "refuse";
   render(): Promise<HTMLCanvasElement>;
-  exportPng(now: Date): Promise<{ blob: Blob; filename: string } | Refuse>;
+  exportPng(now: Date): Promise<{ blob: Blob; filename: string } | "refuse">;
 };
 
 export async function createSession(options: {
@@ -134,7 +138,7 @@ export async function createSession(options: {
   const storeUnavailable = listed === "unavailable";
   let storage: "ok" | "unavailable" = storeUnavailable ? "unavailable" : "ok";
   let uploadedBackgrounds: UploadedBackground[] = storeUnavailable ? [] : [...listed];
-  let screenshotSize: Size | null = null;
+  let screenshotSize: Frame | null = null;
   let version = 0;
   const listeners = new Set<() => void>();
   let composition: Composition = {
@@ -284,26 +288,28 @@ export async function createSession(options: {
       commit({ ...composition, position: { x, y } });
       return "ok";
     },
-    setShadow(offset, blur, opacity) {
+    setShadow(patch) {
+      const shadow = { ...composition.shadow, ...patch };
       if (
-        !Number.isFinite(offset) ||
-        !Number.isFinite(blur) ||
-        !Number.isFinite(opacity) ||
-        offset < 0 ||
-        blur < 0 ||
-        opacity < 0 ||
-        opacity > 1
+        !Number.isFinite(shadow.offset) ||
+        !Number.isFinite(shadow.blur) ||
+        !Number.isFinite(shadow.opacity) ||
+        shadow.offset < 0 ||
+        shadow.blur < 0 ||
+        shadow.opacity < 0 ||
+        shadow.opacity > 1
       ) {
         return "refuse";
       }
-      commit({ ...composition, shadow: { offset, blur, opacity } });
+      commit({ ...composition, shadow });
       return "ok";
     },
-    setBorder(width, color) {
-      if (!Number.isFinite(width) || width < 0 || !isHexColor(color)) {
+    setBorder(patch) {
+      const border = { ...composition.border, ...patch };
+      if (!Number.isFinite(border.width) || border.width < 0 || !isHexColor(border.color)) {
         return "refuse";
       }
-      commit({ ...composition, border: { width, color } });
+      commit({ ...composition, border });
       return "ok";
     },
     setRadius(value) {

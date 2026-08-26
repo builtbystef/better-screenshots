@@ -1,4 +1,4 @@
-import type { GradientBackground, HexColor } from "./session";
+import type { GradientBackground, HexColor, SolidBackground } from "./session";
 
 export type CatalogSolid = { name: string; color: HexColor };
 
@@ -106,7 +106,10 @@ export function catalogGradientFor(value: GradientBackground): CatalogGradient |
   );
 }
 
-export const catalogDefaultSolid = { type: "solid" as const, color: "#E4E4E7" };
+export const catalogDefaultSolid = {
+  type: "solid",
+  color: "#E4E4E7",
+} satisfies SolidBackground;
 
 export type AspectPreset = { name: string; width: number; height: number };
 

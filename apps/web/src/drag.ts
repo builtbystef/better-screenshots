@@ -1,3 +1,5 @@
+import type { Point, Rect } from "./session";
+
 export function isFileDrag(types: readonly string[]): boolean {
   return types.includes("Files");
 }
@@ -51,9 +53,9 @@ export function filesFrom(
 }
 
 export function hitsDrawn(input: {
-  point: { x: number; y: number };
+  point: Point;
   rect: { left: number; top: number; clientWidth: number; clientLeft: number };
-  drawn: { x: number; y: number; width: number; height: number };
+  drawn: Rect;
   compositionWidth: number;
 }): boolean {
   const scale = input.rect.clientWidth / input.compositionWidth;
@@ -68,12 +70,12 @@ export function hitsDrawn(input: {
 }
 
 export function positionFromDrag(input: {
-  origin: { x: number; y: number };
-  start: { x: number; y: number };
-  current: { x: number; y: number };
+  origin: Point;
+  start: Point;
+  current: Point;
   previewWidth: number;
   compositionWidth: number;
-}): { x: number; y: number } {
+}): Point {
   const scale = input.compositionWidth / input.previewWidth;
   return {
     x: input.origin.x + Math.round((input.current.x - input.start.x) * scale),

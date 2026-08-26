@@ -1,19 +1,17 @@
-export type Rect = { x: number; y: number; width: number; height: number };
+import type { Frame, Point } from "./session";
+
+export type Rect = Point & Frame;
 
 export type Placement = {
   inner: Rect;
-  fitted: { width: number; height: number };
+  fitted: Frame;
   drawn: Rect;
 };
 
-export type Size = { width: number; height: number };
-
-type PlacementComposition = {
-  width: number;
-  height: number;
+type PlacementComposition = Frame & {
   padding: number;
   scale: number;
-  position: { x: number; y: number };
+  position: Point;
   browserWindow: "none" | "light" | "dark";
 };
 
@@ -23,7 +21,7 @@ export function browserWindowHeight(width: number): number {
   return width * BROWSER_WINDOW_BAR_RATIO;
 }
 
-export function derivePlacement(composition: PlacementComposition, screenshot: Size): Placement {
+export function derivePlacement(composition: PlacementComposition, screenshot: Frame): Placement {
   const padding = Math.min(
     composition.padding,
     (Math.min(composition.width, composition.height) - 1) / 2,
@@ -60,7 +58,7 @@ export function gradientLine(
   width: number,
   height: number,
   angle: number,
-): { start: { x: number; y: number }; end: { x: number; y: number } } {
+): { start: Point; end: Point } {
   const theta = (angle * Math.PI) / 180;
   const length = Math.abs(width * Math.sin(theta)) + Math.abs(height * Math.cos(theta));
   const dx = Math.sin(theta);

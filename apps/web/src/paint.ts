@@ -4,9 +4,15 @@ import {
   gradientLine,
   type Placement,
   type Rect,
-  type Size,
 } from "./placement";
-import type { Composition, HexColor, SolidBackground, UploadedBackgroundStore } from "./session";
+import type {
+  Composition,
+  Frame,
+  HexColor,
+  Shadow,
+  SolidBackground,
+  UploadedBackgroundStore,
+} from "./session";
 
 const PAINT_SCALE = 2;
 
@@ -93,7 +99,7 @@ export function paintShadow(
   ctx: CanvasRenderingContext2D,
   outer: Rect,
   outerRadius: number,
-  shadow: { offset: number; blur: number; opacity: number },
+  shadow: Shadow,
   createCanvas: () => HTMLCanvasElement,
 ): void {
   if (shadow.offset === 0 && shadow.blur === 0) {
@@ -263,7 +269,7 @@ export async function paintScreenshot(
 
 export async function renderComposition(
   composition: Composition,
-  screenshotSize: Size | null,
+  screenshotSize: Frame | null,
   options: PaintOptions,
 ): Promise<HTMLCanvasElement> {
   const canvas = options.createCanvas();
