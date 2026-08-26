@@ -1,6 +1,6 @@
 # Draw the Composition and write the Export with Canvas 2D
 
-The Studio must preview a Composition honestly and write that same image as the Export, with no backend and no extra library. First ship is one Screenshot plus shadow, border, and rounded corners — not text, annotations, or device frames.
+The Studio must preview a Composition honestly and write that same image as the Export, with no backend and no extra library.
 
 Preview and Export share one Canvas 2D bitmap (`toBlob`). Shadows have offset, blur, and color, not spread. The draw is two-pass so a rounded clip does not cut the drop shadow.
 

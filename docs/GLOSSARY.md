@@ -8,10 +8,6 @@ The project's shared language. The rules: use one term for each concept — the 
 The browser app where the user makes a Composition.
 _Avoid_: editor, app, site
 
-**Empty Studio**:
-The Studio when the Composition has no Screenshot.
-_Avoid_: first-run, blank, unoccupied, empty-occupied
-
 **Inspector**:
 The single Studio panel for Frame, Background, placement, Browser window, and Effects.
 _Avoid_: sidebar, properties, settings (when this panel is meant)
@@ -49,15 +45,15 @@ The Chrome-style title and address bar drawn around a Screenshot.
 _Avoid_: browser chrome, device frame, chrome (when this wrap is meant)
 
 **Padding**:
-The inset of the Screenshot — and its Browser window, when present — on the Background.
+The inset of the Screenshot on the Background.
 _Avoid_: framing, margin, gap
 
 **Position**:
-The offset of the Screenshot — and its Browser window, when present — from the center of the Composition.
+The offset of the Screenshot from the center of the Composition.
 _Avoid_: translation, location, offset (when the placement is meant)
 
 **Scale**:
-The size of the Screenshot — and its Browser window, when present — relative to the size that fits it inside the Padding.
+The size of the Screenshot relative to the size that fits it inside the Padding.
 _Avoid_: zoom, magnification
 
 **Effect**:
