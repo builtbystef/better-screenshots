@@ -1,29 +1,40 @@
-import { IDBFactory, IDBObjectStore } from "fake-indexeddb";
+import { createCanvas } from "@napi-rs/canvas";
+import { IDBFactory } from "fake-indexeddb";
 import { expect, test } from "vite-plus/test";
 import { createIndexedDbStore } from "./indexed-db-store";
 import { createSession } from "./session";
 import { defaultSolid, isUploaded, pngBlob } from "./test/helpers";
 
-function indexedDbStore() {
-  globalThis.indexedDB = new IDBFactory();
-  return createIndexedDbStore();
+function indexedDbStore(factory: IDBFactory = new IDBFactory()) {
+  return createIndexedDbStore(factory);
 }
 
-async function blobBytes(blob: Blob): Promise<Uint8Array> {
-  return new Uint8Array(await blob.arrayBuffer());
+function createTestCanvas() {
+  return createCanvas(1, 1) as unknown as HTMLCanvasElement;
+}
+
+function pixelAt(canvas: HTMLCanvasElement, x: number, y: number) {
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("expected a 2d context");
+  }
+  return [...context.getImageData(x * 2, y * 2, 1, 1).data];
 }
 
 test("two createSession calls against the IndexedDB store see the same upload", async () => {
   const store = indexedDbStore();
   const first = await createSession({ defaultSolid, store });
-  const file = pngBlob(100, 80);
+  const file = pngBlob(100, 80, (context) => {
+    context.fillStyle = "#ff0000";
+    context.fillRect(0, 0, 100, 80);
+  });
   const uploaded = await first.uploadBackground(file, "wall.png");
   expect(isUploaded(uploaded)).toBe(true);
   if (!isUploaded(uploaded)) {
     return;
   }
 
-  const second = await createSession({ defaultSolid, store });
+  const second = await createSession({ defaultSolid, store, createCanvas: createTestCanvas });
   expect(second.uploadedBackgrounds).toHaveLength(1);
   const listed = second.uploadedBackgrounds[0];
   expect(listed?.id).toBe(uploaded.id);
@@ -31,7 +42,10 @@ test("two createSession calls against the IndexedDB store see the same upload", 
   expect(listed?.width).toBe(100);
   expect(listed?.height).toBe(80);
   expect(listed?.byteLength).toBe(file.size);
-  expect(listed && (await blobBytes(listed.blob))).toEqual(await blobBytes(file));
+
+  expect(second.setBackground({ type: "image", id: uploaded.id })).toBe("ok");
+  const canvas = await second.render();
+  expect(pixelAt(canvas, 960, 540)).toEqual([0xff, 0, 0, 0xff]);
 });
 
 test("a new session against the IndexedDB store does not list a removed Background", async () => {
@@ -66,64 +80,107 @@ test("upload and remove refuse when IndexedDB is unavailable", async () => {
   }
 });
 
-function objectStoreMethod(name: "put" | "delete") {
-  const descriptor = Object.getOwnPropertyDescriptor(IDBObjectStore.prototype, name);
-  if (descriptor === undefined) {
-    throw new Error(`expected IDBObjectStore.prototype.${name}`);
-  }
-  return descriptor;
+type FailureDelivery = "request-error" | "abort";
+
+function requestStub<T>(result: T, error: DOMException | null = null): IDBRequest<T> {
+  return {
+    error,
+    onerror: null,
+    onsuccess: null,
+    readyState: "pending",
+    result,
+    source: null,
+    transaction: null,
+  } as unknown as IDBRequest<T>;
 }
 
-function stubObjectStoreMethod(name: "put" | "delete", error: DOMException) {
-  Object.defineProperty(IDBObjectStore.prototype, name, {
-    configurable: true,
-    writable: true,
-    value: () => {
-      throw error;
+function factoryWithWriteFailure(delivery: FailureDelivery, error: DOMException): IDBFactory {
+  const writeRequest = requestStub<IDBValidKey>(undefined as unknown as IDBValidKey, error);
+  const transaction = {
+    error: delivery === "abort" ? error : null,
+    onabort: null,
+    oncomplete: null,
+    onerror: null,
+    objectStore: () => ({
+      put: () => {
+        queueMicrotask(() => {
+          if (delivery === "request-error") {
+            writeRequest.onerror?.(new Event("error"));
+          } else {
+            transaction.onabort?.(new Event("abort"));
+          }
+        });
+        return writeRequest;
+      },
+    }),
+  } as unknown as IDBTransaction;
+  const database = {
+    close() {},
+    transaction: () => transaction,
+  } as unknown as IDBDatabase;
+  const openRequest = requestStub(database) as IDBOpenDBRequest;
+  return {
+    open: () => {
+      queueMicrotask(() => openRequest.onsuccess?.(new Event("success")));
+      return openRequest;
     },
-  });
+  } as unknown as IDBFactory;
 }
 
-test("upload refuses when the IndexedDB store hits quota or is unavailable", async () => {
-  const store = indexedDbStore();
-  const session = await createSession({ defaultSolid, store });
-  const original = objectStoreMethod("put");
-  try {
-    stubObjectStoreMethod(
-      "put",
-      new DOMException("The quota has been exceeded.", "QuotaExceededError"),
-    );
-    expect(await session.uploadBackground(pngBlob(100, 80), "one.png")).toBe("quota");
-    expect(session.uploadedBackgrounds).toEqual([]);
+function blockedFactory(): IDBFactory {
+  const openRequest = requestStub<IDBDatabase>(
+    undefined as unknown as IDBDatabase,
+  ) as IDBOpenDBRequest;
+  return {
+    open: () => {
+      queueMicrotask(() =>
+        openRequest.onblocked?.(new Event("blocked") as unknown as IDBVersionChangeEvent),
+      );
+      return openRequest;
+    },
+  } as unknown as IDBFactory;
+}
 
-    stubObjectStoreMethod(
-      "put",
-      new DOMException("The database is not available.", "UnknownError"),
-    );
-    expect(await session.uploadBackground(pngBlob(50, 40), "two.png")).toBe("unavailable");
-    expect(session.uploadedBackgrounds).toEqual([]);
-  } finally {
-    Object.defineProperty(IDBObjectStore.prototype, "put", original);
-  }
+const record = {
+  id: "background-1",
+  filename: "wall.png",
+  addedAt: new Date("2026-08-26T00:00:00Z"),
+  width: 100,
+  height: 80,
+  byteLength: 1,
+  blob: new Blob([new Uint8Array([0])], { type: "image/png" }),
+};
+
+test("an asynchronous IndexedDB quota error refuses the write as quota", async () => {
+  const quota = new DOMException("The quota has been exceeded.", "QuotaExceededError");
+
+  expect(
+    await createIndexedDbStore(factoryWithWriteFailure("request-error", quota)).put(record),
+  ).toBe("quota");
+  expect(await createIndexedDbStore(factoryWithWriteFailure("abort", quota)).put(record)).toBe(
+    "quota",
+  );
 });
 
-test("remove refuses when the IndexedDB store is unavailable", async () => {
+test("an asynchronous non-quota IndexedDB abort refuses the write as unavailable", async () => {
+  const unavailable = new DOMException("The database is not available.", "UnknownError");
+
+  expect(
+    await createIndexedDbStore(factoryWithWriteFailure("abort", unavailable)).put(record),
+  ).toBe("unavailable");
+});
+
+test("a blocked IndexedDB open settles as unavailable", async () => {
+  expect(await createIndexedDbStore(blockedFactory()).list()).toBe("unavailable");
+});
+
+test("a corrupt stored image paints the default Background instead of transparency", async () => {
   const store = indexedDbStore();
-  const session = await createSession({ defaultSolid, store });
-  const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(isUploaded(uploaded)).toBe(true);
-  if (!isUploaded(uploaded)) {
-    return;
-  }
-  const original = objectStoreMethod("delete");
-  stubObjectStoreMethod(
-    "delete",
-    new DOMException("The database is not available.", "UnknownError"),
-  );
-  try {
-    expect(await session.removeBackground(uploaded.id)).toBe("refuse");
-    expect(session.uploadedBackgrounds).toEqual([uploaded]);
-  } finally {
-    Object.defineProperty(IDBObjectStore.prototype, "delete", original);
-  }
+  expect(await store.put(record)).toBe("ok");
+  const session = await createSession({ defaultSolid, store, createCanvas: createTestCanvas });
+  expect(session.setBackground({ type: "image", id: record.id })).toBe("ok");
+
+  const canvas = await session.render();
+
+  expect(pixelAt(canvas, 960, 540)).toEqual([0x11, 0x22, 0x33, 0xff]);
 });

@@ -4,11 +4,13 @@ const DB_NAME = "better-screenshots";
 const DB_VERSION = 1;
 const STORE_NAME = "uploaded-backgrounds";
 
-export function createIndexedDbStore(): UploadedBackgroundStore {
+export function createIndexedDbStore(
+  factory: IDBFactory = globalThis.indexedDB,
+): UploadedBackgroundStore {
   return {
     async list() {
       try {
-        const db = await openDatabase();
+        const db = await openDatabase(factory);
         try {
           return await run(db, "readonly", (store) => store.getAll());
         } finally {
@@ -20,7 +22,7 @@ export function createIndexedDbStore(): UploadedBackgroundStore {
     },
     async put(record: UploadedBackground) {
       try {
-        const db = await openDatabase();
+        const db = await openDatabase(factory);
         try {
           await run(db, "readwrite", (store) => store.put(record));
           return "ok";
@@ -33,7 +35,7 @@ export function createIndexedDbStore(): UploadedBackgroundStore {
     },
     async get(id: string) {
       try {
-        const db = await openDatabase();
+        const db = await openDatabase(factory);
         try {
           return await run(db, "readonly", (store) => store.get(id));
         } finally {
@@ -45,7 +47,7 @@ export function createIndexedDbStore(): UploadedBackgroundStore {
     },
     async remove(id: string) {
       try {
-        const db = await openDatabase();
+        const db = await openDatabase(factory);
         try {
           await run(db, "readwrite", (store) => store.delete(id));
           return "ok";
@@ -63,8 +65,7 @@ function isQuotaExceeded(error: unknown): boolean {
   return error instanceof DOMException && error.name === "QuotaExceededError";
 }
 
-function openDatabase(): Promise<IDBDatabase> {
-  const factory = globalThis.indexedDB;
+function openDatabase(factory: IDBFactory): Promise<IDBDatabase> {
   if (factory === undefined) {
     return Promise.reject(new Error("unavailable"));
   }
@@ -87,6 +88,9 @@ function openDatabase(): Promise<IDBDatabase> {
     };
     request.onerror = () => {
       reject(request.error ?? new Error("unavailable"));
+    };
+    request.onblocked = () => {
+      reject(new Error("unavailable"));
     };
   });
 }

@@ -1,14 +1,15 @@
 ---
 id: aofakr
 title: 'Test the IndexedDB seams: read path, async errors, corrupt image'
-state: todo
+state: done
+assignee: agent
 priority: medium
 labels:
     - maintenance
 depends_on:
     - v4l2o5
 created: 2026-08-26T16:32:24Z
-updated: 2026-08-26T17:40:35Z
+updated: 2026-08-26T19:02:43Z
 ---
 
 ## Finding
@@ -41,3 +42,9 @@ Narrowed from the original nine-seam issue. The paint seams moved to `dza8bk` an
 - A stored record whose Blob does not decode produces a refusal, not a transparent Composition.
 - A blocked open resolves to `"unavailable"` and has a test.
 - The four checks pass.
+
+## Notes
+
+**agent** — 2026-08-26T19:02:43Z
+
+Completed the IndexedDB seam coverage. createIndexedDbStore now accepts an injected IDBFactory while production defaults to globalThis.indexedDB, and blocked opens settle as unavailable. Tests use controlled factories instead of vendor prototype patches to exercise asynchronous request errors and transaction aborts, including quota classification. The real-store refresh test now renders the Blob returned by get() and verifies its centre pixel, and a corrupt stored Blob verifies the default Background fallback rather than transparency. All format, lint, typecheck, and test checks pass.
