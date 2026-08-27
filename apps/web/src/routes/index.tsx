@@ -288,6 +288,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
         top: bounds.top,
         clientWidth: canvas.clientWidth,
         clientLeft: canvas.clientLeft,
+        clientTop: canvas.clientTop,
       },
       drawn,
       compositionWidth: session.composition.width,

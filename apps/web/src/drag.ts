@@ -54,13 +54,13 @@ export function filesFrom(
 
 export function hitsDrawn(input: {
   point: Point;
-  rect: { left: number; top: number; clientWidth: number; clientLeft: number };
+  rect: { left: number; top: number; clientWidth: number; clientLeft: number; clientTop: number };
   drawn: Rect;
   compositionWidth: number;
 }): boolean {
   const scale = input.rect.clientWidth / input.compositionWidth;
   const left = input.rect.left + input.rect.clientLeft + input.drawn.x * scale;
-  const top = input.rect.top + input.rect.clientLeft + input.drawn.y * scale;
+  const top = input.rect.top + input.rect.clientTop + input.drawn.y * scale;
   return (
     input.point.x >= left &&
     input.point.x < left + input.drawn.width * scale &&

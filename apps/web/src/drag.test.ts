@@ -73,7 +73,7 @@ test("filesFrom skips string items and files that cannot be read", () => {
 });
 
 test("hitsDrawn includes points inside every edge and excludes points outside", () => {
-  const rect = { left: 100, top: 50, clientWidth: 500, clientLeft: 2 };
+  const rect = { left: 100, top: 50, clientWidth: 500, clientLeft: 2, clientTop: 2 };
   const drawn = { x: 20, y: 40, width: 200, height: 100 };
   const compositionWidth = 1000;
 
