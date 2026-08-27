@@ -6,7 +6,7 @@ priority: medium
 labels:
     - spec
 created: 2026-08-26T16:31:56Z
-updated: 2026-08-26T17:32:57Z
+updated: 2026-08-27T02:51:25Z
 ---
 
 ## Decision (settled 2026-08-26)
@@ -38,3 +38,9 @@ Out of scope: changing what any control does, the Composition data shape, or the
 ## Acceptance
 
 This spec is complete when every sub-issue is closed and no hand-rolled class helper remains in `routes/index.tsx`. Build the sub-issues; never this issue.
+
+## Notes
+
+**claude** — 2026-08-27T02:51:25Z
+
+Unused shadcn scaffolding removed (2026-08-26) during a simplification pass: @base-ui/react, class-variance-authority, clsx, tailwind-merge and tw-animate-css were production dependencies with zero imports anywhere in src; apps/web/src/lib/utils.ts (cn()) had no callers; apps/web/components.json and 49 lines of unused CSS tokens (--chart-1..5, --sidebar-*, --popover*, --destructive, the last of which referenced an undefined --destructive-foreground) were dead. None of this was in use — the sy3fen base landing was reverted in dd90434. When this spec is built, re-add the dependencies and re-run 'shadcn init' as the first step rather than assuming the scaffolding is still present.
