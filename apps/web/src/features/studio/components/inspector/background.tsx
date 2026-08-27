@@ -15,6 +15,7 @@ import type {
   HexColor,
   StudioSession,
 } from "@/features/studio/composition/session";
+import { notifyRefusal } from "@/features/studio/platform/notify";
 import { useDraft } from "@/hooks/use-draft";
 import { cn } from "@/lib/utils";
 import { gradientCss } from "@/features/studio/components/inspector/gradient-css";
@@ -34,7 +35,6 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
   const addDisabled = session.storage === "unavailable";
   const images = session.uploadedBackgrounds.toReversed();
   const [lastSolid, setLastSolid] = useState(currentSolid ?? "#000000");
-  const [line, setLine] = useState<string | null>(null);
   const {
     draft: hexDraft,
     setDraft: setHexDraft,
@@ -64,7 +64,7 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
   }
 
   async function removeImage(id: string) {
-    setLine(changeLine(await session.removeBackground(id)));
+    notifyRefusal(changeLine(await session.removeBackground(id)));
   }
 
   async function onAddChange(event: ChangeEvent<HTMLInputElement>) {
@@ -75,10 +75,9 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
     }
     const result = await session.uploadBackground(file, file.name);
     if (result === "undecodable" || result === "quota" || result === "unavailable") {
-      setLine(uploadLine(result));
+      notifyRefusal(uploadLine(result));
       return;
     }
-    setLine(null);
     writeImage(result.id);
   }
 
@@ -168,7 +167,7 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
                   className={cn(
                     "h-auto w-full overflow-hidden rounded-md p-0",
                     current
-                      ? "ring-2 ring-ring ring-offset-2 ring-offset-card"
+                      ? "ring-2 ring-ring ring-offset-2 ring-offset-sidebar"
                       : "border-border hover:bg-transparent",
                   )}
                   onClick={() => writeImage(record.id)}
@@ -180,7 +179,7 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
                   size="icon-xs"
                   aria-label={`Remove ${record.filename}`}
                   disabled={current}
-                  className="absolute top-1 right-1 size-5 rounded-sm bg-card/90 shadow-sm"
+                  className="absolute top-1 right-1 size-5 rounded-sm bg-sidebar/90 shadow-sm"
                   onClick={() => {
                     void removeImage(record.id);
                   }}
@@ -197,7 +196,6 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
               accept="image/*"
               className="sr-only"
               disabled={addDisabled}
-              onClick={() => setLine(null)}
               onChange={(event) => {
                 void onAddChange(event);
               }}
@@ -216,7 +214,6 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
             </Label>
           </li>
         </ul>
-        {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
       </div>
     </div>
   );

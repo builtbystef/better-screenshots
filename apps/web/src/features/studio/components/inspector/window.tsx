@@ -2,9 +2,9 @@ import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { changeLine } from "@/features/studio/composition/messages";
 import type { BrowserWindow, StudioSession } from "@/features/studio/composition/session";
+import { notifyRefusal } from "@/features/studio/platform/notify";
 import { cn } from "@/lib/utils";
 import { chipGroup, chipItem } from "@/features/studio/components/inspector/styles";
-import { useState } from "react";
 
 const windowSchemes: ReadonlyArray<{ name: string; value: BrowserWindow }> = [
   { name: "None", value: "none" },
@@ -14,7 +14,6 @@ const windowSchemes: ReadonlyArray<{ name: string; value: BrowserWindow }> = [
 
 export function WindowInspector({ session }: { session: StudioSession }) {
   const { browserWindow, url } = session.composition;
-  const [line, setLine] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,10 +42,9 @@ export function WindowInspector({ session }: { session: StudioSession }) {
         aria-label="URL"
         className="font-mono text-sm"
         onChange={(event) => {
-          setLine(changeLine(session.setUrl(event.target.value)));
+          notifyRefusal(changeLine(session.setUrl(event.target.value)));
         }}
       />
-      {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
     </div>
   );
 }

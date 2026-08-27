@@ -1,18 +1,13 @@
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  placeLine,
-  type PlaceOutcome,
-  type PlaceSource,
-} from "@/features/studio/composition/messages";
 import type { StudioSession } from "@/features/studio/composition/session";
 import { cn } from "@/lib/utils";
-import { useExport } from "@/features/studio/hooks/use-export";
 import { useFileDrop } from "@/features/studio/hooks/use-file-drop";
+import { usePlaceScreenshot } from "@/features/studio/hooks/use-place-screenshot";
 import { usePreviewCanvas } from "@/features/studio/hooks/use-preview-canvas";
 import { useScreenshotDrag } from "@/features/studio/hooks/use-screenshot-drag";
-import { Download, Upload } from "lucide-react";
-import { useCallback, useId, useState, type ChangeEvent } from "react";
+import { Upload } from "lucide-react";
+import { useId, type ChangeEvent } from "react";
 
 export function Preview({
   session,
@@ -22,33 +17,16 @@ export function Preview({
   sessionVersion: number;
 }) {
   const pickerId = useId();
-  const [line, setLine] = useState<string | null>(null);
   const occupied = session.composition.screenshot !== null;
 
   const hostRef = usePreviewCanvas(session, sessionVersion);
-  const { exporting, exportPng } = useExport(session, setLine);
-  const exportDisabled = !occupied || exporting;
-
-  const place = useCallback(
-    async (source: PlaceSource, files: readonly Blob[]) => {
-      setLine(null);
-      const outcome: PlaceOutcome =
-        files.length === 0
-          ? "empty"
-          : (await session.placeScreenshot(files)) === "ok"
-            ? "ok"
-            : "refuse";
-      setLine(placeLine(source, outcome));
-    },
-    [session],
-  );
+  const place = usePlaceScreenshot(session);
 
   const fileDrag = useFileDrop(place);
   const { dragging, overScreenshot, handlers } = useScreenshotDrag({
     session,
     hostRef,
     occupied,
-    onLine: setLine,
   });
 
   function onPickerChange(event: ChangeEvent<HTMLInputElement>) {
@@ -61,59 +39,47 @@ export function Preview({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
-      <div className="flex shrink-0 items-center justify-end gap-2 px-5 py-3">
-        <input
-          id={pickerId}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={onPickerChange}
-        />
-        {occupied ? (
-          <Label
-            htmlFor={pickerId}
-            className={cn(buttonVariants({ variant: "ghost" }), "cursor-pointer")}
-          >
-            Replace
-          </Label>
-        ) : null}
-        <Button
-          disabled={exportDisabled}
-          onClick={() => {
-            if (exportDisabled) {
-              return;
-            }
-            void exportPng();
-          }}
-        >
-          <Download aria-hidden="true" />
-          Export
-        </Button>
+    <div
+      className={cn(
+        "relative h-full min-h-0 w-full",
+        fileDrag && "ring-2 ring-inset ring-ring",
+        occupied && "touch-none",
+        dragging ? "cursor-grabbing" : overScreenshot && "cursor-grab",
+      )}
+      {...handlers}
+    >
+      <input
+        id={pickerId}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={onPickerChange}
+      />
+      <div className="absolute inset-0 flex items-center justify-center p-8">
+        <div ref={hostRef} className="flex h-full w-full items-center justify-center" />
       </div>
-      <div
-        className={cn(
-          "studio-well relative min-h-0 flex-1",
-          fileDrag && "ring-2 ring-inset ring-ring",
-          occupied && "touch-none",
-          dragging ? "cursor-grabbing" : overScreenshot && "cursor-grab",
-        )}
-        {...handlers}
-      >
-        <div className="absolute inset-0 flex items-center justify-center p-8">
-          <div ref={hostRef} className="flex h-full w-full items-center justify-center" />
-        </div>
-        {fileDrag ? (
-          <div className="pointer-events-none absolute inset-5 rounded-xl border-2 border-dashed border-ring" />
-        ) : null}
-        {occupied ? null : (
-          <Label
-            htmlFor={pickerId}
-            aria-label="Drop a screenshot or paste (Ctrl/Cmd+V). Choose a file"
-            className="absolute inset-0 flex cursor-pointer items-center justify-center"
+      {fileDrag ? (
+        <div className="pointer-events-none absolute inset-5 rounded-xl border-2 border-dashed border-ring" />
+      ) : null}
+      {occupied ? null : (
+        <Label
+          htmlFor={pickerId}
+          aria-label="Drop a screenshot or paste (Ctrl/Cmd+V). Choose a file"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center p-8"
+        >
+          {/* The hit box repeats the box that `usePreviewCanvas` gives the
+              canvas, so the pointer turns over the Frame and stays an arrow
+              on the surface around it. */}
+          <span
+            className="pointer-events-auto flex h-full max-w-full cursor-pointer items-center justify-center"
+            style={{
+              aspectRatio: `${String(session.composition.width)} / ${String(session.composition.height)}`,
+            }}
           >
-            <span className="flex flex-col items-center gap-3 text-center">
-              <span className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm">
+            {/* The Composition renders behind this prompt, and its Background is
+                the user's to choose, so the prompt states its own surface. */}
+            <span className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card px-10 py-8 text-center text-card-foreground shadow-lg">
+              <span className="flex size-11 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm">
                 <Upload className="size-4" aria-hidden="true" />
               </span>
               <span className="flex flex-col items-center gap-1">
@@ -122,14 +88,9 @@ export function Preview({
               </span>
               <span className={buttonVariants()}>Choose a file</span>
             </span>
-          </Label>
-        )}
-        {line === null ? null : (
-          <p className="pointer-events-none absolute inset-x-0 bottom-4 px-5 text-center text-sm text-muted-foreground">
-            {line}
-          </p>
-        )}
-      </div>
+          </span>
+        </Label>
+      )}
     </div>
   );
 }

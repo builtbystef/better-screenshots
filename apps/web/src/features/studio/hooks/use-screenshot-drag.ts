@@ -1,6 +1,7 @@
 import { changeLine } from "@/features/studio/composition/messages";
 import type { Point, StudioSession } from "@/features/studio/composition/session";
 import { hitsDrawn, positionFromDrag } from "@/features/studio/platform/drag";
+import { notifyRefusal } from "@/features/studio/platform/notify";
 import { useRef, useState, type PointerEvent, type RefObject } from "react";
 
 function previewCanvas(host: HTMLDivElement | null): HTMLCanvasElement | null {
@@ -12,12 +13,10 @@ export function useScreenshotDrag({
   session,
   hostRef,
   occupied,
-  onLine,
 }: {
   session: StudioSession;
   hostRef: RefObject<HTMLDivElement | null>;
   occupied: boolean;
-  onLine: (line: string | null) => void;
 }) {
   const dragRef = useRef<{
     origin: Point;
@@ -89,7 +88,7 @@ export function useScreenshotDrag({
       compositionWidth: session.composition.width,
     });
     const outcome = session.setPosition(next.x, next.y);
-    onLine(changeLine(outcome));
+    notifyRefusal(changeLine(outcome));
   }
 
   function endDrag() {

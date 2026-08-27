@@ -13,7 +13,7 @@ export const inspectorField = cva("font-mono", {
 export const chipGroup = "grid w-full items-stretch gap-2 p-0.5";
 
 export const chipItem = cva(
-  "h-auto w-full rounded-md border border-border ring-offset-card transition-[box-shadow] data-pressed:ring-2 data-pressed:ring-ring data-pressed:ring-offset-2 not-data-pressed:hover:ring-2 not-data-pressed:hover:ring-ring/40 not-data-pressed:hover:ring-offset-2",
+  "h-auto w-full rounded-md border border-border ring-offset-sidebar transition-[box-shadow] data-pressed:ring-2 data-pressed:ring-ring data-pressed:ring-offset-2 not-data-pressed:hover:ring-2 not-data-pressed:hover:ring-ring/40 not-data-pressed:hover:ring-offset-2",
   {
     variants: {
       chip: {

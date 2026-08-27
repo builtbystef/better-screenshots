@@ -1,3 +1,4 @@
+import { Toaster } from "@/components/ui/sonner";
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { schemeBootScript } from "@/lib/scheme";
@@ -14,7 +15,13 @@ export const Route = createRootRoute({
         content: "A browser studio for polished product screenshots.",
       },
     ],
-    links: [{ rel: "stylesheet", href: appCss }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      // The SVG is the brand icon as drawn — black stroke, no scheme swap. The
+      // ICO sits behind it for whatever will not take an SVG.
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/x-icon", href: "/favicon.ico", sizes: "any" },
+    ],
   }),
   component: RootComponent,
   shellComponent: RootDocument,
@@ -29,6 +36,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster position="bottom-center" />
         <Scripts />
       </body>
     </html>

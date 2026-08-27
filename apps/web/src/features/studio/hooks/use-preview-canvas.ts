@@ -17,8 +17,7 @@ export function usePreviewCanvas(
       if (cancelled) {
         return;
       }
-      canvas.className =
-        "block max-h-full max-w-full border border-border object-contain shadow-[0_28px_80px_-28px_rgba(0,0,0,0.45)]";
+      canvas.className = "block max-h-full max-w-full object-contain";
       canvas.style.aspectRatio = `${String(session.composition.width)} / ${String(session.composition.height)}`;
       host.replaceChildren(canvas);
     });

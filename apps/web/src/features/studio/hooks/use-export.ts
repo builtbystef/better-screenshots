@@ -1,16 +1,16 @@
 import { exportLine } from "@/features/studio/composition/messages";
 import type { StudioSession } from "@/features/studio/composition/session";
+import { notifyRefusal } from "@/features/studio/platform/notify";
 import { useState } from "react";
 
-export function useExport(session: StudioSession, onLine: (line: string | null) => void) {
+export function useExport(session: StudioSession) {
   const [exporting, setExporting] = useState(false);
 
   async function exportPng() {
-    onLine(null);
     setExporting(true);
     try {
       const result = await session.exportPng(new Date());
-      onLine(exportLine(result === "refuse" ? "refuse" : "ok"));
+      notifyRefusal(exportLine(result === "refuse" ? "refuse" : "ok"));
       if (result === "refuse") {
         return;
       }
