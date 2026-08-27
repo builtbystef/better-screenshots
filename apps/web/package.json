@@ -9,11 +9,15 @@
     "preview": "vp preview --port 4173"
   },
   "dependencies": {
+    "@base-ui/react": "catalog:",
     "@tanstack/react-router": "^1.170.29",
     "@tanstack/react-start": "^1.168.46",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
     "lucide-react": "^1.31.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "tailwind-merge": "catalog:",
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
@@ -28,5 +32,6 @@
     "typescript": "catalog:",
     "vite": "catalog:"
   },
-  "// @tanstack": "Bump react-router and react-start together; mismatched copies break SPA prerendering."
+  "// @tanstack": "Bump react-router and react-start together; mismatched copies break SPA prerendering.",
+  "// shadcn": "clsx, tailwind-merge, class-variance-authority and @base-ui/react are the runtime of the base-nova components that components.json vendors into src/components/ui. clsx and tailwind-merge back cn(); the other two arrive with the first component. Removing them un-lands the base."
 }
