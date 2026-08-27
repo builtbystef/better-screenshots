@@ -2,6 +2,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
@@ -464,14 +465,19 @@ const inspectorField = cva("font-mono", {
   },
 });
 
-function chipClass(selected: boolean): string {
-  return cn(
-    "aspect-square w-full rounded-md border border-border",
-    selected
-      ? "ring-2 ring-ring ring-offset-2 ring-offset-card"
-      : "transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card",
-  );
-}
+const chipGroup = "grid w-full items-stretch gap-2 p-0.5";
+
+const chipItem = cva(
+  "h-auto w-full rounded-md border border-border ring-offset-card transition-[box-shadow] data-pressed:ring-2 data-pressed:ring-ring data-pressed:ring-offset-2 not-data-pressed:hover:ring-2 not-data-pressed:hover:ring-ring/40 not-data-pressed:hover:ring-offset-2",
+  {
+    variants: {
+      chip: {
+        swatch: "aspect-square p-0",
+        text: "px-2 py-1.5 text-[11px] not-data-pressed:text-muted-foreground",
+      },
+    },
+  },
+);
 
 function BackgroundInspector({ session }: { session: StudioSession }) {
   const pickerId = useId();
@@ -536,27 +542,26 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
     <div className="mt-4 flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h3 className="text-[11px] text-muted-foreground">Solid</h3>
-        <div className="grid grid-cols-4 gap-2 p-0.5">
-          {catalogSolids.map((entry) => {
-            const selected = selectedSolid?.name === entry.name;
-            return (
-              <button
-                key={entry.color}
-                type="button"
-                title={entry.name}
-                aria-label={entry.name}
-                className={chipClass(selected)}
-                style={{ backgroundColor: entry.color }}
-                onClick={() => {
-                  if (selected) {
-                    return;
-                  }
+        <ToggleGroup
+          className={cn(chipGroup, "grid-cols-4")}
+          value={selectedSolid === undefined ? [] : [selectedSolid.name]}
+        >
+          {catalogSolids.map((entry) => (
+            <ToggleGroupItem
+              key={entry.color}
+              value={entry.name}
+              title={entry.name}
+              aria-label={entry.name}
+              className={chipItem({ chip: "swatch" })}
+              style={{ backgroundColor: entry.color }}
+              onPressedChange={(pressed) => {
+                if (pressed) {
                   writeSolid(entry.color);
-                }}
-              />
-            );
-          })}
-        </div>
+                }
+              }}
+            />
+          ))}
+        </ToggleGroup>
         <div className="flex overflow-hidden rounded-md border border-input">
           <Input
             value={hexDraft}
@@ -584,27 +589,26 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
       </div>
       <div className="flex flex-col gap-2">
         <h3 className="text-[11px] text-muted-foreground">Gradient</h3>
-        <div className="grid grid-cols-4 gap-2 p-0.5">
-          {catalogGradients.map((entry) => {
-            const selected = selectedGradient?.name === entry.name;
-            return (
-              <button
-                key={entry.name}
-                type="button"
-                title={entry.name}
-                aria-label={entry.name}
-                className={chipClass(selected)}
-                style={{ backgroundImage: gradientCss(entry.value) }}
-                onClick={() => {
-                  if (selected) {
-                    return;
-                  }
+        <ToggleGroup
+          className={cn(chipGroup, "grid-cols-4")}
+          value={selectedGradient === undefined ? [] : [selectedGradient.name]}
+        >
+          {catalogGradients.map((entry) => (
+            <ToggleGroupItem
+              key={entry.name}
+              value={entry.name}
+              title={entry.name}
+              aria-label={entry.name}
+              className={chipItem({ chip: "swatch" })}
+              style={{ backgroundImage: gradientCss(entry.value) }}
+              onPressedChange={(pressed) => {
+                if (pressed) {
                   writeGradient(entry.value);
-                }}
-              />
-            );
-          })}
-        </div>
+                }
+              }}
+            />
+          ))}
+        </ToggleGroup>
       </div>
       <div className="flex flex-col gap-2">
         <h3 className="text-[11px] text-muted-foreground">Image</h3>
@@ -691,15 +695,6 @@ function ImageThumbnail({ blob }: { blob: Blob }) {
   return <img src={src} alt="" className="block aspect-square w-full object-cover" />;
 }
 
-function textChipClass(selected: boolean): string {
-  return cn(
-    "rounded-md border border-border px-2 py-1.5 text-center text-[11px]",
-    selected
-      ? "bg-background font-medium ring-2 ring-ring ring-offset-2 ring-offset-card"
-      : "text-muted-foreground transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card",
-  );
-}
-
 function FrameInspector({ session }: { session: StudioSession }) {
   const selected = aspectPresetFor(session.composition.width, session.composition.height);
 
@@ -708,28 +703,27 @@ function FrameInspector({ session }: { session: StudioSession }) {
   }
 
   return (
-    <div className="mt-4 grid grid-cols-4 gap-2 p-0.5">
-      {aspectPresets.map((preset) => {
-        const isSelected = selected?.name === preset.name;
-        return (
-          <button
-            key={preset.name}
-            type="button"
-            title={`${String(preset.width)}×${String(preset.height)}`}
-            aria-label={`${preset.name} ${String(preset.width)}×${String(preset.height)}`}
-            className={textChipClass(isSelected)}
-            onClick={() => {
-              if (isSelected) {
-                return;
-              }
+    <ToggleGroup
+      className={cn(chipGroup, "mt-4 grid-cols-4")}
+      value={selected === undefined ? [] : [selected.name]}
+    >
+      {aspectPresets.map((preset) => (
+        <ToggleGroupItem
+          key={preset.name}
+          value={preset.name}
+          title={`${String(preset.width)}×${String(preset.height)}`}
+          aria-label={`${preset.name} ${String(preset.width)}×${String(preset.height)}`}
+          className={chipItem({ chip: "text" })}
+          onPressedChange={(pressed) => {
+            if (pressed) {
               writePreset(preset.width, preset.height);
-            }}
-          >
-            {preset.name}
-          </button>
-        );
-      })}
-    </div>
+            }
+          }}
+        >
+          {preset.name}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
 
@@ -745,27 +739,23 @@ function WindowInspector({ session }: { session: StudioSession }) {
 
   return (
     <div className="mt-4 flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-2 p-0.5">
-        {windowSchemes.map((entry) => {
-          const selected = browserWindow === entry.value;
-          return (
-            <button
-              key={entry.value}
-              type="button"
-              aria-label={entry.name}
-              className={textChipClass(selected)}
-              onClick={() => {
-                if (selected) {
-                  return;
-                }
+      <ToggleGroup className={cn(chipGroup, "grid-cols-3")} value={[browserWindow]}>
+        {windowSchemes.map((entry) => (
+          <ToggleGroupItem
+            key={entry.value}
+            value={entry.value}
+            aria-label={entry.name}
+            className={chipItem({ chip: "text" })}
+            onPressedChange={(pressed) => {
+              if (pressed) {
                 session.setBrowserWindow(entry.value);
-              }}
-            >
-              {entry.name}
-            </button>
-          );
-        })}
-      </div>
+              }
+            }}
+          >
+            {entry.name}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
       <Input
         value={url}
         placeholder="example.com"
