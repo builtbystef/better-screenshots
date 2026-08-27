@@ -15,7 +15,6 @@ export default defineConfig({
     },
     ignorePatterns: [
       "**/dist/**",
-      "**/coverage/**",
       ".agents/**",
       ".claude/**",
       ".pi/**",
@@ -25,14 +24,6 @@ export default defineConfig({
   },
   test: {
     globalSetup: ["apps/web/src/test/ensure-canvas-shim.ts"],
-    coverage: {
-      thresholds: {
-        statements: 93,
-        branches: 90,
-        functions: 94,
-        lines: 94,
-      },
-    },
   },
   pack: {
     dts: true,

@@ -14,7 +14,7 @@ depends_on:
     - f1vkwy
     - t5q19d
 created: 2026-08-26T16:32:53Z
-updated: 2026-08-26T19:37:44Z
+updated: 2026-08-27T02:51:25Z
 ---
 
 ## Finding
@@ -89,3 +89,7 @@ User decision: keep the measured-minus-two global coverage floors and weaken the
 **agent** — 2026-08-26T19:37:44Z
 
 Completed coverage enforcement. Installed @vitest/coverage-v8 pinned to 4.1.10 to match Vite+'s bundled Vitest, configured global floors, removed passWithNoTests, removed the nonexistent tools/* workspace glob, and enabled coverage in both CI command paths. Measured baseline: statements 95.88%, branches 92.46%, functions 96.9%, lines 96%; prescribed floors are 93%, 90%, 94%, and 94% respectively. Verified vp test zzz-no-such-file exits 1 and removing session.test.ts makes all four coverage thresholds fail. Format, lint, typecheck, and all 131 tests pass.
+
+**claude** — 2026-08-27T02:51:25Z
+
+Coverage enforcement removed by user decision (2026-08-26). The floors were measuring the wrong denominator: Vitest v4 only counts files a test loads, so routes/index.tsx (1059 lines), routes/__root.tsx, router.tsx and lib/utils.ts were absent from the report entirely. The measured 95.88% described the ~460 statements that were already tested, and the floor could never fall as the page grew — the opposite of this issue's stated intent ('a floor on routes/index.tsx forces extraction'). Removed test.coverage.thresholds, --coverage from the ci script and the CI workflow, and the @vitest/coverage-v8 devDependency. passWithNoTests stays deleted, so total test-discovery failure is still caught. User's position: coverage is not a metric they want to optimise for.

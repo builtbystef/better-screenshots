@@ -10,11 +10,10 @@
     "check:fix": "vp check --fix",
     "test": "vp test",
     "build": "vp run -r build",
-    "ci": "vp check && vp test --coverage && vp run -r build"
+    "ci": "vp check && vp test && vp run -r build"
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plus": "catalog:"
