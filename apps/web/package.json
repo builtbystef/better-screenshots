@@ -29,9 +29,11 @@
     "@vitejs/plugin-react": "^6",
     "fake-indexeddb": "catalog:",
     "jsdom": "catalog:",
+    "shadcn": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:"
   },
   "// @tanstack": "Bump react-router and react-start together; mismatched copies break SPA prerendering.",
-  "// shadcn": "clsx, tailwind-merge, class-variance-authority and @base-ui/react are the runtime of the base-nova components that components.json vendors into src/components/ui. clsx and tailwind-merge back cn(); the other two arrive with the first component. Removing them un-lands the base."
+  "// shadcn": "clsx, tailwind-merge, class-variance-authority and @base-ui/react are the runtime of the base-nova components that components.json vendors into src/components/ui. clsx and tailwind-merge back cn(); the other two arrive with the first component. Removing them un-lands the base.",
+  "// shadcn/tailwind.css": "The shadcn devDependency is imported by src/styles.css for its stylesheet alone. It defines the @custom-variant rules that map the bare data-* variants in the vendored class strings onto the attributes Base UI emits — data-horizontal resolves to [data-orientation=horizontal], not to [data-horizontal], which is what Tailwind assumes without it. Slider is the first component whose layout depends on one."
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -90,43 +91,6 @@
     background-color: color-mix(in oklch, var(--muted) 55%, var(--background));
     background-image: radial-gradient(circle at center, var(--border) 1.1px, transparent 1.1px);
     background-size: 1.15rem 1.15rem;
-  }
-
-  .studio-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 0.25rem;
-    border-radius: 999px;
-    background: var(--muted);
-    outline: none;
-  }
-
-  .studio-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 999px;
-    background: var(--foreground);
-    border: 2px solid var(--card);
-    box-shadow: 0 0 0 1px var(--border);
-    cursor: pointer;
-  }
-
-  .studio-slider::-moz-range-thumb {
-    width: 0.875rem;
-    height: 0.875rem;
-    border-radius: 999px;
-    background: var(--foreground);
-    border: 2px solid var(--card);
-    box-shadow: 0 0 0 1px var(--border);
-    cursor: pointer;
-  }
-
-  .studio-slider::-moz-range-track {
-    height: 0.25rem;
-    border-radius: 999px;
-    background: transparent;
   }
 
   .studio-swatch {

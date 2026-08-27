@@ -1,6 +1,7 @@
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { cva } from "class-variance-authority";
@@ -690,10 +691,6 @@ function ImageThumbnail({ blob }: { blob: Blob }) {
   return <img src={src} alt="" className="block aspect-square w-full object-cover" />;
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
-
 function textChipClass(selected: boolean): string {
   return cn(
     "rounded-md border border-border px-2 py-1.5 text-center text-[11px]",
@@ -916,24 +913,18 @@ function KnobRow({
 }) {
   const { draft, setDraft, onBlur, onKeyDown } = useDraft(value, parse, onWrite, format);
 
-  const thumb = clamp(value, min, max);
-  const fill = max === min ? 0 : ((thumb - min) / (max - min)) * 100;
-
   return (
     <div className="grid grid-cols-[3.75rem_1fr_3rem] items-center gap-2">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <input
-        type="range"
+      <Slider
+        value={value}
         min={min}
         max={max}
         step={step}
-        value={thumb}
         aria-label={label}
-        className="studio-slider w-full"
-        style={{
-          background: `linear-gradient(to right, var(--foreground) ${fill}%, var(--muted) ${fill}%)`,
+        onValueChange={(next) => {
+          onWrite(next);
         }}
-        onChange={(event) => onWrite(Number(event.target.value))}
       />
       <Input
         type="number"
