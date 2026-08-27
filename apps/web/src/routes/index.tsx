@@ -1,5 +1,9 @@
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
+import { cva } from "class-variance-authority";
 import { Download, Plus, Upload, X } from "lucide-react";
 import {
   useCallback,
@@ -380,29 +384,22 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
           onChange={onPickerChange}
         />
         {occupied ? (
-          <label
+          <Label
             htmlFor={pickerId}
-            className="inline-flex cursor-pointer items-center rounded-md px-3 py-1.5 text-sm text-secondary-foreground transition-colors hover:bg-accent"
+            className={cn(buttonVariants({ variant: "ghost" }), "cursor-pointer")}
           >
             Replace
-          </label>
+          </Label>
         ) : null}
-        <button
-          type="button"
+        <Button
           disabled={exportDisabled}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm",
-            exportDisabled
-              ? "cursor-default text-muted-foreground"
-              : "cursor-pointer bg-primary text-primary-foreground transition-opacity hover:opacity-90",
-          )}
           onClick={() => {
             void onExport();
           }}
         >
-          <Download className="size-3.5" aria-hidden="true" />
+          <Download aria-hidden="true" />
           Export
-        </button>
+        </Button>
       </div>
       <div
         className={cn(
@@ -424,7 +421,7 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
           <div className="pointer-events-none absolute inset-5 rounded-xl border-2 border-dashed border-ring" />
         ) : null}
         {occupied ? null : (
-          <label
+          <Label
             htmlFor={pickerId}
             aria-label="Drop a screenshot or paste (Ctrl/Cmd+V). Choose a file"
             className="absolute inset-0 flex cursor-pointer items-center justify-center"
@@ -437,11 +434,9 @@ function Preview({ session, sessionVersion }: { session: StudioSession; sessionV
                 <span className="text-base font-medium tracking-tight">Drop a screenshot</span>
                 <span className="text-sm text-muted-foreground">or paste (Ctrl/Cmd+V)</span>
               </span>
-              <span className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground">
-                Choose a file
-              </span>
+              <span className={buttonVariants()}>Choose a file</span>
             </span>
-          </label>
+          </Label>
         )}
         {line === null ? null : (
           <p className="pointer-events-none absolute inset-x-0 bottom-4 px-5 text-center text-sm text-muted-foreground">
@@ -457,6 +452,16 @@ function gradientCss(value: GradientBackground): string {
   const stops = value.stops.map((stop) => `${stop.color} ${stop.offset * 100}%`).join(", ");
   return `linear-gradient(${value.angle}deg, ${stops})`;
 }
+
+const inspectorField = cva("font-mono", {
+  variants: {
+    field: {
+      number:
+        "px-1.5 py-1 text-right text-xs tabular-nums md:text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+      hex: "flex-1 rounded-none border-0 bg-transparent focus-visible:ring-0",
+    },
+  },
+});
 
 function chipClass(selected: boolean): string {
   return cn(
@@ -552,14 +557,13 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
           })}
         </div>
         <div className="flex overflow-hidden rounded-md border border-input">
-          <input
-            type="text"
+          <Input
             value={hexDraft}
             placeholder="#RRGGBB"
             spellCheck={false}
             autoComplete="off"
             aria-label="Background color"
-            className="min-w-0 flex-1 border-0 bg-transparent px-2.5 py-1.5 font-mono text-sm outline-none"
+            className={inspectorField({ field: "hex", className: "text-sm" })}
             onChange={(event) => setHexDraft(event.target.value)}
             onBlur={commitHex}
             onKeyDown={onHexKeyDown}
@@ -608,36 +612,32 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
             const current = record.id === currentImageId;
             return (
               <li key={record.id} className="relative">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
                   title={record.filename}
                   aria-label={record.filename}
                   className={cn(
-                    "block w-full overflow-hidden rounded-md",
+                    "h-auto w-full overflow-hidden rounded-md p-0",
                     current
                       ? "ring-2 ring-ring ring-offset-2 ring-offset-card"
-                      : "border border-border",
+                      : "border-border hover:bg-transparent",
                   )}
                   onClick={() => writeImage(record.id)}
                 >
                   <ImageThumbnail blob={record.blob} />
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   aria-label={`Remove ${record.filename}`}
                   disabled={current}
-                  className={cn(
-                    "absolute top-1 right-1 flex size-5 items-center justify-center rounded-sm bg-card/90",
-                    current
-                      ? "cursor-default text-muted-foreground"
-                      : "cursor-pointer text-foreground shadow-sm",
-                  )}
+                  className="absolute top-1 right-1 size-5 rounded-sm bg-card/90 shadow-sm"
                   onClick={() => {
                     void removeImage(record.id);
                   }}
                 >
                   <X className="size-3" aria-hidden="true" />
-                </button>
+                </Button>
               </li>
             );
           })}
@@ -653,7 +653,7 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
                 void onAddChange(event);
               }}
             />
-            <label
+            <Label
               htmlFor={pickerId}
               className={cn(
                 "flex aspect-square flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-[11px]",
@@ -664,7 +664,7 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
             >
               <Plus className="size-3.5" aria-hidden="true" />
               Add
-            </label>
+            </Label>
           </li>
         </ul>
         {line === null ? null : <p className="text-sm text-muted-foreground">{line}</p>}
@@ -689,10 +689,6 @@ function ImageThumbnail({ blob }: { blob: Blob }) {
   }
   return <img src={src} alt="" className="block aspect-square w-full object-cover" />;
 }
-
-const numberChromeClass =
-  "min-w-0 rounded-md border border-input bg-background px-1.5 py-1 text-right font-mono text-xs tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-const numberFieldClass = `${numberChromeClass} w-12`;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -773,14 +769,13 @@ function WindowInspector({ session }: { session: StudioSession }) {
           );
         })}
       </div>
-      <input
-        type="text"
+      <Input
         value={url}
         placeholder="example.com"
         spellCheck={false}
         autoComplete="off"
         aria-label="URL"
-        className="min-w-0 rounded-md border border-input bg-background px-2.5 py-1.5 font-mono text-sm outline-none"
+        className="font-mono text-sm"
         onChange={(event) => {
           setLine(changeLine(session.setUrl(event.target.value)));
         }}
@@ -940,14 +935,14 @@ function KnobRow({
         }}
         onChange={(event) => onWrite(Number(event.target.value))}
       />
-      <input
+      <Input
         type="number"
         value={draft}
         step="any"
         spellCheck={false}
         autoComplete="off"
         aria-label={label}
-        className={numberFieldClass}
+        className={inspectorField({ field: "number" })}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
@@ -982,27 +977,27 @@ function PositionRow({
     <div className="grid grid-cols-[3.75rem_auto_1fr_auto_1fr] items-center gap-2">
       <span className="text-[11px] text-muted-foreground">Position</span>
       <span className="text-[11px] text-muted-foreground">X</span>
-      <input
+      <Input
         type="number"
         value={xDraft}
         step="any"
         spellCheck={false}
         autoComplete="off"
         aria-label="X"
-        className={`${numberChromeClass} min-w-0 w-full`}
+        className={inspectorField({ field: "number" })}
         onChange={(event) => setXDraft(event.target.value)}
         onBlur={commitX}
         onKeyDown={onXKeyDown}
       />
       <span className="text-[11px] text-muted-foreground">Y</span>
-      <input
+      <Input
         type="number"
         value={yDraft}
         step="any"
         spellCheck={false}
         autoComplete="off"
         aria-label="Y"
-        className={`${numberChromeClass} min-w-0 w-full`}
+        className={inspectorField({ field: "number" })}
         onChange={(event) => setYDraft(event.target.value)}
         onBlur={commitY}
         onKeyDown={onYKeyDown}
@@ -1029,14 +1024,13 @@ function BorderColorRow({
     <div className="grid grid-cols-[3.75rem_1fr] items-center gap-2">
       <span className="text-[11px] text-muted-foreground">Color</span>
       <div className="flex overflow-hidden rounded-md border border-input">
-        <input
-          type="text"
+        <Input
           value={hexDraft}
           placeholder="#RRGGBB"
           spellCheck={false}
           autoComplete="off"
           aria-label="Border color"
-          className="min-w-0 flex-1 border-0 bg-transparent px-2 py-1 font-mono text-xs outline-none"
+          className={inspectorField({ field: "hex", className: "h-7 px-2 text-xs md:text-xs" })}
           onChange={(event) => setHexDraft(event.target.value)}
           onBlur={commitHex}
           onKeyDown={onHexKeyDown}
