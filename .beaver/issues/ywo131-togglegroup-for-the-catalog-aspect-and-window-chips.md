@@ -11,7 +11,7 @@ depends_on:
     - 1o9amb
 parent: u5l5hp
 created: 2026-08-26T17:33:46Z
-updated: 2026-08-27T04:29:54Z
+updated: 2026-08-27T04:57:18Z
 ---
 
 The Studio has four chip groups, all hand-rolled as `<button>` lists with a `selected` boolean driving a class ternary: the Catalog solids, the Catalog gradients, the aspect presets, and the Browser window schemes (`windowSchemes` at `routes/index.tsx:813`).
@@ -57,3 +57,7 @@ The Browser window group keys on the `BrowserWindow` domain value (`none` / `lig
 Pointer-level behaviour beyond the click path was not exercised; it is the library's own.
 
 No dependency changed: `@base-ui/react` and `class-variance-authority` were already the runtime of the vendored components, so `package.json` and the lockfile are untouched. All 100 existing tests pass unchanged. Format, lint, typecheck, test and the app build pass.
+
+**claude** — 2026-08-27T04:57:18Z
+
+q53d20 (render harness) was deleted on 2026-08-27. Render-testing the components/ui wrappers is not wanted for this project: they are vendored registry source whose behaviour is the library's, and the seams worth asserting are covered without rendering React. The standing rule is now in docs/CODING_STANDARDS.md under Module boundaries — verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice. References to q53d20 above are historical; there is no follow-on issue.

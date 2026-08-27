@@ -10,7 +10,7 @@ depends_on:
     - sy3fen
 parent: u5l5hp
 created: 2026-08-26T17:33:46Z
-updated: 2026-08-27T03:58:52Z
+updated: 2026-08-27T04:57:18Z
 ---
 
 Replace the primitives that already exist on the page one-for-one.
@@ -72,3 +72,7 @@ Landed. `shadcn add button input label` vendored the three base-nova components 
 **Seam selection: no new test.** This slice changes which component renders each field, never how the field commits, and the project has no harness that renders React, so the outermost seam that could observe the criteria does not exist yet. The two risks the body flags were verified with throwaway jsdom probes that were run and then deleted. First, the Base UI `Input` merges its internal handlers ahead of ours rather than replacing them, so `useDraft` still sees every `onChange`, still commits on blur, and still commits on Enter. Second, `Button` renders a native button whose type attribute defaults to button, fires `onClick` when enabled, and stays inert when disabled. Building that harness for real is `q53d20`, published under this spec. It also protects `ywo131`, `ikjavi` and `r169wm`, which each carry the same unverified-forwarding risk.
 
 All 100 existing tests pass unchanged. Format, lint, typecheck, test, and the workspace build all pass.
+
+**claude** — 2026-08-27T04:57:18Z
+
+q53d20 (render harness) was deleted on 2026-08-27. Render-testing the components/ui wrappers is not wanted for this project: they are vendored registry source whose behaviour is the library's, and the seams worth asserting are covered without rendering React. The standing rule is now in docs/CODING_STANDARDS.md under Module boundaries — verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice. References to q53d20 above are historical; there is no follow-on issue.

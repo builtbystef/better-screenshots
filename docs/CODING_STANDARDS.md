@@ -17,6 +17,7 @@ The conventions that this project holds, beyond what linters and formatters enfo
 
 - `routes/index.tsx` contains JSX, DOM event handling, and React state only. Put parsing in `parse.ts`, Composition validation in `session.ts`, Composition geometry in `placement.ts`, and DOM gesture geometry in `drag.ts`.
 - A test may declare `@vitest-environment jsdom` only when its module owns a DOM seam: `paint`, `drag`, `scheme`, `indexed-db-store`, or a route.
+- The shadcn wrappers in `components/ui` are not render-tested. They are vendored registry source whose behaviour is the library's, not this project's; the seams worth asserting — parsing, commit and revert, geometry, paint — are covered without rendering React. Verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice.
 
 ## Production source
 

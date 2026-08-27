@@ -12,7 +12,7 @@ depends_on:
     - 11cr8l
 parent: u5l5hp
 created: 2026-08-26T17:34:11Z
-updated: 2026-08-27T04:38:09Z
+updated: 2026-08-27T04:57:18Z
 ---
 
 The last slice. The Inspector renders six `<section>` elements separated by `border-t` divider divs, with heading markup repeated in each.
@@ -51,3 +51,7 @@ Facts a reviewer needs:
 - `docs/ARCHITECTURE.md` gained rows for `src/components/ui/` and `src/lib/utils.ts`, records `routes/index.tsx -> components/ui -> lib/utils` with `hooks` and `components/ui` as leaves that import no Composition module, and the route row now names the primitives the page composes.
 
 No test was added. Nothing in the suite renders React, and `q53d20` owns that harness; all 100 existing tests pass unchanged. The four checks pass and the production build prerenders.
+
+**claude** — 2026-08-27T04:57:18Z
+
+q53d20 (render harness) was deleted on 2026-08-27. Render-testing the components/ui wrappers is not wanted for this project: they are vendored registry source whose behaviour is the library's, and the seams worth asserting are covered without rendering React. The standing rule is now in docs/CODING_STANDARDS.md under Module boundaries — verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice. References to q53d20 above are historical; there is no follow-on issue.

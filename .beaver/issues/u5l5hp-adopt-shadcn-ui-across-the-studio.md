@@ -6,7 +6,7 @@ priority: medium
 labels:
     - spec
 created: 2026-08-26T16:31:56Z
-updated: 2026-08-27T04:53:59Z
+updated: 2026-08-27T04:57:18Z
 ---
 
 ## Decision (settled 2026-08-26)
@@ -73,3 +73,7 @@ Full diff b0e3d4f..16565a3: +3200/-375 over 25 files, 8 components vendored into
 **The 8 files in src/components/ui are vendored byte-identical to the registry.** Nothing pins them and no lockfile covers them: a future shadcn add overwrites local edits silently. Any deliberate change to one should say so at the edit site.
 
 Follow-on: q53d20 (render harness) — nothing in the suite renders React, so every vendored component's prop forwarding is verified only by reading. That is why deviation 1 above reached a commit with no test to catch it.
+
+**claude** — 2026-08-27T04:57:18Z
+
+q53d20 (render harness) was deleted on 2026-08-27. Render-testing the components/ui wrappers is not wanted for this project: they are vendored registry source whose behaviour is the library's, and the seams worth asserting are covered without rendering React. The standing rule is now in docs/CODING_STANDARDS.md under Module boundaries — verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice. References to q53d20 above are historical; there is no follow-on issue.

@@ -10,7 +10,7 @@ depends_on:
     - 4x0vj8
 parent: u5l5hp
 created: 2026-08-26T17:34:11Z
-updated: 2026-08-27T04:15:14Z
+updated: 2026-08-27T04:57:18Z
 ---
 
 `KnobRow` (`routes/index.tsx:1005`) hand-draws a track and a thumb: `clamp(value, min, max)` at `:1052` converts the stored value to a percentage and positions the thumb with inline styles. Padding, Scale, Shadow offset, Shadow blur, Shadow opacity, and Border width all render through it.
@@ -68,3 +68,7 @@ All 100 existing tests pass unchanged. Format, lint, typecheck, test, and the wo
 **Two visible consequences of taking the vendored styling as-is.** The thumb is `bg-white` with a `border-ring` in both schemes, where the hand-rolled one was `var(--foreground)` — black in light, white in dark. The filled part of the track is `bg-primary` rather than `var(--foreground)`; those two tokens differ only slightly at either scheme. Both are the base-nova defaults and were kept, since the spec calls this a markup and styling migration.
 
 `aria-label` now lands on the slider's `role="group"` root, which is where `SliderPrimitive.Root` puts it, not on the range input inside the thumb. The input is the focusable control and now has no name of its own; a reader announces it inside the named group. Base UI's route to naming the input is `getAriaLabel` on `Slider.Thumb`, which the vendored wrapper does not forward. Left alone deliberately: forwarding it is a third edit to a vendored file, and `q53d20`'s harness is the place where an a11y assertion of this kind can be written down and kept.
+
+**claude** — 2026-08-27T04:57:18Z
+
+q53d20 (render harness) was deleted on 2026-08-27. Render-testing the components/ui wrappers is not wanted for this project: they are vendored registry source whose behaviour is the library's, and the seams worth asserting are covered without rendering React. The standing rule is now in docs/CODING_STANDARDS.md under Module boundaries — verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice. References to q53d20 above are historical; there is no follow-on issue.
