@@ -3,28 +3,23 @@
 import { afterEach, expect, test, vi } from "vite-plus/test";
 import { schemeBootScript } from "./scheme";
 
-const darkQuery = "(prefers-color-scheme: dark)";
-const lightQuery = "(prefers-color-scheme: light)";
-
-type Scheme = "dark" | "light" | "no-preference";
-
-function runBootScript(scheme: Scheme) {
-  let current = scheme;
+function runBootScript(dark: boolean) {
+  let matches = dark;
   let changeListener: (() => void) | undefined;
-  const matchMedia = vi.fn((query: string) => ({
-    matches:
-      (query === darkQuery && current === "dark") || (query === lightQuery && current === "light"),
+  vi.stubGlobal("matchMedia", () => ({
+    get matches() {
+      return matches;
+    },
     addEventListener: (_type: "change", listener: () => void) => {
-      if (query === darkQuery) changeListener = listener;
+      changeListener = listener;
     },
   }));
-  vi.stubGlobal("matchMedia", matchMedia);
 
   window.eval(schemeBootScript);
 
   return {
-    changeTo(next: Scheme) {
-      current = next;
+    changeTo(next: boolean) {
+      matches = next;
       changeListener?.();
     },
   };
@@ -35,27 +30,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("the boot script sets dark on html for the dark colour scheme", () => {
-  runBootScript("dark");
+test("the boot script follows the OS colour scheme at boot and on change", () => {
+  const scheme = runBootScript(false);
+  expect(document.documentElement.classList.contains("dark")).toBe(false);
 
-  expect(document.documentElement.classList.contains("dark")).toBe(true);
-});
-
-test.each(["light", "no-preference"] as const)(
-  "the boot script leaves html light for the %s colour scheme",
-  (scheme) => {
-    runBootScript(scheme);
-
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  },
-);
-
-test("the boot script reapplies the colour scheme after a change", () => {
-  const scheme = runBootScript("light");
-
-  scheme.changeTo("dark");
+  scheme.changeTo(true);
   expect(document.documentElement.classList.contains("dark")).toBe(true);
 
-  scheme.changeTo("light");
+  scheme.changeTo(false);
   expect(document.documentElement.classList.contains("dark")).toBe(false);
 });

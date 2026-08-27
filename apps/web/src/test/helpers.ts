@@ -1,5 +1,12 @@
 import { createCanvas, loadImage } from "@napi-rs/canvas";
-import type { Frame, SolidBackground, UploadRefuse, UploadedBackground } from "../session";
+import type {
+  Composition,
+  Frame,
+  SolidBackground,
+  UploadRefuse,
+  UploadedBackground,
+  UploadedBackgroundStore,
+} from "../session";
 
 const imageSizes = new WeakMap<Blob, Frame>();
 
@@ -31,8 +38,57 @@ export function pngBlob(
 
 export const defaultSolid = { type: "solid", color: "#112233" } satisfies SolidBackground;
 
+export const defaultComposition: Composition = {
+  width: 1920,
+  height: 1080,
+  background: defaultSolid,
+  screenshot: null,
+  padding: 120,
+  scale: 1,
+  position: { x: 0, y: 0 },
+  shadow: { offset: 16, blur: 32, opacity: 0.25 },
+  border: { width: 0, color: "#FFFFFF" },
+  radius: 16,
+  browserWindow: "none",
+  url: "",
+};
+
 export function isUploaded(
   result: UploadedBackground | UploadRefuse,
 ): result is UploadedBackground {
   return typeof result !== "string";
+}
+
+export function emptyStore(): UploadedBackgroundStore {
+  return {
+    list: async () => [],
+    put: async () => "ok",
+    get: async () => undefined,
+    remove: async () => "ok",
+  };
+}
+
+export function memoryStore(): UploadedBackgroundStore {
+  const records: UploadedBackground[] = [];
+  return {
+    list: async () => [...records],
+    put: async (record) => {
+      records.push(record);
+      return "ok";
+    },
+    get: async (id) => records.find((record) => record.id === id),
+    remove: async (id) => {
+      const index = records.findIndex((record) => record.id === id);
+      if (index !== -1) records.splice(index, 1);
+      return "ok";
+    },
+  };
+}
+
+export function pixelAt(canvas: HTMLCanvasElement, cssX: number, cssY: number): number[] {
+  const ctx = canvas.getContext("2d");
+  if (ctx === null) {
+    throw new Error("expected a 2d context");
+  }
+  return [...ctx.getImageData(Math.round(cssX * 2), Math.round(cssY * 2), 1, 1).data];
 }

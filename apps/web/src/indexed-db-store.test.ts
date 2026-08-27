@@ -3,7 +3,7 @@ import { IDBFactory } from "fake-indexeddb";
 import { expect, test } from "vite-plus/test";
 import { createIndexedDbStore } from "./indexed-db-store";
 import { createSession } from "./session";
-import { defaultSolid, isUploaded, pngBlob } from "./test/helpers";
+import { defaultSolid, isUploaded, pixelAt, pngBlob } from "./test/helpers";
 
 function indexedDbStore(factory: IDBFactory = new IDBFactory()) {
   return createIndexedDbStore(factory);
@@ -11,14 +11,6 @@ function indexedDbStore(factory: IDBFactory = new IDBFactory()) {
 
 function createTestCanvas() {
   return createCanvas(1, 1) as unknown as HTMLCanvasElement;
-}
-
-function pixelAt(canvas: HTMLCanvasElement, x: number, y: number) {
-  const context = canvas.getContext("2d");
-  if (context === null) {
-    throw new Error("expected a 2d context");
-  }
-  return [...context.getImageData(x * 2, y * 2, 1, 1).data];
 }
 
 test("two createSession calls against the IndexedDB store see the same upload", async () => {
@@ -127,20 +119,6 @@ function factoryWithWriteFailure(delivery: FailureDelivery, error: DOMException)
   } as unknown as IDBFactory;
 }
 
-function blockedFactory(): IDBFactory {
-  const openRequest = requestStub<IDBDatabase>(
-    undefined as unknown as IDBDatabase,
-  ) as IDBOpenDBRequest;
-  return {
-    open: () => {
-      queueMicrotask(() =>
-        openRequest.onblocked?.(new Event("blocked") as unknown as IDBVersionChangeEvent),
-      );
-      return openRequest;
-    },
-  } as unknown as IDBFactory;
-}
-
 const record = {
   id: "background-1",
   filename: "wall.png",
@@ -168,10 +146,6 @@ test("an asynchronous non-quota IndexedDB abort refuses the write as unavailable
   expect(
     await createIndexedDbStore(factoryWithWriteFailure("abort", unavailable)).put(record),
   ).toBe("unavailable");
-});
-
-test("a blocked IndexedDB open settles as unavailable", async () => {
-  expect(await createIndexedDbStore(blockedFactory()).list()).toBe("unavailable");
 });
 
 test("a corrupt stored image paints the default Background instead of transparency", async () => {

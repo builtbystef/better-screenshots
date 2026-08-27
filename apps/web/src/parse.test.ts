@@ -1,7 +1,5 @@
 import { expect, test } from "vite-plus/test";
 import {
-  commitDraft,
-  formatInteger,
   formatScale,
   parseHex,
   parseInteger,
@@ -9,29 +7,6 @@ import {
   parseOpacityPercent,
   parseScale,
 } from "./parse";
-
-test("commitDraft reverts an invalid draft to the formatted stored value", () => {
-  expect(commitDraft("abc", 7, parseInteger, formatInteger)).toEqual({ revert: "7" });
-});
-
-test("commitDraft reverts a parsed value refused by the field rule", () => {
-  expect(commitDraft("-1", 7, parseNonNegativeInteger, formatInteger)).toEqual({ revert: "7" });
-});
-
-test("commitDraft returns a value accepted by the field rule", () => {
-  expect(commitDraft("12", 7, parseNonNegativeInteger, formatInteger)).toEqual({ write: 12 });
-});
-
-test("commitDraft round-trips stored opacity and percent drafts", () => {
-  const parseOpacity = (raw: string) => {
-    const percent = parseOpacityPercent(raw);
-    return percent === "refuse" ? percent : percent / 100;
-  };
-  const formatOpacity = (value: number) => formatInteger(value * 100);
-
-  expect(commitDraft("25", 0.25, parseOpacity, formatOpacity)).toEqual({ write: 0.25 });
-  expect(commitDraft("abc", 0.25, parseOpacity, formatOpacity)).toEqual({ revert: "25" });
-});
 
 test("parseHex accepts six digits without a hash and keeps case", () => {
   expect(parseHex("aabbcc")).toBe("#aabbcc");
@@ -78,8 +53,7 @@ test("parseNonNegativeInteger refuses a negative value and a non-integer", () =>
   expect(parseNonNegativeInteger("2.5")).toBe("refuse");
 });
 
-test("formatters prepare integer and Scale field values", () => {
-  expect(formatInteger(12)).toBe("12");
+test("formatScale pads a Scale to two decimals", () => {
   expect(formatScale(1.2)).toBe("1.20");
 });
 

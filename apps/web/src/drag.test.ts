@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget } from "./drag";
+import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "./drag";
 
 test("a drag is a file drag when types include Files", () => {
   expect(isFileDrag(["Files"])).toBe(true);
@@ -93,4 +93,26 @@ test("hitsDrawn includes points inside every edge and excludes points outside", 
   ]) {
     expect(hitsDrawn({ point, rect, drawn, compositionWidth })).toBe(false);
   }
+});
+
+test("positionFromDrag adds a scaled Preview drag to its starting Position and snaps to integers", () => {
+  expect(
+    positionFromDrag({
+      origin: { x: 100, y: -50 },
+      start: { x: 0, y: 0 },
+      current: { x: 10, y: -15 },
+      previewWidth: 960,
+      compositionWidth: 1920,
+    }),
+  ).toEqual({ x: 120, y: -80 });
+
+  expect(
+    positionFromDrag({
+      origin: { x: 0, y: 0 },
+      start: { x: 0, y: 0 },
+      current: { x: 10.4, y: -3.2 },
+      previewWidth: 960,
+      compositionWidth: 1920,
+    }),
+  ).toEqual({ x: 21, y: -6 });
 });

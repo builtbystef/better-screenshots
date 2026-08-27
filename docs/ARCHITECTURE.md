@@ -1,71 +1,43 @@
 # Architecture
 
-The Studio is one browser application under `apps/web`. Its modules expose small interfaces and keep Composition rules, browser APIs, and presentation details on their respective sides of those interfaces. This document records both the current structure and the settled target structure; rows marked **Target** do not exist yet.
+The Studio is one browser application under `apps/web`. Its modules expose small interfaces and keep Composition rules, browser APIs, and presentation details on their respective sides of those interfaces.
 
-## Current module map
+## Module map
 
-| Module                             | Interface                                                                                                                      | Hides                                                                                                                                                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web/src/session.ts`          | `createSession(...) -> StudioSession`, plus the Composition and storage port types                                             | The Composition shape, state machine, and validation                                                                                                                                                        |
-| `apps/web/src/placement.ts`        | `derivePlacement`, `browserWindowHeight`, and `gradientLine`                                                                   | Composition geometry; loads in Node                                                                                                                                                                         |
-| `apps/web/src/paint.ts`            | The four paint passes and `renderComposition`                                                                                  | Canvas 2D drawing and image decoding                                                                                                                                                                        |
-| `apps/web/src/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                                                            | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
-| `apps/web/src/hooks/use-draft.ts`  | `useDraft(value, format, parse, onWrite)`                                                                                      | React draft-input state, stored-value re-sync, and blur/Enter commit wiring                                                                                                                                 |
-| `apps/web/src/catalog.ts`          | `catalogSolids`, `catalogGradients`, `catalogDefaultSolid`, and `aspectPresets`                                                | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
-| `apps/web/src/scheme.ts`           | `schemeBootScript`                                                                                                             | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
-| `apps/web/src/messages.ts`         | Refusal and affordance message functions                                                                                       | User-facing outcome copy; loads in Node                                                                                                                                                                     |
-| `apps/web/src/parse.ts`            | `parseHex`, `parseInteger`, `parseScale`, `parseOpacityPercent`, `parseNonNegativeInteger`, `formatInteger`, and `formatScale` | Input syntax and field formatting; loads in Node                                                                                                                                                            |
-| `apps/web/src/drag.ts`             | `isFileDrag`, `isTextFieldTarget`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`                                            | DataTransfer and pointer geometry                                                                                                                                                                           |
-| `apps/web/src/routes/index.tsx`    | TanStack Router's `/` route with `HomePage`                                                                                    | The Studio shell, Preview, the five Inspector sections, DOM event handling, and React state                                                                                                                 |
-| `apps/web/src/lib/utils.ts`        | `cn(...)`                                                                                                                      | Tailwind class merging                                                                                                                                                                                      |
+| Module                             | Interface                                                                                                 | Hides                                                                                                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/src/session.ts`          | `createSession(...) -> StudioSession`, plus the Composition and storage port types                        | The Composition shape, state machine, and validation                                                                                                                                                        |
+| `apps/web/src/placement.ts`        | `derivePlacement`, `browserWindowHeight`, and `gradientLine`                                              | Composition geometry; loads in Node                                                                                                                                                                         |
+| `apps/web/src/paint.ts`            | `renderComposition`, `paintScreenshot`, and `paintBrowserWindow`                                          | Canvas 2D drawing and image decoding                                                                                                                                                                        |
+| `apps/web/src/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                                       | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
+| `apps/web/src/hooks/use-draft.ts`  | `useDraft(value, parse, onWrite, format?)`                                                                | React draft-input state, stored-value re-sync, and blur/Enter commit wiring                                                                                                                                 |
+| `apps/web/src/catalog.ts`          | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor`                               | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
+| `apps/web/src/scheme.ts`           | `schemeBootScript`                                                                                        | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
+| `apps/web/src/messages.ts`         | Refusal and affordance message functions                                                                  | User-facing outcome copy; loads in Node                                                                                                                                                                     |
+| `apps/web/src/parse.ts`            | `parseHex`, `parseInteger`, `parseScale`, `parseOpacityPercent`, `parseNonNegativeInteger`, `formatScale` | Input syntax and field formatting; loads in Node                                                                                                                                                            |
+| `apps/web/src/drag.ts`             | `isFileDrag`, `isTextFieldTarget`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`                       | DataTransfer and pointer geometry                                                                                                                                                                           |
+| `apps/web/src/routes/index.tsx`    | TanStack Router's `/` route with `HomePage`                                                               | The Studio shell, Preview, the five Inspector sections, DOM event handling, and React state                                                                                                                 |
 
-The current source dependency direction is:
+Source dependencies point one way:
 
 ```text
-routes/index.tsx -> session, catalog, messages, parse, drag, scheme, indexed-db-store
-session.ts       -> placement, paint
+routes/index.tsx -> session, catalog, messages, parse, drag, hooks
+routes/__root.tsx -> scheme
+session.ts       -> placement, paint, indexed-db-store (port)
 paint.ts         -> placement, session types
-messages.ts      -> session types
-catalog.ts       -> session types
-indexed-db-store.ts -> session's UploadedBackgroundStore port
+messages.ts, catalog.ts -> session types
+placement.ts, parse.ts, scheme.ts -> nothing
 ```
 
-## Target module map
+DOM access is permitted in exactly five places: `paint.ts`, `drag.ts`, `scheme.ts`, `indexed-db-store.ts`, and the route tree. Every other module must load and test in the default Node environment. A `@vitest-environment jsdom` pragma on another module's test is therefore a layering violation.
 
-Structural issues move one row at a time from **Target** to current. Keep this map current as those issues land.
-
-| Status     | Module                | Interface                                                                   | Hides                                                        |
-| ---------- | --------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Current    | `session.ts`          | `StudioSession` and the `createSession` coordinator                         | The Composition state machine and writer validation          |
-| Current    | `placement.ts`        | `derivePlacement`, `browserWindowHeight`, `gradientLine`                    | Composition geometry; loads in Node                          |
-| Current    | `paint.ts`            | The four paint passes and `renderComposition`                               | Canvas 2D drawing and image decoding                         |
-| Current    | `catalog.ts`          | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor` | Built-in Background and Aspect preset lookup                 |
-| Current    | `messages.ts`         | Refusal and affordance message functions                                    | User-facing outcome copy; loads in Node                      |
-| Current    | `parse.ts`            | `parseHex`, `parseOpacityPercent`, formatters, and `commitDraft`            | Text-field parsing and commit rules; loads in Node           |
-| Current    | `drag.ts`             | `isFileDrag`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`              | DataTransfer and pointer geometry                            |
-| Current    | `scheme.ts`           | `schemeBootScript`                                                          | The single light/dark rule and colour-scheme DOM integration |
-| Current    | `indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                         | The production persistence adapter                           |
-| Current    | `hooks/use-draft.ts`  | The draft/commit/revert hook                                                | React draft-input lifecycle                                  |
-| Current    | `lib/utils.ts`        | `cn(...)`                                                                   | Tailwind class merging                                       |
-| **Target** | `components/ui/`      | shadcn components                                                           | Reusable presentation primitives, after spec `u5l5hp`        |
-| Current    | `routes/index.tsx`    | `HomePage`                                                                  | JSX and React state only                                     |
-
-Target dependencies point one way:
-
-```text
-routes/index.tsx -> session, catalog, messages, parse, drag, scheme, hooks, components/ui
-session.ts       -> placement, paint, catalog, indexed-db-store (port)
-paint.ts         -> placement
-placement.ts, parse.ts, messages.ts, scheme.ts -> nothing
-```
-
-In the target, DOM access is permitted in exactly five places: `paint.ts`, `drag.ts`, `scheme.ts`, `indexed-db-store.ts`, and the route tree. Every other module must load and test in the default Node environment. A `@vitest-environment jsdom` pragma on another module's test is therefore a layering violation. Until the remaining target extractions land, the current `session.ts` necessarily retains the DOM access assigned to its target replacements.
+Adopting shadcn components (spec `u5l5hp`) adds a `components/ui/` row for reusable presentation primitives; nothing else in this map moves.
 
 ## Composition invariants
 
 `session.ts` owns Composition state and its invariants. Callers request changes through `StudioSession`; they do not reproduce its validation.
 
-- Position is unbounded and the Frame clips it. No caller clamps Position. This rule was settled in spec `y7ac9r`; issue `jcden7` removes the current contradictory UI clamp.
+- Position is unbounded and the Frame clips it. No caller clamps Position. This rule was settled in spec `y7ac9r` and the contradictory UI clamp was removed in `jcden7`.
 - Padding, Scale, Shadow, and Border are validated in `session.ts` and nowhere else.
 - A Composition is replaced, never mutated. Writers assign a new object with object spread.
 - `PAINT_SCALE = 2`: the render canvas is twice the Frame dimensions. Preview and Export use the same bitmap and therefore both depend on this constant. It is not part of the Composition.
@@ -80,11 +52,11 @@ StudioSession writers return an explicit outcome instead of throwing. Ordinary w
 
 ### Uploaded Background persistence
 
-`UploadedBackgroundStore` is the persistence port consumed by `createSession`. `createIndexedDbStore` is the production adapter. The `memoryStore` helper in `session.test.ts` is the in-memory test adapter. Session behavior depends on the port, not IndexedDB details.
+`UploadedBackgroundStore` is the persistence port consumed by `createSession`. `createIndexedDbStore` is the production adapter. The `memoryStore` helper in `test/helpers.ts` is the in-memory test adapter, shared by every test that needs one. Session behavior depends on the port, not IndexedDB details.
 
 ### Preview and Export
 
-Preview and Export share the Canvas 2D draw path required by ADR 0001. Painting clips to the Frame, runs the four paint passes, and produces a bitmap scaled by `PAINT_SCALE`; Export serializes that same result with `toBlob`.
+Preview and Export share the Canvas 2D draw path required by ADR 0001. Painting clips to the Frame, runs the paint passes, and produces a bitmap scaled by `PAINT_SCALE`; Export serializes that same result with `toBlob`.
 
 ### Canvas tests
 

@@ -8,62 +8,16 @@ import {
   paintScreenshot,
 } from "./paint";
 import type { Placement } from "./placement";
+import { createSession, type Composition, type UploadedBackgroundStore } from "./session";
 import {
-  createSession,
-  type Composition,
-  type UploadedBackground,
-  type UploadedBackgroundStore,
-} from "./session";
-import { defaultSolid, isUploaded, pngBlob } from "./test/helpers";
-function emptyStore(): UploadedBackgroundStore {
-  return {
-    list: async () => [],
-    put: async () => "ok",
-    get: async () => undefined,
-    remove: async () => "ok",
-  };
-}
-function memoryStore(): UploadedBackgroundStore {
-  const records: UploadedBackground[] = [];
-  return {
-    list: async () => [...records],
-    put: async (record) => {
-      records.push(record);
-      return "ok";
-    },
-    get: async (id) => records.find((record) => record.id === id),
-    remove: async (id) => {
-      const index = records.findIndex((record) => record.id === id);
-      if (index !== -1) records.splice(index, 1);
-      return "ok";
-    },
-  };
-}
-
-test("setSize writes a render canvas of the Frame at 2x", async () => {
-  const session = await createSession({ defaultSolid, store: emptyStore() });
-  expect(session.setSize(1080, 1080)).toBe("ok");
-
-  const canvas = await session.render();
-
-  expect(canvas.width).toBe(2160);
-  expect(canvas.height).toBe(2160);
-});
-
-function pixelAt(
-  canvas: HTMLCanvasElement,
-  cssX: number,
-  cssY: number,
-): [number, number, number, number] {
-  const ctx = canvas.getContext("2d");
-  if (ctx === null) {
-    throw new Error("expected a 2d context");
-  }
-  const data = ctx.getImageData(Math.round(cssX * 2), Math.round(cssY * 2), 1, 1).data;
-  return [data[0] ?? 0, data[1] ?? 0, data[2] ?? 0, data[3] ?? 0];
-}
-
-function opaquePixel(color: string): [number, number, number, number] {
+  defaultSolid,
+  emptyStore,
+  isUploaded,
+  memoryStore,
+  pixelAt,
+  pngBlob,
+} from "./test/helpers";
+function opaquePixel(color: string): number[] {
   return [
     Number.parseInt(color.slice(1, 3), 16),
     Number.parseInt(color.slice(3, 5), 16),
@@ -483,44 +437,16 @@ test("exportPng refuses when screenshot is null", async () => {
   expect(await session.exportPng(new Date(2026, 7, 19, 14, 5, 3))).toBe("refuse");
 });
 
-test("render returns a canvas of the default frame at 2x", async () => {
+test("render returns a smoothed canvas of the Frame at 2x", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
+  expect((await session.render()).width).toBe(3840);
+  expect(session.setSize(1080, 1080)).toBe("ok");
   const canvas = await session.render();
 
-  expect(canvas.width).toBe(3840);
+  expect(canvas.width).toBe(2160);
   expect(canvas.height).toBe(2160);
   const ctx = canvas.getContext("2d");
   expect(ctx?.imageSmoothingEnabled).toBe(true);
   expect(ctx?.imageSmoothingQuality).toBe("high");
-});
-
-test("a second createSession lists this session's uploads and a fresh default Composition", async () => {
-  const store = memoryStore();
-  const session = await createSession({ defaultSolid, store });
-  const uploaded = await session.uploadBackground(pngBlob(100, 80), "wall.png");
-  expect(isUploaded(uploaded)).toBe(true);
-  if (!isUploaded(uploaded)) {
-    return;
-  }
-  session.setPadding(0);
-  session.setBackground({ type: "image", id: uploaded.id });
-
-  const refreshed = await createSession({ defaultSolid, store });
-
-  expect(refreshed.uploadedBackgrounds).toEqual([uploaded]);
-  expect(refreshed.composition).toEqual({
-    width: 1920,
-    height: 1080,
-    background: defaultSolid,
-    screenshot: null,
-    padding: 120,
-    scale: 1,
-    position: { x: 0, y: 0 },
-    shadow: { offset: 16, blur: 32, opacity: 0.25 },
-    border: { width: 0, color: "#FFFFFF" },
-    radius: 16,
-    browserWindow: "none",
-    url: "",
-  });
 });

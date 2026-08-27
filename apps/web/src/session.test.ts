@@ -7,35 +7,14 @@ import {
   type UploadedBackground,
   type UploadedBackgroundStore,
 } from "./session";
-import { defaultSolid, imageBlob, isUploaded } from "./test/helpers";
-
-function emptyStore(): UploadedBackgroundStore {
-  return {
-    list: async () => [],
-    put: async () => "ok",
-    get: async () => undefined,
-    remove: async () => "ok",
-  };
-}
-
-function memoryStore(): UploadedBackgroundStore {
-  const records: UploadedBackground[] = [];
-  return {
-    list: async () => [...records],
-    put: async (record) => {
-      records.push(record);
-      return "ok";
-    },
-    get: async (id) => records.find((record) => record.id === id),
-    remove: async (id) => {
-      const index = records.findIndex((record) => record.id === id);
-      if (index !== -1) {
-        records.splice(index, 1);
-      }
-      return "ok";
-    },
-  };
-}
+import {
+  defaultComposition,
+  defaultSolid,
+  emptyStore,
+  imageBlob,
+  isUploaded,
+  memoryStore,
+} from "./test/helpers";
 
 test("a subscriber receives one notification for a successful write and none for a refusal", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
@@ -68,20 +47,7 @@ test("unsubscribe stops session change notifications", async () => {
 test("createSession opens a default Composition on the given solid", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
 
-  expect(session.composition).toEqual({
-    width: 1920,
-    height: 1080,
-    background: defaultSolid,
-    screenshot: null,
-    padding: 120,
-    scale: 1,
-    position: { x: 0, y: 0 },
-    shadow: { offset: 16, blur: 32, opacity: 0.25 },
-    border: { width: 0, color: "#FFFFFF" },
-    radius: 16,
-    browserWindow: "none",
-    url: "",
-  });
+  expect(session.composition).toEqual(defaultComposition);
 });
 
 test("placement is null while screenshot is null", async () => {
@@ -135,20 +101,7 @@ test("a second createSession is a fresh default Composition", async () => {
 
   const second = await createSession({ defaultSolid, store });
 
-  expect(second.composition).toEqual({
-    width: 1920,
-    height: 1080,
-    background: defaultSolid,
-    screenshot: null,
-    padding: 120,
-    scale: 1,
-    position: { x: 0, y: 0 },
-    shadow: { offset: 16, blur: 32, opacity: 0.25 },
-    border: { width: 0, color: "#FFFFFF" },
-    radius: 16,
-    browserWindow: "none",
-    url: "",
-  });
+  expect(second.composition).toEqual(defaultComposition);
 });
 
 test("setBackground writes a solid and keeps hex case", async () => {

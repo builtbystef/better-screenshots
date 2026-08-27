@@ -31,7 +31,6 @@ import {
   type PlaceSource,
 } from "../messages";
 import {
-  formatInteger,
   formatScale,
   parseHex,
   parseInteger,
@@ -463,10 +462,6 @@ function chipClass(selected: boolean): string {
     : "aspect-square w-full rounded-md border border-border transition-[box-shadow] hover:ring-2 hover:ring-ring/40 hover:ring-offset-2 hover:ring-offset-card";
 }
 
-function formatText(value: string): string {
-  return value;
-}
-
 function BackgroundInspector({ session }: { session: StudioSession }) {
   const pickerId = useId();
   const background = session.composition.background;
@@ -484,7 +479,7 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
     setDraft: setHexDraft,
     onBlur: commitHex,
     onKeyDown: onHexKeyDown,
-  } = useDraft(currentSolid ?? "", formatText, parseHex, writeSolid);
+  } = useDraft(currentSolid ?? "", parseHex, writeSolid);
 
   function writeSolid(color: HexColor) {
     if (session.setBackground({ type: "solid", color }) === "ok") {
@@ -796,7 +791,6 @@ function PlacementInspector({ session }: { session: StudioSession }) {
         min={0}
         max={400}
         step={1}
-        format={formatInteger}
         parse={parseNonNegativeInteger}
         onWrite={(value) => {
           session.setPadding(value);
@@ -846,7 +840,6 @@ function EffectsInspector({ session }: { session: StudioSession }) {
           min={0}
           max={64}
           step={1}
-          format={formatInteger}
           parse={parseNonNegativeInteger}
           onWrite={(offset) => writeShadow({ offset })}
         />
@@ -856,7 +849,6 @@ function EffectsInspector({ session }: { session: StudioSession }) {
           min={0}
           max={80}
           step={1}
-          format={formatInteger}
           parse={parseNonNegativeInteger}
           onWrite={(blur) => writeShadow({ blur })}
         />
@@ -866,7 +858,6 @@ function EffectsInspector({ session }: { session: StudioSession }) {
           min={0}
           max={100}
           step={1}
-          format={formatInteger}
           parse={parseOpacityPercent}
           onWrite={(percent) => writeShadow({ opacity: percent / 100 })}
         />
@@ -879,7 +870,6 @@ function EffectsInspector({ session }: { session: StudioSession }) {
           min={0}
           max={24}
           step={1}
-          format={formatInteger}
           parse={parseNonNegativeInteger}
           onWrite={(width) => writeBorder({ width })}
         />
@@ -891,7 +881,6 @@ function EffectsInspector({ session }: { session: StudioSession }) {
         min={0}
         max={64}
         step={1}
-        format={formatInteger}
         parse={parseNonNegativeInteger}
         onWrite={(value) => {
           session.setRadius(value);
@@ -907,20 +896,20 @@ function KnobRow({
   min,
   max,
   step,
-  format,
   parse,
   onWrite,
+  format,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
   step: number;
-  format: (value: number) => string;
+  format?: (value: number) => string;
   parse: (raw: string) => number | "refuse";
   onWrite: (value: number) => void;
 }) {
-  const { draft, setDraft, onBlur, onKeyDown } = useDraft(value, format, parse, onWrite);
+  const { draft, setDraft, onBlur, onKeyDown } = useDraft(value, parse, onWrite, format);
 
   const thumb = clamp(value, min, max);
   const fill = max === min ? 0 : ((thumb - min) / (max - min)) * 100;
@@ -971,13 +960,13 @@ function PositionRow({
     setDraft: setXDraft,
     onBlur: commitX,
     onKeyDown: onXKeyDown,
-  } = useDraft(x, formatInteger, parseInteger, (nextX) => onWrite(nextX, y));
+  } = useDraft(x, parseInteger, (nextX) => onWrite(nextX, y));
   const {
     draft: yDraft,
     setDraft: setYDraft,
     onBlur: commitY,
     onKeyDown: onYKeyDown,
-  } = useDraft(y, formatInteger, parseInteger, (nextY) => onWrite(x, nextY));
+  } = useDraft(y, parseInteger, (nextY) => onWrite(x, nextY));
 
   return (
     <div className="grid grid-cols-[3.75rem_auto_1fr_auto_1fr] items-center gap-2">
@@ -1024,7 +1013,7 @@ function BorderColorRow({
     setDraft: setHexDraft,
     onBlur: commitHex,
     onKeyDown: onHexKeyDown,
-  } = useDraft(color, formatText, parseHex, onWrite);
+  } = useDraft(color, parseHex, onWrite);
 
   return (
     <div className="grid grid-cols-[3.75rem_1fr] items-center gap-2">

@@ -22,7 +22,7 @@ type PaintOptions = {
   createCanvas: () => HTMLCanvasElement;
 };
 
-export async function paintBackground(
+async function paintBackground(
   ctx: CanvasRenderingContext2D,
   composition: Composition,
   options: Pick<PaintOptions, "defaultSolid" | "store">,
@@ -93,7 +93,7 @@ function pathScaledRect(ctx: CanvasRenderingContext2D, rect: Rect, radius: numbe
   );
 }
 
-export function paintShadow(
+function paintShadow(
   ctx: CanvasRenderingContext2D,
   outer: Rect,
   outerRadius: number,
