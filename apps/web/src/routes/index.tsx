@@ -1,6 +1,8 @@
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
@@ -16,6 +18,7 @@ import {
   useSyncExternalStore,
   type ChangeEvent,
   type PointerEvent,
+  type ReactNode,
 } from "react";
 import {
   aspectPresetFor,
@@ -87,38 +90,40 @@ function Studio({ session }: { session: StudioSession }) {
         <Preview session={session} sessionVersion={sessionVersion} />
       </section>
       <aside className="flex w-80 shrink-0 flex-col overflow-y-auto overscroll-contain border-l border-border bg-card text-card-foreground">
-        <section className="border-b border-border px-4 py-5">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Frame
-          </h2>
+        <InspectorSection title="Frame">
           <FrameInspector session={session} />
-        </section>
-        <section className="border-b border-border px-4 py-5">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Background
-          </h2>
+        </InspectorSection>
+        <Separator />
+        <InspectorSection title="Background">
           <BackgroundInspector session={session} />
-        </section>
-        <section className="border-b border-border px-4 py-5">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Placement
-          </h2>
+        </InspectorSection>
+        <Separator />
+        <InspectorSection title="Placement">
           <PlacementInspector session={session} />
-        </section>
-        <section className="border-b border-border px-4 py-5">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Window
-          </h2>
+        </InspectorSection>
+        <Separator />
+        <InspectorSection title="Window">
           <WindowInspector session={session} />
-        </section>
-        <section className="px-4 py-5">
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            Effects
-          </h2>
+        </InspectorSection>
+        <Separator />
+        <InspectorSection title="Effects">
           <EffectsInspector session={session} />
-        </section>
+        </InspectorSection>
       </aside>
     </main>
+  );
+}
+
+function InspectorSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <Card className="shrink-0 rounded-none bg-transparent py-5 ring-0">
+      <CardHeader>
+        <CardTitle className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          <h2>{title}</h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   );
 }
 
@@ -539,7 +544,7 @@ function BackgroundInspector({ session }: { session: StudioSession }) {
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h3 className="text-[11px] text-muted-foreground">Solid</h3>
         <ToggleGroup
@@ -704,7 +709,7 @@ function FrameInspector({ session }: { session: StudioSession }) {
 
   return (
     <ToggleGroup
-      className={cn(chipGroup, "mt-4 grid-cols-4")}
+      className={cn(chipGroup, "grid-cols-4")}
       value={selected === undefined ? [] : [selected.name]}
     >
       {aspectPresets.map((preset) => (
@@ -738,7 +743,7 @@ function WindowInspector({ session }: { session: StudioSession }) {
   const [line, setLine] = useState<string | null>(null);
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <ToggleGroup className={cn(chipGroup, "grid-cols-3")} value={[browserWindow]}>
         {windowSchemes.map((entry) => (
           <ToggleGroupItem
@@ -776,7 +781,7 @@ function PlacementInspector({ session }: { session: StudioSession }) {
   const { padding, scale, position } = session.composition;
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <KnobRow
         label="Padding"
         value={padding}
@@ -823,7 +828,7 @@ function EffectsInspector({ session }: { session: StudioSession }) {
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
         <h3 className="text-[11px] text-muted-foreground">Shadow</h3>
         <KnobRow

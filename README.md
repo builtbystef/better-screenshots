@@ -24,7 +24,7 @@ The application should run entirely on the frontend with no backend dependency.
 - React
 - TanStack Start in SPA mode
 - Tailwind CSS
-- ShadCN UI using the Base UI variant (planned; the Studio currently uses native controls)
+- ShadCN UI using the Base UI variant
 
 The Studio lives in `apps/web`, started from the carbon-fiber Vite+ workspace.
 
