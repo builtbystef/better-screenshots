@@ -6,7 +6,7 @@ import type {
   UploadRefuse,
   UploadedBackground,
   UploadedBackgroundStore,
-} from "../session";
+} from "@/features/studio/composition/session";
 
 const imageSizes = new WeakMap<Blob, Frame>();
 

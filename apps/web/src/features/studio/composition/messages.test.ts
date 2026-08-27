@@ -1,5 +1,10 @@
 import { expect, test } from "vite-plus/test";
-import { changeLine, exportLine, placeLine, uploadLine } from "./messages";
+import {
+  changeLine,
+  exportLine,
+  placeLine,
+  uploadLine,
+} from "@/features/studio/composition/messages";
 
 test("a place writes a line only when it fails, and clipboard copy only for paste", () => {
   for (const source of ["picker", "drop", "paste"] as const) {

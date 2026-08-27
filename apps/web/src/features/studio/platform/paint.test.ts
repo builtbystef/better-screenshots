@@ -6,9 +6,13 @@ import {
   BROWSER_WINDOW_TRAFFIC_LIGHTS,
   paintBrowserWindow,
   paintScreenshot,
-} from "./paint";
-import type { Placement } from "./placement";
-import { createSession, type Composition, type UploadedBackgroundStore } from "./session";
+} from "@/features/studio/platform/paint";
+import type { Placement } from "@/features/studio/composition/placement";
+import {
+  createSession,
+  type Composition,
+  type UploadedBackgroundStore,
+} from "@/features/studio/composition/session";
 import {
   defaultSolid,
   emptyStore,
@@ -16,7 +20,7 @@ import {
   memoryStore,
   pixelAt,
   pngBlob,
-} from "./test/helpers";
+} from "@/test/helpers";
 function opaquePixel(color: string): number[] {
   return [
     Number.parseInt(color.slice(1, 3), 16),

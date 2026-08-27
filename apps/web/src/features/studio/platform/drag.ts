@@ -1,4 +1,4 @@
-import type { Point, Rect } from "./session";
+import type { Point, Rect } from "@/features/studio/composition/session";
 
 export function isFileDrag(types: readonly string[]): boolean {
   return types.includes("Files");

@@ -1,4 +1,8 @@
-import type { GradientBackground, HexColor, SolidBackground } from "./session";
+import type {
+  GradientBackground,
+  HexColor,
+  SolidBackground,
+} from "@/features/studio/composition/session";
 
 export type CatalogSolid = { name: string; color: HexColor };
 

@@ -1,4 +1,4 @@
-import type { Frame, Point } from "./session";
+import type { Frame, Point } from "@/features/studio/composition/session";
 
 export type Rect = Point & Frame;
 

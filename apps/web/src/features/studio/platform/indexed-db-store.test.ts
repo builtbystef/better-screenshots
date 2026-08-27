@@ -1,9 +1,9 @@
 import { createCanvas } from "@napi-rs/canvas";
 import { IDBFactory } from "fake-indexeddb";
 import { expect, test } from "vite-plus/test";
-import { createIndexedDbStore } from "./indexed-db-store";
-import { createSession } from "./session";
-import { defaultSolid, isUploaded, pixelAt, pngBlob } from "./test/helpers";
+import { createIndexedDbStore } from "@/features/studio/platform/indexed-db-store";
+import { createSession } from "@/features/studio/composition/session";
+import { defaultSolid, isUploaded, pixelAt, pngBlob } from "@/test/helpers";
 
 function indexedDbStore(factory: IDBFactory = new IDBFactory()) {
   return createIndexedDbStore(factory);

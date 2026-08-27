@@ -2,41 +2,74 @@
 
 The Studio is one browser application under `apps/web`. Its modules expose small interfaces and keep Composition rules, browser APIs, and presentation details on their respective sides of those interfaces.
 
+## Source layout
+
+`apps/web/src` is organised by feature, not by file type. The Studio owns its own folder and everything inside it; the rest of `src` is either routing or genuinely shared.
+
+```text
+routes/          the URL surface, and nothing else
+features/studio/ the Studio
+  composition/   Composition rules, pure and Node-only
+  platform/      the Studio's DOM seams
+  components/    the shell, the Preview, and the Inspector sections
+  hooks/         one hook per Preview DOM concern
+  studio-page.tsx  the Session boot
+  index.ts       what the route is allowed to import
+components/ui/   shadcn presentation primitives
+hooks/           React hooks that know nothing about the Studio
+lib/             shared modules that know nothing about the Studio
+```
+
+A second feature would arrive as a second folder under `features/`, not as new files spread across `composition/`, `platform/`, and `components/`.
+
 ## Module map
 
-| Module                             | Interface                                                                                                                      | Hides                                                                                                                                                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web/src/session.ts`          | `createSession(...) -> StudioSession`, plus the Composition and storage port types                                             | The Composition shape, state machine, and validation                                                                                                                                                        |
-| `apps/web/src/placement.ts`        | `derivePlacement`, `browserWindowHeight`, and `gradientLine`                                                                   | Composition geometry; loads in Node                                                                                                                                                                         |
-| `apps/web/src/paint.ts`            | `renderComposition`, `paintScreenshot`, and `paintBrowserWindow`                                                               | Canvas 2D drawing and image decoding                                                                                                                                                                        |
-| `apps/web/src/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                                                            | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
-| `apps/web/src/hooks/use-draft.ts`  | `useDraft(value, parse, onWrite, format?)`                                                                                     | React draft-input state, stored-value re-sync, and blur/Enter commit wiring                                                                                                                                 |
-| `apps/web/src/components/ui/`      | One shadcn presentation primitive per file: `Button`, `Input`, `Label`, `Slider`, `Toggle`, `ToggleGroup`, `Card`, `Separator` | Base UI behaviour and the Tailwind class strings that style it; each file is vendored from the `base-nova` registry that `components.json` names, and is edited only to keep the formatter happy            |
-| `apps/web/src/lib/utils.ts`        | `cn(...inputs)`                                                                                                                | The one place a conditional class string is assembled: `clsx` composition and `tailwind-merge` conflict resolution                                                                                          |
-| `apps/web/src/catalog.ts`          | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor`                                                    | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
-| `apps/web/src/scheme.ts`           | `schemeBootScript`                                                                                                             | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
-| `apps/web/src/messages.ts`         | Refusal and affordance message functions                                                                                       | User-facing outcome copy; loads in Node                                                                                                                                                                     |
-| `apps/web/src/parse.ts`            | `parseHex`, `parseInteger`, `parseScale`, `parseOpacityPercent`, `parseNonNegativeInteger`, `formatScale`                      | Input syntax and field formatting; loads in Node                                                                                                                                                            |
-| `apps/web/src/drag.ts`             | `isFileDrag`, `isTextFieldTarget`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`                                            | DataTransfer and pointer geometry                                                                                                                                                                           |
-| `apps/web/src/routes/index.tsx`    | TanStack Router's `/` route with `HomePage`, composed from the `components/ui/` primitives                                     | The Studio shell, Preview, the five Inspector sections, DOM event handling, and React state                                                                                                                 |
+| Module                                         | Interface                                                                                                                            | Hides                                                                                                                                                                                                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/studio/composition/session.ts`       | `createSession(...) -> StudioSession`, plus the Composition and storage port types                                                   | The Composition shape, state machine, and validation                                                                                                                                                        |
+| `features/studio/composition/placement.ts`     | `derivePlacement`, `browserWindowHeight`, and `gradientLine`                                                                         | Composition geometry; loads in Node                                                                                                                                                                         |
+| `features/studio/composition/catalog.ts`       | Catalog data and `catalogSolidFor`, `catalogGradientFor`, `aspectPresetFor`                                                          | The eight solid Backgrounds, six gradient Backgrounds, default Background, and seven Aspect presets                                                                                                         |
+| `features/studio/composition/messages.ts`      | Refusal and affordance message functions                                                                                             | User-facing outcome copy; loads in Node                                                                                                                                                                     |
+| `features/studio/composition/parse.ts`         | `parseHex`, `parseInteger`, `parseScale`, `parseOpacityPercent`, `parseNonNegativeInteger`, `formatScale`                            | Input syntax and field formatting; loads in Node                                                                                                                                                            |
+| `features/studio/platform/paint.ts`            | `renderComposition`, `paintScreenshot`, and `paintBrowserWindow`                                                                     | Canvas 2D drawing and image decoding                                                                                                                                                                        |
+| `features/studio/platform/drag.ts`             | `isFileDrag`, `isTextFieldTarget`, `filesFrom`, `positionFromDrag`, and `hitsDrawn`                                                  | DataTransfer and pointer geometry                                                                                                                                                                           |
+| `features/studio/platform/indexed-db-store.ts` | `createIndexedDbStore() -> UploadedBackgroundStore`                                                                                  | IndexedDB database `better-screenshots` version 1, object store `uploaded-backgrounds`, and key path `id`; storage failures are translated to `"quota"` or `"unavailable"` and do not throw across the port |
+| `features/studio/studio-page.tsx`              | `StudioPage()`                                                                                                                       | The Session boot: it creates the Session with the IndexedDB adapter and hands it to `StudioShell`                                                                                                           |
+| `features/studio/index.ts`                     | `StudioPage`                                                                                                                         | Every other module in the feature; the route imports this file and no deeper                                                                                                                                |
+| `features/studio/components/studio-shell.tsx`  | `StudioShell({ session })`                                                                                                           | The Studio shell layout, the version subscription, and the five `InspectorSection` cards                                                                                                                    |
+| `features/studio/components/preview.tsx`       | `Preview({ session, sessionVersion })`                                                                                               | The Preview surface markup and the wiring of the four Preview hooks                                                                                                                                         |
+| `features/studio/components/inspector/`        | One Inspector section per file: `FrameInspector`, `BackgroundInspector`, `PlacementInspector`, `WindowInspector`, `EffectsInspector` | The section markup, the shared `KnobRow`, `PositionRow`, and `BorderColorRow`, the `styles.ts` class variants, and `gradientCss`                                                                            |
+| `features/studio/hooks/`                       | One hook per Preview DOM concern: `usePreviewCanvas`, `useFileDrop`, `useScreenshotDrag`, `useExport`                                | Canvas mounting, the window drag and paste listeners, pointer drag state, and the export download                                                                                                           |
+| `routes/index.tsx`                             | TanStack Router's `/` route with `StudioRoute`                                                                                       | Nothing: it declares the route and renders `StudioPage`                                                                                                                                                     |
+| `routes/__root.tsx`                            | TanStack Router's root route                                                                                                         | The document shell, the head tags, and the colour-scheme boot script                                                                                                                                        |
+| `hooks/use-draft.ts`                           | `useDraft(value, parse, onWrite, format?)`                                                                                           | React draft-input state, stored-value re-sync, and blur/Enter commit wiring                                                                                                                                 |
+| `components/ui/`                               | One shadcn presentation primitive per file: `Button`, `Input`, `Label`, `Slider`, `Toggle`, `ToggleGroup`, `Card`, `Separator`       | Base UI behaviour and the Tailwind class strings that style it; each file is vendored from the `base-nova` registry that `components.json` names, and is edited only to keep the formatter happy            |
+| `lib/scheme.ts`                                | `schemeBootScript`                                                                                                                   | The single light/dark rule and colour-scheme change listener                                                                                                                                                |
+| `lib/utils.ts`                                 | `cn(...inputs)`                                                                                                                      | The one place a conditional class string is assembled: `clsx` composition and `tailwind-merge` conflict resolution                                                                                          |
 
 Source dependencies point one way:
 
 ```text
-routes/index.tsx -> session, catalog, messages, parse, drag, hooks, components/ui
-routes/__root.tsx -> scheme
-components/ui    -> lib/utils
-session.ts       -> placement, paint, indexed-db-store (port)
-paint.ts         -> placement, session types
-messages.ts, catalog.ts -> session types
-placement.ts, parse.ts, scheme.ts, hooks, lib/utils -> nothing
+routes/index.tsx   -> features/studio
+routes/__root.tsx  -> lib/scheme
+features/studio/studio-page.tsx -> features/studio/components, composition, platform
+features/studio/components      -> features/studio/composition, features/studio/hooks, components/ui, hooks, lib/utils
+features/studio/hooks           -> features/studio/composition, features/studio/platform
+features/studio/platform        -> features/studio/composition types
+features/studio/composition/session -> features/studio/composition/placement, features/studio/platform/paint
+components/ui      -> lib/utils
+features/studio/composition/placement, hooks, lib/scheme, lib/utils -> nothing
 ```
 
-`components/ui/` and `hooks/` are leaves that know nothing about the Studio. A primitive takes props and renders; `useDraft` takes a value, a parser, and a writer. Neither imports `session`, `catalog`, or any other Composition module, so the arrow never points back at the page.
+`components/ui/`, `hooks/`, and `lib/` are leaves that know nothing about the Studio. A primitive takes props and renders; `useDraft` takes a value, a parser, and a writer. Neither imports `session`, `catalog`, or any other Composition module, so the arrow never points back at the feature. The route is a composition point: it imports `features/studio` and nothing deeper, so the Studio can be re-mounted, re-routed, or replaced without touching its insides.
 
-DOM access is permitted in exactly five places: `paint.ts`, `drag.ts`, `scheme.ts`, `indexed-db-store.ts`, and the route tree. Every other module must load and test in the default Node environment. A `@vitest-environment jsdom` pragma on another module's test is therefore a layering violation.
+The folders carry the DOM rule too. `composition/` holds the Node-only modules; `platform/` holds the three that own a DOM seam — `paint.ts`, `drag.ts`, `indexed-db-store.ts`. DOM access is permitted in those three, in `lib/scheme.ts`, in `features/studio/components/` and `features/studio/hooks/`, and in the route tree, and nowhere else. Every module under `composition/` must load and test in the default Node environment, so a `@vitest-environment jsdom` pragma on a `composition/` test is a layering violation.
 
-Spec `u5l5hp` landed those primitives. Every control in the Studio is now a shadcn component, and `cn` is the only place a conditional class string is assembled — the hand-rolled class helpers are gone. Nothing else in this map moved.
+`platform/` rather than `browser/`, because Browser window is a glossary term.
+
+Spec `u5l5hp` landed those primitives. Every control in the Studio is now a shadcn component, and `cn` is the only place a conditional class string is assembled — the hand-rolled class helpers are gone.
+
+Issue `fabo7m` split the Studio page, which had grown to 1039 lines, into a shell, a Preview, one file per Inspector section, and one hook per Preview DOM concern. Issue `xgp77f` then gathered those files, the Composition modules, and the Studio's DOM seams under `features/studio/`, and reduced `routes/index.tsx` to the route declaration. Neither changed behaviour. `features/` is a sibling of `routes/`, not a child, because `routeTree.gen.ts` is generated from everything under `routes/`. Every internal import uses the `@/` alias.
 
 ## Composition invariants
 
@@ -47,7 +80,7 @@ Spec `u5l5hp` landed those primitives. Every control in the Studio is now a shad
 - A Composition is replaced, never mutated. Writers assign a new object with object spread.
 - `PAINT_SCALE = 2`: the render canvas is twice the Frame dimensions. Preview and Export use the same bitmap and therefore both depend on this constant. It is not part of the Composition.
 
-A validator, clamp, or parse rule in `routes/index.tsx` is a layering violation. Parsing belongs in `parse.ts`; state invariants belong in `session.ts`; geometry belongs in `placement.ts` or `drag.ts` according to whether it describes the Composition or a DOM gesture.
+A validator, clamp, or parse rule under `features/studio/components/`, `features/studio/hooks/`, or `routes/` is a layering violation. Parsing belongs in `composition/parse.ts`; state invariants belong in `composition/session.ts`; geometry belongs in `composition/placement.ts` or `platform/drag.ts` according to whether it describes the Composition or a DOM gesture.
 
 ## Cross-seam contracts
 

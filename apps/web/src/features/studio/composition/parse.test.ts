@@ -6,7 +6,7 @@ import {
   parseNonNegativeInteger,
   parseOpacityPercent,
   parseScale,
-} from "./parse";
+} from "@/features/studio/composition/parse";
 
 test("parseHex accepts six digits without a hash and keeps case", () => {
   expect(parseHex("aabbcc")).toBe("#aabbcc");

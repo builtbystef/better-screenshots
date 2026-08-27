@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import { expect, test } from "vite-plus/test";
-import { filesFrom, hitsDrawn, isFileDrag, isTextFieldTarget, positionFromDrag } from "./drag";
+import {
+  filesFrom,
+  hitsDrawn,
+  isFileDrag,
+  isTextFieldTarget,
+  positionFromDrag,
+} from "@/features/studio/platform/drag";
 
 test("a drag is a file drag when types include Files", () => {
   expect(isFileDrag(["Files"])).toBe(true);

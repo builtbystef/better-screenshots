@@ -1,4 +1,4 @@
-import type { HexColor } from "./session";
+import type { HexColor } from "@/features/studio/composition/session";
 
 const HEX_DIGITS = /^#?([0-9A-Fa-f]{6})$/;
 

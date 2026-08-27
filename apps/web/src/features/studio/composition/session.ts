@@ -1,7 +1,7 @@
-import { renderComposition } from "./paint";
-import { derivePlacement, type Placement } from "./placement";
+import { renderComposition } from "@/features/studio/platform/paint";
+import { derivePlacement, type Placement } from "@/features/studio/composition/placement";
 
-export type { Placement, Rect } from "./placement";
+export type { Placement, Rect } from "@/features/studio/composition/placement";
 
 export type Point = { x: number; y: number };
 

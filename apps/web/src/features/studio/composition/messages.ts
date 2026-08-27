@@ -1,4 +1,4 @@
-import type { UploadRefuse } from "./session";
+import type { UploadRefuse } from "@/features/studio/composition/session";
 
 export type PlaceSource = "picker" | "drop" | "paste";
 

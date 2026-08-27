@@ -15,8 +15,13 @@ The conventions that this project holds, beyond what linters and formatters enfo
 
 ## Module boundaries
 
-- `routes/index.tsx` contains JSX, DOM event handling, and React state only. Put parsing in `parse.ts`, Composition validation in `session.ts`, Composition geometry in `placement.ts`, and DOM gesture geometry in `drag.ts`.
-- A test may declare `@vitest-environment jsdom` only when its module owns a DOM seam: `paint`, `drag`, `scheme`, `indexed-db-store`, or a route.
+- Application code lives in a folder of its own under `features/`, not in a folder named after its file type. A feature owns its `composition/`, `platform/`, `components/`, and `hooks/`; a module only leaves the feature when a second feature needs it, and then it goes to `lib/`, `hooks/`, or `components/`.
+- `routes/` declares routes and renders a feature's page component. It holds no state, no boot, and no markup beyond the page it renders. Put the boot in the feature's page.
+- A feature is entered through its `index.ts`. `routes/` imports `@/features/<feature>`; nothing outside a feature reaches into its folders.
+- `components/` and `hooks/` inside a feature contain JSX, DOM event handling, and React state only. Put parsing in `composition/parse.ts`, Composition validation in `composition/session.ts`, Composition geometry in `composition/placement.ts`, and DOM gesture geometry in `platform/drag.ts`.
+- One Inspector section per file under `features/studio/components/inspector/`, and one Preview DOM concern per hook under `features/studio/hooks/`. When a section outgrows its file, extract a row component beside it rather than letting the file grow.
+- Import internal modules through the `@/` alias, never a relative path.
+- A test may declare `@vitest-environment jsdom` only when its module owns a DOM seam: anything under a `platform/` folder, `lib/scheme.ts`, a component, a hook, or a route. Nothing under a `composition/` folder may.
 - The shadcn wrappers in `components/ui` are not render-tested. They are vendored registry source whose behaviour is the library's, not this project's; the seams worth asserting — parsing, commit and revert, geometry, paint — are covered without rendering React. Verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice.
 
 ## Production source

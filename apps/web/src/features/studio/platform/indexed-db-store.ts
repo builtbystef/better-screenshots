@@ -1,4 +1,7 @@
-import type { UploadedBackground, UploadedBackgroundStore } from "./session";
+import type {
+  UploadedBackground,
+  UploadedBackgroundStore,
+} from "@/features/studio/composition/session";
 
 const DB_NAME = "better-screenshots";
 const DB_VERSION = 1;

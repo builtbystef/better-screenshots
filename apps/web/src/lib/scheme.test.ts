@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { afterEach, expect, test, vi } from "vite-plus/test";
-import { schemeBootScript } from "./scheme";
+import { schemeBootScript } from "@/lib/scheme";
 
 function runBootScript(dark: boolean) {
   let matches = dark;

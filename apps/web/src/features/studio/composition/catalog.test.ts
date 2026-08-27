@@ -7,7 +7,7 @@ import {
   catalogGradients,
   catalogSolidFor,
   catalogSolids,
-} from "./catalog";
+} from "@/features/studio/composition/catalog";
 
 test("catalogSolidFor matches a Catalog color case-insensitively and misses anything else", () => {
   expect(catalogSolidFor("#e4e4e7")).toEqual({ name: "Zinc 200", color: "#E4E4E7" });

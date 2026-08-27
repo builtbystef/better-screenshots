@@ -4,7 +4,7 @@ import {
   gradientLine,
   type Placement,
   type Rect,
-} from "./placement";
+} from "@/features/studio/composition/placement";
 import type {
   Composition,
   Frame,
@@ -12,7 +12,7 @@ import type {
   Shadow,
   SolidBackground,
   UploadedBackgroundStore,
-} from "./session";
+} from "@/features/studio/composition/session";
 
 const PAINT_SCALE = 2;
 

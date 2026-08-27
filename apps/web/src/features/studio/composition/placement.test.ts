@@ -1,6 +1,10 @@
 import { expect, test } from "vite-plus/test";
-import { browserWindowHeight, derivePlacement, gradientLine } from "./placement";
-import type { Composition } from "./session";
+import {
+  browserWindowHeight,
+  derivePlacement,
+  gradientLine,
+} from "@/features/studio/composition/placement";
+import type { Composition } from "@/features/studio/composition/session";
 
 const composition: Composition = {
   width: 1920,

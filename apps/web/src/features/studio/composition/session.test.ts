@@ -6,7 +6,7 @@ import {
   type GradientBackground,
   type UploadedBackground,
   type UploadedBackgroundStore,
-} from "./session";
+} from "@/features/studio/composition/session";
 import {
   defaultComposition,
   defaultSolid,
@@ -14,7 +14,7 @@ import {
   imageBlob,
   isUploaded,
   memoryStore,
-} from "./test/helpers";
+} from "@/test/helpers";
 
 test("a subscriber receives one notification for a successful write and none for a refusal", async () => {
   const session = await createSession({ defaultSolid, store: emptyStore() });
