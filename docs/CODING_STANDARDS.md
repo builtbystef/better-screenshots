@@ -22,11 +22,6 @@ The conventions that this project holds, beyond what linters and formatters enfo
 - One Inspector section per file under `features/studio/components/inspector/`, and one Preview DOM concern per hook under `features/studio/hooks/`. When a section outgrows its file, extract a row component beside it rather than letting the file grow.
 - Import internal modules through the `@/` alias, never a relative path.
 - A test may declare `@vitest-environment jsdom` only when its module owns a DOM seam: anything under a `platform/` folder, `lib/scheme.ts`, a component, a hook, or a route. Nothing under a `composition/` folder may.
-- The shadcn wrappers in `components/ui` are not render-tested. They are vendored registry source whose behaviour is the library's, not this project's; the seams worth asserting — parsing, commit and revert, geometry, paint — are covered without rendering React. Verify a wrapper's prop forwarding with a throwaway probe when a slice needs it, and delete the probe with the slice.
-
-## Production source
-
-- Do not add explanatory comments to production source. Make the code state the rule; reserve comments for tool directives such as generated-file markers.
 
 ## Dependencies
 
