@@ -1,4 +1,4 @@
-import { renderComposition } from "@/features/studio/platform/paint";
+import { createPainter, PAINT_SCALE } from "@/features/studio/platform/paint";
 import { derivePlacement, type Placement } from "@/features/studio/composition/placement";
 
 export type { Placement, Rect } from "@/features/studio/composition/placement";
@@ -122,9 +122,18 @@ export type StudioSession = {
   setShadow(patch: Partial<Shadow>): "ok" | "refuse";
   setBorder(patch: Partial<Border>): "ok" | "refuse";
   setRadius(value: number): "ok" | "refuse";
-  render(): Promise<HTMLCanvasElement>;
+  render(request?: { scale?: number; canvas?: HTMLCanvasElement }): Promise<HTMLCanvasElement>;
   exportPng(now: Date): Promise<{ blob: Blob; filename: string } | "refuse">;
 };
+
+// The Preview asks for the scale that fills its box; anything unusable falls
+// back to the Export's scale, which is also the cap.
+function usableScale(scale: number | undefined): number {
+  if (scale === undefined || !Number.isFinite(scale) || scale <= 0) {
+    return PAINT_SCALE;
+  }
+  return Math.min(scale, PAINT_SCALE);
+}
 
 export async function createSession(options: {
   defaultSolid: SolidBackground;
@@ -132,6 +141,11 @@ export async function createSession(options: {
   createCanvas?: () => HTMLCanvasElement;
 }): Promise<StudioSession> {
   const createCanvas = options.createCanvas ?? (() => document.createElement("canvas"));
+  const paint = createPainter({
+    defaultSolid: options.defaultSolid,
+    store: options.store,
+    createCanvas,
+  });
   const listed = await options.store.list();
   let storage: "ok" | "unavailable" = listed === "unavailable" ? "unavailable" : "ok";
   let uploadedBackgrounds: UploadedBackground[] = listed === "unavailable" ? [] : [...listed];
@@ -313,21 +327,16 @@ export async function createSession(options: {
       commit({ ...composition, radius: value });
       return "ok";
     },
-    render: () =>
-      renderComposition(composition, screenshotSize, {
-        defaultSolid: options.defaultSolid,
-        store: options.store,
-        createCanvas,
+    render: (request) =>
+      paint(composition, screenshotSize, {
+        scale: usableScale(request?.scale),
+        canvas: request?.canvas,
       }),
     async exportPng(now) {
       if (composition.screenshot === null) {
         return "refuse";
       }
-      const canvas = await renderComposition(composition, screenshotSize, {
-        defaultSolid: options.defaultSolid,
-        store: options.store,
-        createCanvas,
-      });
+      const canvas = await paint(composition, screenshotSize, { scale: PAINT_SCALE });
       const blob = await new Promise<Blob | null>((resolve) => {
         canvas.toBlob(resolve, "image/png");
       });

@@ -38,7 +38,7 @@ function paintBrowserWindowFixture(scheme: "light" | "dark", url = ""): HTMLCanv
   if (ctx === null) {
     throw new Error("expected a 2d context");
   }
-  paintBrowserWindow(ctx, { x: 0, y: 0, width: 400, height: 100 }, scheme, url);
+  paintBrowserWindow(ctx, { x: 0, y: 0, width: 400, height: 100 }, scheme, url, 2);
   return canvas;
 }
 
@@ -102,8 +102,13 @@ test("a Browser window squeezes the Screenshot so its bottom stripe remains visi
     url: "",
   };
 
-  await paintScreenshot(ctx, composition, placement, screenshot, () =>
-    document.createElement("canvas"),
+  paintScreenshot(
+    ctx,
+    composition,
+    placement,
+    await createImageBitmap(screenshot),
+    () => document.createElement("canvas"),
+    2,
   );
 
   expect(pixelAt(canvas, 70, 119)).toEqual([255, 0, 0, 255]);
@@ -453,4 +458,32 @@ test("render returns a smoothed canvas of the Frame at 2x", async () => {
   const ctx = canvas.getContext("2d");
   expect(ctx?.imageSmoothingEnabled).toBe(true);
   expect(ctx?.imageSmoothingQuality).toBe("high");
+});
+
+test("render at a Preview scale sizes the canvas to it, caps it at 2x, and paints a given canvas", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+  expect(session.setSize(100, 50)).toBe("ok");
+
+  const preview = await session.render({ scale: 1 });
+  expect([preview.width, preview.height]).toEqual([100, 50]);
+
+  const capped = await session.render({ scale: 8 });
+  expect([capped.width, capped.height]).toEqual([200, 100]);
+
+  const target = document.createElement("canvas");
+  expect(await session.render({ scale: 1, canvas: target })).toBe(target);
+  expect([target.width, target.height]).toEqual([100, 50]);
+});
+
+test("a repaint after a Background write paints the new Background", async () => {
+  const store = memoryStore();
+  const session = await createSession({ defaultSolid, store });
+  expect(session.setSize(100, 100)).toBe("ok");
+  const canvas = await session.render({ scale: 2 });
+  expect(pixelAt(canvas, 50, 50)).toEqual([0x11, 0x22, 0x33, 255]);
+
+  expect(session.setBackground({ type: "solid", color: "#FF0000" })).toBe("ok");
+  await session.render({ scale: 2, canvas });
+
+  expect(pixelAt(canvas, 50, 50)).toEqual([255, 0, 0, 255]);
 });
