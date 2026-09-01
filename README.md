@@ -13,7 +13,7 @@ Drop a screenshot in, put it on a background, adjust the placement, add a shadow
 
 - **Bring an image in** by file picker, drag and drop, or paste from the clipboard.
 - **Backgrounds**: eight solid colours, six gradients, any hex colour you type, or your own image saved in the browser.
-- **Frames**: nine preset sizes named for where they go — Social post (4:5), Short-form video (9:16), Landscape (16:9), Instagram grid (3:4), Pinterest Pin (2:3), Square (1:1), Link preview (1.91:1), Classic (4:3), and Photo (3:2).
+- **Frames**: Auto, which shapes the frame to the screenshot you dropped in, plus seven preset ratios — 16:9, 1:1, 4:5, 9:16, 2:3, 4:3, and 1.91:1 — each naming the placements it suits on hover.
 - **Placement**: set padding and scale, then drag the screenshot to position it.
 - **Browser window**: wrap the screenshot in a light or dark title bar with your own URL.
 - **Effects**: drop shadow (offset, blur, opacity), border (width, colour), and rounded corners.

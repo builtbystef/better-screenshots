@@ -54,6 +54,33 @@ export function derivePlacement(composition: PlacementComposition, screenshot: F
   };
 }
 
+// The Auto frame's longest edge. A retina screenshot would otherwise derive a
+// Frame larger than any preset, and the Export doubles it again.
+const AUTO_FRAME_MAX_EDGE = 1920;
+
+type AutoFrameComposition = {
+  padding: number;
+  browserWindow: "none" | "light" | "dark";
+};
+
+// The Frame that holds the Screenshot at its own size with the current Padding
+// on every side: `derivePlacement` then fits it at Scale 1 with no empty band
+// on any edge. Shrunk to keep the longest edge within AUTO_FRAME_MAX_EDGE.
+export function deriveAutoFrame(composition: AutoFrameComposition, screenshot: Frame): Frame {
+  const objectHeight =
+    screenshot.height +
+    (composition.browserWindow === "none" ? 0 : browserWindowHeight(screenshot.width));
+  const padding = Math.max(0, composition.padding);
+  const width = screenshot.width + 2 * padding;
+  const height = objectHeight + 2 * padding;
+  const longest = Math.max(width, height);
+  const shrink = longest > AUTO_FRAME_MAX_EDGE ? AUTO_FRAME_MAX_EDGE / longest : 1;
+  return {
+    width: Math.max(1, Math.round(width * shrink)),
+    height: Math.max(1, Math.round(height * shrink)),
+  };
+}
+
 export function gradientLine(
   width: number,
   height: number,

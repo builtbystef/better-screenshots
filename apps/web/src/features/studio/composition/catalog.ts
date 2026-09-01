@@ -117,7 +117,6 @@ export const catalogDefaultSolid = {
 
 export type AspectPreset = {
   name: string;
-  ratio: string;
   width: number;
   height: number;
   // The placements this Frame is meant for, shown on the chip's tooltip. One
@@ -126,69 +125,18 @@ export type AspectPreset = {
 };
 
 export const aspectPresets: readonly AspectPreset[] = [
+  { name: "16:9", width: 1920, height: 1080, note: "YouTube, X posts and slides" },
+  { name: "1:1", width: 1080, height: 1080, note: "Square feed posts" },
   {
-    name: "Social post",
-    ratio: "4:5",
+    name: "4:5",
     width: 1080,
     height: 1350,
     note: "Instagram, Facebook, LinkedIn and Threads feeds",
   },
-  {
-    name: "Short-form video",
-    ratio: "9:16",
-    width: 1080,
-    height: 1920,
-    note: "Reels, Stories, TikTok and YouTube Shorts",
-  },
-  {
-    name: "Landscape",
-    ratio: "16:9",
-    width: 1920,
-    height: 1080,
-    note: "YouTube, X posts and slides",
-  },
-  {
-    name: "Instagram grid",
-    ratio: "3:4",
-    width: 1080,
-    height: 1440,
-    note: "Instagram's tallest feed size; the profile grid previews at 3:4",
-  },
-  {
-    name: "Pinterest Pin",
-    ratio: "2:3",
-    width: 1000,
-    height: 1500,
-    note: "The Pin size Pinterest recommends",
-  },
-  {
-    name: "Square",
-    ratio: "1:1",
-    width: 1080,
-    height: 1080,
-    note: "Square feed posts",
-  },
-  {
-    name: "Link preview",
-    ratio: "1.91:1",
-    width: 1200,
-    height: 630,
-    note: "The Open Graph card scrapers read",
-  },
-  {
-    name: "Classic",
-    ratio: "4:3",
-    width: 1440,
-    height: 1080,
-    note: "Untrimmed desktop screenshots",
-  },
-  {
-    name: "Photo",
-    ratio: "3:2",
-    width: 1620,
-    height: 1080,
-    note: "Camera-native landscape",
-  },
+  { name: "9:16", width: 1080, height: 1920, note: "Reels, Stories, TikTok and YouTube Shorts" },
+  { name: "2:3", width: 1000, height: 1500, note: "The Pin size Pinterest recommends" },
+  { name: "4:3", width: 1440, height: 1080, note: "Untrimmed desktop screenshots" },
+  { name: "1.91:1", width: 1200, height: 630, note: "The Open Graph card scrapers read" },
 ];
 
 export function aspectPresetFor(width: number, height: number): AspectPreset | undefined {

@@ -17,7 +17,7 @@ import { FrameInspector } from "@/features/studio/components/inspector/frame";
 import { PlacementInspector } from "@/features/studio/components/inspector/placement";
 import { WindowInspector } from "@/features/studio/components/inspector/window";
 import { Preview } from "@/features/studio/components/preview";
-import { useSyncExternalStore, type ReactNode } from "react";
+import { useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 
 export function StudioShell({ session }: { session: StudioSession }) {
   const sessionVersion = useSyncExternalStore(
@@ -31,7 +31,12 @@ export function StudioShell({ session }: { session: StudioSession }) {
     // Below the md breakpoint the Studio stacks: the Preview keeps the top of
     // the screen and the Inspector becomes a bottom panel that scrolls inside
     // its own box, so a phone never scrolls the page sideways.
-    <SidebarProvider className="studio-well h-svh flex-col md:flex-row">
+    <SidebarProvider
+      className="studio-well h-svh flex-col md:flex-row"
+      // Wider than the primitive's 16rem default: the Inspector's chip grids
+      // and knob rows read better with the extra room.
+      style={{ "--sidebar-width": "20rem" } as CSSProperties}
+    >
       <main className="min-h-0 min-w-0 flex-1">
         <Preview session={session} sessionVersion={sessionVersion} />
       </main>
@@ -110,7 +115,7 @@ function BrandMark() {
 function InspectorSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <SidebarGroup className="shrink-0 gap-3 p-5">
-      <SidebarGroupLabel className="h-auto p-0 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+      <SidebarGroupLabel className="h-auto p-0 text-[13px] font-medium tracking-tight text-foreground">
         <h2>{title}</h2>
       </SidebarGroupLabel>
       <SidebarGroupContent>{children}</SidebarGroupContent>

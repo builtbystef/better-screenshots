@@ -1,5 +1,9 @@
 import { createPainter, PAINT_SCALE } from "@/features/studio/platform/paint";
-import { derivePlacement, type Placement } from "@/features/studio/composition/placement";
+import {
+  deriveAutoFrame,
+  derivePlacement,
+  type Placement,
+} from "@/features/studio/composition/placement";
 
 export type { Placement, Rect } from "@/features/studio/composition/placement";
 
@@ -108,6 +112,8 @@ export type StudioSession = {
   subscribe: (listener: () => void) => () => void;
   readonly uploadedBackgrounds: readonly UploadedBackground[];
   readonly placement: Placement | null;
+  // The Frame the Auto chip would write, or null with no Screenshot to measure.
+  readonly autoFrame: Frame | null;
   readonly storage: "ok" | "unavailable";
   placeScreenshot(sources: readonly Blob[]): Promise<"ok" | "refuse">;
   setBackground(background: Background): "ok" | "refuse";
@@ -193,6 +199,9 @@ export async function createSession(options: {
     },
     get placement() {
       return screenshotSize === null ? null : derivePlacement(composition, screenshotSize);
+    },
+    get autoFrame() {
+      return screenshotSize === null ? null : deriveAutoFrame(composition, screenshotSize);
     },
     async placeScreenshot(sources) {
       for (const blob of sources) {

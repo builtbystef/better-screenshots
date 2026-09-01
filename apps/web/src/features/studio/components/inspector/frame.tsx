@@ -5,36 +5,58 @@ import { cn } from "@/lib/utils";
 import { chipGroup, chipItem } from "@/features/studio/components/inspector/styles";
 
 export function FrameInspector({ session }: { session: StudioSession }) {
-  const selected = aspectPresetFor(session.composition.width, session.composition.height);
+  const { width, height } = session.composition;
+  const selected = aspectPresetFor(width, height);
+  const auto = session.autoFrame;
+  const onAuto = auto !== null && width === auto.width && height === auto.height;
 
-  function writePreset(width: number, height: number) {
-    session.setSize(width, height);
+  function writePreset(nextWidth: number, nextHeight: number) {
+    session.setSize(nextWidth, nextHeight);
   }
 
   return (
     <ToggleGroup
-      className={cn(chipGroup, "grid-cols-2")}
-      value={selected === undefined ? [] : [selected.name]}
+      className={cn(chipGroup, "grid-cols-4")}
+      value={[...(onAuto ? ["auto"] : []), ...(selected === undefined ? [] : [selected.name])]}
     >
+      <ToggleGroupItem
+        value="auto"
+        disabled={auto === null}
+        title={
+          auto === null
+            ? "Add a screenshot first — Auto measures it"
+            : `${String(auto.width)}×${String(auto.height)} — the screenshot's own shape, with the current padding`
+        }
+        aria-label={
+          auto === null
+            ? "Auto, unavailable until a screenshot is added"
+            : `Auto, ${String(auto.width)}×${String(auto.height)}`
+        }
+        // The base Toggle drops pointer events when disabled, which would take
+        // the title with them; the tooltip is the only thing saying why.
+        className={cn(chipItem({ chip: "text" }), "disabled:pointer-events-auto")}
+        onPressedChange={(pressed) => {
+          if (pressed && auto !== null) {
+            writePreset(auto.width, auto.height);
+          }
+        }}
+      >
+        Auto
+      </ToggleGroupItem>
       {aspectPresets.map((preset) => (
         <ToggleGroupItem
           key={preset.name}
           value={preset.name}
           title={`${String(preset.width)}×${String(preset.height)} — ${preset.note}`}
-          aria-label={`${preset.name} ${preset.ratio}, ${String(preset.width)}×${String(preset.height)}`}
-          // The base Toggle is nowrap/shrink-0; these let a two-word name wrap
-          // inside its grid cell instead of overflowing into the next chip.
-          className={cn(
-            chipItem({ chip: "text" }),
-            "min-w-0 shrink text-center leading-tight text-balance whitespace-normal",
-          )}
+          aria-label={`${preset.name}, ${String(preset.width)}×${String(preset.height)}`}
+          className={chipItem({ chip: "text" })}
           onPressedChange={(pressed) => {
             if (pressed) {
               writePreset(preset.width, preset.height);
             }
           }}
         >
-          {preset.name} ({preset.ratio})
+          {preset.name}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

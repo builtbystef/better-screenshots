@@ -57,6 +57,12 @@ test("placement is null while screenshot is null", async () => {
   expect(session.placement).toBeNull();
 });
 
+test("the Auto frame is null while screenshot is null, so the chip has nothing to write", async () => {
+  const session = await createSession({ defaultSolid, store: emptyStore() });
+
+  expect(session.autoFrame).toBeNull();
+});
+
 function uploaded(id: string): UploadedBackground {
   return {
     id,

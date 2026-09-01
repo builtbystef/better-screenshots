@@ -56,6 +56,10 @@ _Avoid_: canvas size, output size, artboard
 A named Frame size in the Catalog.
 _Avoid_: social size, ratio (when the named Frame is meant)
 
+**Auto frame**:
+The Frame that holds the Screenshot at its own size with the current Padding on every side.
+_Avoid_: fit, smart size, best fit
+
 **Browser window**:
 The Chrome-style title and address bar drawn around a Screenshot. The two are placed as one, so Padding, Position, and Scale act on both.
 _Avoid_: browser chrome, device frame, chrome (when this wrap is meant)

@@ -1,6 +1,7 @@
 import { expect, test } from "vite-plus/test";
 import {
   browserWindowHeight,
+  deriveAutoFrame,
   derivePlacement,
   gradientLine,
 } from "@/features/studio/composition/placement";
@@ -56,6 +57,40 @@ test("placement applies Scale and Position around the Frame center", () => {
   );
 
   expect(placement.drawn).toEqual({ x: -60, y: -350, width: 2240, height: 1680 });
+});
+
+test("the Auto frame wraps the Screenshot in the current Padding on every side", () => {
+  expect(deriveAutoFrame(composition, { width: 800, height: 600 })).toEqual({
+    width: 1040,
+    height: 840,
+  });
+});
+
+test("the Auto frame leaves no empty band once the Placement fits it", () => {
+  const screenshot = { width: 800, height: 600 };
+  const auto = deriveAutoFrame(composition, screenshot);
+  const placement = derivePlacement({ ...composition, ...auto }, screenshot);
+
+  // Scale 1 draws the Screenshot at its own size, centred, Padding all round.
+  expect(placement.fitted).toEqual(screenshot);
+  expect(placement.drawn).toEqual({ x: 120, y: 120, width: 800, height: 600 });
+});
+
+test("the Auto frame counts the Browser window bar in its height", () => {
+  const withBar = { ...composition, browserWindow: "light" } as const;
+
+  expect(deriveAutoFrame(withBar, { width: 800, height: 600 })).toEqual({
+    width: 1040,
+    height: 840 + browserWindowHeight(800),
+  });
+});
+
+test("the Auto frame shrinks a retina Screenshot to keep its longest edge at 1920", () => {
+  const auto = deriveAutoFrame(composition, { width: 3000, height: 2000 });
+
+  expect(Math.max(auto.width, auto.height)).toBe(1920);
+  // The shrink is proportional, so the derived Frame keeps its shape.
+  expect(auto.width / auto.height).toBeCloseTo(3240 / 2240, 2);
 });
 
 test("gradient lines follow horizontal and vertical CSS angles", () => {

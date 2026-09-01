@@ -33,13 +33,13 @@ test("catalogGradientFor matches on angle and stops, and misses on a changed ang
 });
 
 test("aspectPresetFor matches an exact Frame and misses a Frame off by one", () => {
-  expect(aspectPresetFor(1920, 1080)?.name).toBe("Landscape");
+  expect(aspectPresetFor(1920, 1080)?.name).toBe("16:9");
   expect(aspectPresetFor(1920, 1081)).toBeUndefined();
 });
 
-test("each Aspect preset's ratio describes its Frame, and each name is unique", () => {
+test("each Aspect preset's name describes its Frame ratio, and each name is unique", () => {
   for (const preset of aspectPresets) {
-    const namedRatio = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(preset.ratio);
+    const namedRatio = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(preset.name);
     expect(namedRatio).not.toBeNull();
     if (namedRatio === null) {
       continue;
