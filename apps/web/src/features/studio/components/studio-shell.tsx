@@ -62,7 +62,7 @@ export function StudioShell({ session }: { session: StudioSession }) {
             <PlacementInspector session={session} />
           </InspectorSection>
           <SidebarSeparator className="mx-0" />
-          <InspectorSection title="Window">
+          <InspectorSection title="Browser window">
             <WindowInspector session={session} />
           </InspectorSection>
           <SidebarSeparator className="mx-0" />
