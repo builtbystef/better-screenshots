@@ -5,7 +5,7 @@
 
 A small browser studio that turns a plain screenshot into a polished image for launch posts, landing pages, and social media.
 
-**Live at [better-screenshots.pages.dev](https://better-screenshots.pages.dev).**
+**Live at [betterscreenshots.dev](https://betterscreenshots.dev).**
 
 Drop a screenshot in, put it on a background, adjust the placement, add a shadow, and export a PNG. Everything runs in your browser — images are never uploaded anywhere.
 
@@ -76,6 +76,8 @@ The live site is on [Cloudflare Pages](https://pages.cloudflare.com), connected 
 | Build output directory | `apps/web/dist/client` |
 
 The Node version comes from `.node-version` and the pnpm version from the `packageManager` field in `package.json`, both of which Cloudflare's build image respects. A push to `main` deploys automatically once the project is connected.
+
+The project serves `betterscreenshots.dev`, attached as a custom domain in the Pages project. Cloudflare keeps the `*.pages.dev` address alive alongside it.
 
 If the site URL ever changes, update `siteUrl` in `apps/web/src/lib/site.ts` so the link-preview tags point at the right origin.
 
