@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      body {
+        font-family: "Poppins", system-ui, sans-serif;
+        background: linear-gradient(135deg, #c9e4fb 0%, #d4e6fd 55%, #dde3fe 100%);
+        position: relative;
+      }
+      .text {
+        position: absolute;
+        left: 96px;
+        top: 84px;
+        width: 330px;
+        z-index: 2;
+      }
+      .logo {
+        width: 84px;
+        height: 84px;
+        margin-bottom: 34px;
+      }
+      h1 {
+        font-size: 55px;
+        font-weight: 700;
+        line-height: 1.08;
+        color: #10151d;
+        letter-spacing: -0.5px;
+        margin-bottom: 26px;
+      }
+      .tagline {
+        font-size: 26px;
+        font-weight: 500;
+        line-height: 1.35;
+        color: #1f2937;
+        margin-bottom: 30px;
+      }
+      .meta {
+        font-size: 19px;
+        white-space: nowrap;
+        font-weight: 500;
+        color: #3d4b5e;
+      }
+      .browser {
+        position: absolute;
+        left: 470px;
+        top: 152px;
+        width: 690px;
+        height: 560px;
+        background: #fafafa;
+        border-radius: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        box-shadow:
+          0 30px 70px rgba(23, 60, 110, 0.35),
+          0 8px 24px rgba(23, 60, 110, 0.18);
+        overflow: hidden;
+        z-index: 1;
+      }
+      .toolbar {
+        height: 62px;
+        background: #f0f0f1;
+        border-bottom: 1px solid #e2e2e4;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 12px;
+      }
+      .dot {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+      }
+      .dot.r {
+        background: #ff5f57;
+      }
+      .dot.y {
+        background: #febc2e;
+      }
+      .dot.g {
+        background: #28c840;
+      }
+      .urlbar {
+        flex: 1;
+        height: 38px;
+        margin-left: 14px;
+        background: #ffffff;
+        border-radius: 19px;
+        display: flex;
+        align-items: center;
+        padding: 0 22px;
+        font-size: 17px;
+        color: #55606e;
+        box-shadow: inset 0 0 0 1px #e6e6e9;
+      }
+      .chrome-body {
+        display: flex;
+        height: calc(100% - 62px);
+      }
+      .sidebar {
+        width: 170px;
+        border-right: 1px solid #e7e7ea;
+        padding: 32px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+      .bar {
+        height: 14px;
+        border-radius: 7px;
+        background: #e2e2e6;
+      }
+      .content {
+        flex: 1;
+        padding: 36px 42px;
+      }
+      .content .bar.title {
+        width: 46%;
+        height: 20px;
+        background: #d6d6db;
+        margin-bottom: 24px;
+      }
+      .content .bar.l1 {
+        width: 64%;
+        margin-bottom: 14px;
+      }
+      .content .bar.l2 {
+        width: 58%;
+        margin-bottom: 34px;
+      }
+      .cards {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 26px;
+      }
+      .card {
+        height: 118px;
+        border-radius: 12px;
+        flex: 1;
+      }
+      .card.blue {
+        background: #b7e2f9;
+      }
+      .card.teal {
+        background: #99f2e0;
+      }
+      .wide {
+        height: 118px;
+        border-radius: 12px;
+        width: 63%;
+        background: #dedcf9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="text">
+      <svg class="logo" viewBox="0 0 498 498" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M50 114.982V50H114.982" stroke="black" stroke-width="20" />
+        <path d="M50 385.018V450H114.982" stroke="black" stroke-width="20" />
+        <path d="M450 114.982V50H385.018" stroke="black" stroke-width="20" />
+        <path d="M450 385.018V450H385.018" stroke="black" stroke-width="20" />
+        <path
+          d="M256.734 344L215.405 289.533L174.076 235.066L89 344M215.405 289.533L300.5 189L409 344"
+          stroke="black"
+          stroke-width="20"
+          stroke-linecap="round"
+        />
+        <circle cx="130" cy="170" r="25" fill="black" />
+      </svg>
+      <h1>Better Screenshots</h1>
+      <p class="tagline">Beautiful backgrounds and frames for your screenshots.</p>
+      <p class="meta">Free&nbsp;·&nbsp;Runs in your browser</p>
+    </div>
+    <div class="browser">
+      <div class="toolbar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <div class="urlbar">betterscreenshots.dev</div>
+      </div>
+      <div class="chrome-body">
+        <div class="sidebar">
+          <div class="bar" style="width: 100%"></div>
+          <div class="bar" style="width: 100%"></div>
+          <div class="bar" style="width: 100%"></div>
+          <div class="bar" style="width: 100%"></div>
+          <div class="bar" style="width: 100%"></div>
+        </div>
+        <div class="content">
+          <div class="bar title"></div>
+          <div class="bar l1"></div>
+          <div class="bar l2"></div>
+          <div class="cards">
+            <div class="card blue"></div>
+            <div class="card teal"></div>
+          </div>
+          <div class="wide"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
