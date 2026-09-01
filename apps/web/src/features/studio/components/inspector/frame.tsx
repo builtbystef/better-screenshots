@@ -13,23 +13,28 @@ export function FrameInspector({ session }: { session: StudioSession }) {
 
   return (
     <ToggleGroup
-      className={cn(chipGroup, "grid-cols-4")}
+      className={cn(chipGroup, "grid-cols-2")}
       value={selected === undefined ? [] : [selected.name]}
     >
       {aspectPresets.map((preset) => (
         <ToggleGroupItem
           key={preset.name}
           value={preset.name}
-          title={`${String(preset.width)}×${String(preset.height)}`}
-          aria-label={`${preset.name} ${String(preset.width)}×${String(preset.height)}`}
-          className={chipItem({ chip: "text" })}
+          title={`${String(preset.width)}×${String(preset.height)} — ${preset.note}`}
+          aria-label={`${preset.name} ${preset.ratio}, ${String(preset.width)}×${String(preset.height)}`}
+          // The base Toggle is nowrap/shrink-0; these let a two-word name wrap
+          // inside its grid cell instead of overflowing into the next chip.
+          className={cn(
+            chipItem({ chip: "text" }),
+            "min-w-0 shrink text-center leading-tight text-balance whitespace-normal",
+          )}
           onPressedChange={(pressed) => {
             if (pressed) {
               writePreset(preset.width, preset.height);
             }
           }}
         >
-          {preset.name}
+          {preset.name} ({preset.ratio})
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

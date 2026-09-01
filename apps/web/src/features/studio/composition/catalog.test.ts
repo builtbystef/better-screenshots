@@ -33,13 +33,13 @@ test("catalogGradientFor matches on angle and stops, and misses on a changed ang
 });
 
 test("aspectPresetFor matches an exact Frame and misses a Frame off by one", () => {
-  expect(aspectPresetFor(1920, 1080)).toEqual({ name: "16:9", width: 1920, height: 1080 });
+  expect(aspectPresetFor(1920, 1080)?.name).toBe("Landscape");
   expect(aspectPresetFor(1920, 1081)).toBeUndefined();
 });
 
-test("each Aspect preset's name describes its Frame ratio", () => {
+test("each Aspect preset's ratio describes its Frame, and each name is unique", () => {
   for (const preset of aspectPresets) {
-    const namedRatio = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(preset.name);
+    const namedRatio = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(preset.ratio);
     expect(namedRatio).not.toBeNull();
     if (namedRatio === null) {
       continue;
@@ -48,6 +48,9 @@ test("each Aspect preset's name describes its Frame ratio", () => {
       Math.abs(preset.width / preset.height - Number(namedRatio[1]) / Number(namedRatio[2])),
     ).toBeLessThan(0.01);
   }
+
+  // The name is the ToggleGroup value that marks the selected chip.
+  expect(new Set(aspectPresets.map((preset) => preset.name)).size).toBe(aspectPresets.length);
 });
 
 test("every Catalog color is a six-digit hex and the default solid is a Catalog solid", () => {
