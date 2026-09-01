@@ -15,6 +15,9 @@ function Slider<Value extends number | readonly number[]>({
   value,
   min = 0,
   max = 100,
+  // Forwarded to each thumb's <input type="range">, which is the element a
+  // screen reader lands on; on the root div it would name nothing focusable.
+  "aria-label": ariaLabel,
   ...props
 }: SliderPrimitive.Root.Props<Value>) {
   const thumbs = thumbCount(value ?? defaultValue);
@@ -44,6 +47,7 @@ function Slider<Value extends number | readonly number[]>({
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
+            getAriaLabel={ariaLabel === undefined ? undefined : () => ariaLabel}
             className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
           />
         ))}

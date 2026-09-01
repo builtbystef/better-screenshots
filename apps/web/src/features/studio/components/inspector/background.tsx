@@ -178,6 +178,13 @@ export function BackgroundInspector({ session }: { session: StudioSession }) {
                   variant="ghost"
                   size="icon-xs"
                   aria-label={`Remove ${record.filename}`}
+                  // Disabled while this image is the Background, so the title
+                  // says why instead of leaving a button that looks dead.
+                  title={
+                    current
+                      ? "In use as the Background — pick another one first"
+                      : `Remove ${record.filename}`
+                  }
                   disabled={current}
                   className="absolute top-1 right-1 size-5 rounded-sm bg-sidebar/90 shadow-sm"
                   onClick={() => {

@@ -21,7 +21,11 @@ export function useExport(session: StudioSession) {
       document.body.append(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      // Revoking on the click's own tick can race the download start in some
+      // browsers; a delayed revoke is safe either way.
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 10_000);
     } finally {
       setExporting(false);
     }

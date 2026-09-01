@@ -28,7 +28,10 @@ export function StudioShell({ session }: { session: StudioSession }) {
 
   return (
     // The well backs the whole page, and the Inspector floats on top of it.
-    <SidebarProvider className="studio-well h-svh min-w-[48rem]">
+    // Below the md breakpoint the Studio stacks: the Preview keeps the top of
+    // the screen and the Inspector becomes a bottom panel that scrolls inside
+    // its own box, so a phone never scrolls the page sideways.
+    <SidebarProvider className="studio-well h-svh flex-col md:flex-row">
       <main className="min-h-0 min-w-0 flex-1">
         <Preview session={session} sessionVersion={sessionVersion} />
       </main>
@@ -37,7 +40,7 @@ export function StudioShell({ session }: { session: StudioSession }) {
       <Sidebar
         side="right"
         collapsible="none"
-        className="my-2 mr-2 h-auto overflow-hidden rounded-lg shadow-sm ring-1 ring-sidebar-border"
+        className="h-auto max-h-[46svh] w-full shrink-0 overflow-hidden shadow-sm ring-1 ring-sidebar-border md:my-2 md:mr-2 md:max-h-none md:w-(--sidebar-width) md:rounded-lg"
       >
         <SidebarHeader className="p-4">
           <h1 className="flex items-center gap-2.5 text-lg font-medium tracking-tight">
@@ -68,8 +71,11 @@ export function StudioShell({ session }: { session: StudioSession }) {
           </InspectorSection>
         </SidebarContent>
         <SidebarSeparator className="mx-0" />
-        <SidebarFooter className="p-3">
+        <SidebarFooter className="gap-2 p-3">
           <ActionsInspector session={session} />
+          <p className="text-center text-[11px] text-muted-foreground">
+            Everything stays in your browser (images are never uploaded).
+          </p>
         </SidebarFooter>
       </Sidebar>
     </SidebarProvider>
