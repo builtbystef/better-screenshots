@@ -44,6 +44,10 @@ _Avoid_: palette, theme, presets (when the built-in Background set is meant)
 One arranged result: a Frame, a Background, the Screenshot on it, its Padding, its Effects, and an optional Browser window.
 _Avoid_: design, mockup, poster
 
+**Saved composition**:
+A Composition's settings without its Screenshot, kept in the browser and restored when the Studio next loads.
+_Avoid_: draft, autosave, persisted state
+
 **Frame**:
 The stored width and height of a Composition.
 _Avoid_: canvas size, output size, artboard
