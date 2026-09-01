@@ -5,17 +5,20 @@
 
 A small browser studio that turns a plain screenshot into a polished image for launch posts, landing pages, and social media.
 
-Drop a screenshot in, put it on a background, adjust the placement, add a shadow, and export a PNG. Everything runs in your browser.
+**Live at [better-screenshots.pages.dev](https://better-screenshots.pages.dev).**
+
+Drop a screenshot in, put it on a background, adjust the placement, add a shadow, and export a PNG. Everything runs in your browser — images are never uploaded anywhere.
 
 ## Features
 
 - **Bring an image in** by file picker, drag and drop, or paste from the clipboard.
 - **Backgrounds**: eight solid colours, six gradients, any hex colour you type, or your own image saved in the browser.
-- **Frames**: seven preset sizes, including 16:9, 1:1, 4:5, 9:16, and 1.91:1.
+- **Frames**: nine preset sizes named for where they go — Social post (4:5), Short-form video (9:16), Landscape (16:9), Instagram grid (3:4), Pinterest Pin (2:3), Square (1:1), Link preview (1.91:1), Classic (4:3), and Photo (3:2).
 - **Placement**: set padding and scale, then drag the screenshot to position it.
 - **Browser window**: wrap the screenshot in a light or dark title bar with your own URL.
 - **Effects**: drop shadow (offset, blur, opacity), border (width, colour), and rounded corners.
 - **Export**: a PNG rendered at 2x, drawn by the same code that paints the live preview.
+- **Private by construction**: no backend, no accounts, no telemetry. Uploaded backgrounds live in IndexedDB and your settings in localStorage, so the studio reopens the way you left it.
 
 ## Getting started
 
@@ -60,6 +63,21 @@ apps/web/src/
   hooks/ lib/             shared code that knows nothing about the studio
 docs/                     glossary, coding standards, architecture, ADRs
 ```
+
+## Deployment
+
+The build is a fully static SPA: `pnpm build` writes it to `apps/web/dist/client`, complete with an `index.html`, so it deploys to any static host with no rewrite rules.
+
+The live site is on [Cloudflare Pages](https://pages.cloudflare.com), connected to this repository with these settings:
+
+| Setting                | Value                  |
+| ---------------------- | ---------------------- |
+| Build command          | `pnpm build`           |
+| Build output directory | `apps/web/dist/client` |
+
+The Node version comes from `.node-version` and the pnpm version from the `packageManager` field in `package.json`, both of which Cloudflare's build image respects. A push to `main` deploys automatically once the project is connected.
+
+If the site URL ever changes, update `siteUrl` in `apps/web/src/lib/site.ts` so the link-preview tags point at the right origin.
 
 ## Documentation
 
