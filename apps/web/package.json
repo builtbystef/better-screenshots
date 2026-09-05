@@ -12,7 +12,7 @@
     "@base-ui/react": "catalog:",
     "@fontsource/poppins": "catalog:",
     "@tanstack/react-router": "^1.170.32",
-    "@tanstack/react-start": "^1.168.46",
+    "@tanstack/react-start": "^1.168.49",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "^1.33.0",
